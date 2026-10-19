@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// A resource of module "{{ module }}" (included by its Module.php). Pages are
+// authorized by {{ model_class }}'s policy (viewAny, view, create, update).
+return new Resource(
+    new Property(Resource::Name, '{{ name }}'),
+    new Source({{ model_class }}::class),{{ properties }}
+
+    {{ table }},{{ form }}{{ infolist }}{{ actions }}
+);

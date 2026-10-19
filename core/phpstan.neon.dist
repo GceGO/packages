@@ -1,0 +1,24 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: max
+    phpVersion:
+        min: 80300
+        max: 80599
+    paths:
+        - src
+        - config
+        - tests/Fixtures
+        - benchmarks
+    tmpDir: build/phpstan
+    # Descriptors and the configuration validator re-check values that PHPDoc
+    # describes (list<string>, ...) because PHP does not enforce PHPDoc at
+    # runtime and these APIs are called by third-party packages.
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # config/gcego.php is the package's mergeable config file: the one place
+        # env() belongs. Larastan only recognizes the application's config/ directory.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/gcego.php

@@ -1,0 +1,25 @@
+providers:
+  - Livewire\LivewireServiceProvider
+  - Gcego\Core\GcegoServiceProvider
+  - Gcego\Registry\RegistryServiceProvider
+  - Gcego\Runtime\RuntimeServiceProvider
+  - Gcego\Chroma\ChromaServiceProvider
+  - Gcego\Data\DataServiceProvider
+  - Gcego\Security\SecurityServiceProvider
+  - Gcego\Actions\ActionsServiceProvider
+  - Gcego\Forms\FormsServiceProvider
+  - BladeUI\Icons\BladeIconsServiceProvider
+  - BladeUI\Heroicons\BladeHeroiconsServiceProvider
+  - MallardDuck\LucideIcons\BladeLucideIconsServiceProvider
+  - Gcego\Luminaries\LuminariesServiceProvider
+  - Gcego\Tables\TablesServiceProvider
+  - Gcego\Infolists\InfolistsServiceProvider
+  - Gcego\Widgets\WidgetsServiceProvider
+  - Gcego\Layouts\LayoutsServiceProvider
+  - Gcego\Navigation\NavigationServiceProvider
+  - Gcego\Pages\PagesServiceProvider
+  - Gcego\Modules\ModulesServiceProvider
+  - Gcego\Panels\PanelsServiceProvider
+  - Gcego\Notifications\NotificationsServiceProvider
+  - Gcego\Workflows\WorkflowsServiceProvider
+  - Gcego\Analytics\AnalyticsServiceProvider

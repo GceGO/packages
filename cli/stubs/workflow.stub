@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "workflow:{{ name }}". Each transition needs its policy ability
+// on the subject ("update" to submit, "approve" to decide): nobody else may run it.
+return new Workflow(
+    '{{ name }}',
+    '{{ title }}',
+    new State('draft', 'Draft'),
+    new State('submitted', 'Submitted'),
+    new State('approved', 'Approved', terminal: true, color: 'success'),
+    new State('rejected', 'Rejected', terminal: true, color: 'danger'),
+
+    new Transition('submit', 'draft', 'submitted', ability: 'update'),
+    new Transition('approve', 'submitted', 'approved', ability: 'approve', comment: 'optional'),
+    new Transition('reject', 'submitted', 'rejected', ability: 'approve', comment: 'required'),{{ subject }}
+);

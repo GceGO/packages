@@ -1,0 +1,12 @@
+{
+    "name": "@gcego/chroma",
+    "private": true,
+    "description": "Tailwind CSS v4 non-color design tokens and theme mapping for GCEGO Admin Studio (colors: @gcego/swatches).",
+    "style": "resources/css/gcego.css",
+    "files": [
+        "resources/css"
+    ],
+    "peerDependencies": {
+        "tailwindcss": "^4.0.0"
+    }
+}

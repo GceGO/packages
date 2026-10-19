@@ -1,0 +1,1 @@
+<span class="inline-flex items-center gap-1 rounded-gcego-sm bg-surface-muted px-1.5 py-0.5 font-mono text-xs tracking-widest text-muted-foreground" aria-label="{{ __('gcego-tables::messages.masked') }}">••••••</span>

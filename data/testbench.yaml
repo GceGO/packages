@@ -1,0 +1,6 @@
+providers:
+  - Livewire\LivewireServiceProvider
+  - Gcego\Core\GcegoServiceProvider
+  - Gcego\Registry\RegistryServiceProvider
+  - Gcego\Runtime\RuntimeServiceProvider
+  - Gcego\Data\DataServiceProvider

@@ -1,0 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "navigation:{{ name }}".
+return new Navigation(
+    '{{ name }}',
+    new Group(
+        '{{ title }}',{{ items }}
+    ),
+);

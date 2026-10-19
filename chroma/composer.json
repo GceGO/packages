@@ -1,0 +1,126 @@
+{
+    "name": "gcego/chroma",
+    "description": "Tailwind CSS v4 styling for GCEGO Admin Studio: declarative Tailwind configuration, slots, class merging, design tokens, themes, presets and appearance modes.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "styling",
+        "tailwindcss",
+        "design-tokens",
+        "themes",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/chroma",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/components": "^0.1",
+        "gcego/runtime": "^0.1",
+        "gcego/swatches": "^0.1",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/view": "^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../swatches",
+            "options": {
+                "versions": {
+                    "gcego/swatches": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Chroma\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Chroma\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php",
+        "build-css": "node tests/Build/compile.mjs resources/css/build-entry.css"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Chroma\\ChromaServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

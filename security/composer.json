@@ -1,0 +1,135 @@
+{
+    "name": "gcego/security",
+    "description": "Authorization for GCEGO Admin Studio: declarative requirements over Laravel Gates and Policies, permission and role adapters, tenant isolation, record and field authorization, mandatory data scopes and Livewire reauthorization.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "security",
+        "authorization",
+        "permissions",
+        "tenancy",
+        "laravel",
+        "admin"
+    ],
+    "homepage": "https://github.com/gcego/security",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/blueprints": "^0.1",
+        "gcego/components": "^0.1",
+        "gcego/core": "^0.1",
+        "gcego/data": "^0.1",
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "illuminate/auth": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/log": "^13.0",
+        "illuminate/support": "^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0",
+        "spatie/laravel-permission": "^8.3"
+    },
+    "suggest": {
+        "spatie/laravel-permission": "Resolve permissions and roles with SpatiePermissionProvider and SpatieRoleProvider."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../data",
+            "options": {
+                "versions": {
+                    "gcego/data": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Security\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Security\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Security\\SecurityServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

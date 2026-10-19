@@ -1,0 +1,11 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "blueprint:{{ name }}".
+return new Blueprint(
+    new Property(Blueprint::Name, '{{ name }}'),
+    new Property(Blueprint::Title, '{{ title }}'),{{ parts }}
+);

@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+use {{ model }};
+use Gcego\Components\Property;
+use Gcego\Data\Source;
+use Gcego\Infolists\Entries\Text as TextEntry;
+use Gcego\Infolists\Infolist;
+use Gcego\Modules\Module;
+use Gcego\Modules\Resource;
+use Gcego\Tables\Columns\Text;
+use Gcego\Tables\Table;
+
+// Read-only until you add a Form with Create/Edit actions. Every page is
+// authorized by the {{ model_class }} policy (viewAny/view): define one.
+return new Module(
+    new Property(Module::Name, '{{ name }}'),
+    new Property(Module::Title, '{{ title }}'),
+
+    new Resource(
+        new Source({{ model_class }}::class),
+        new Property(Resource::RecordKey, '{{ key }}'),
+        new Table(new Text('{{ key }}', 'ID')),
+        new Infolist(new TextEntry('{{ key }}', 'ID')),
+    ),
+);

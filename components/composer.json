@@ -1,0 +1,54 @@
+{
+    "name": "gcego/components",
+    "description": "Framework-independent declarative component foundation for GCEGO Admin Studio: properties, schemas, composition, validation, traversal and normalization.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "components",
+        "declarative",
+        "schema",
+        "admin"
+    ],
+    "homepage": "https://github.com/gcego/components",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.14",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Components\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Components\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage --min=90",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Gcego\Actions\Contracts\ActionHandler;
+use Gcego\Actions\Execution\ActionContext;
+
+/**
+ * Handles the "{{ name }}" action. gcego/actions authorizes the action
+ * (the "{{ ability }}" policy ability) before this runs.
+ */
+final readonly class {{ class }} implements ActionHandler
+{
+    public function handle(ActionContext $context): mixed
+    {
+        $record = $context->model();
+
+        return $record;
+    }
+}

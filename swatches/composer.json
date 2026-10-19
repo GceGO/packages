@@ -1,0 +1,84 @@
+{
+    "name": "gcego/swatches",
+    "description": "Color infrastructure for GCEGO Admin Studio: color values and conversion, palettes, semantic color tokens, light/dark and named themes, tenant branding, WCAG contrast validation and the Tailwind CSS v4 color bridge.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "colors",
+        "oklch",
+        "themes",
+        "dark-mode",
+        "tailwindcss",
+        "accessibility",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/swatches",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/core": "^0.1",
+        "illuminate/console": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/view": "^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Swatches\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Swatches\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint",
+        "build-css": "node tests/Build/compile.mjs resources/css/build-entry.css",
+        "build-explorer": "node scripts/build-explorer.mjs"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Swatches\\SwatchesServiceProvider"
+            ],
+            "aliases": {
+                "Swatches": "Gcego\\Swatches\\Facades\\Swatches"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

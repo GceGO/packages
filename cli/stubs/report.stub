@@ -1,0 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "report:{{ name }}".
+return new Report(
+    '{{ name }}',
+    '{{ title }}',
+    {{ requirement }},{{ columns }}
+    dataset: '{{ dataset }}',{{ export }}
+);

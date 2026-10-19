@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "panel:{{ name }}". Who may enter: {{ access_note }}
+return new Panel(
+    new Property(Panel::Name, '{{ name }}'),
+    new Property(Panel::Title, '{{ title }}'),
+    new Property(Panel::Path, '{{ path }}'),{{ properties }}
+    {{ requirement }},
+
+    new Branding(new Property(Branding::Name, '{{ title }}')),{{ references }}
+);

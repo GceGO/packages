@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "module:{{ name }}". Each file in Resources/ returns a Resource
+// (php artisan gcego:make-resource) and is included below.
+return new Module(
+    new Property(Module::Name, '{{ name }}'),
+    new Property(Module::Title, '{{ title }}'),{{ properties }}
+
+    new DashboardPage(
+        new Property(DashboardPage::Name, 'overview'),
+        new Property(DashboardPage::Title, '{{ title }}'),
+        new Authenticated,
+
+        new Section('{{ title }}', new Content('{{ title }} overview.')),
+    ),
+
+    ...array_map(static fn (string $resource): object => require $resource, glob(__DIR__.'/Resources/*.php') ?: []),
+);

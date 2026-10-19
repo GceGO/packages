@@ -1,0 +1,4 @@
+/* A build like an application's: GCEGO styling plus the app's own sources. */
+@import "tailwindcss" source(none);
+@import "../../resources/css/gcego.css";
+@source "../Fixtures";

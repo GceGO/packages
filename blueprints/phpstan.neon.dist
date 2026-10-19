@@ -1,0 +1,14 @@
+parameters:
+    level: max
+    phpVersion:
+        min: 80300
+        max: 80599
+    paths:
+        - src
+        - tests/Fixtures
+        - benchmarks
+    tmpDir: build/phpstan
+    # Policies and collections re-check values that PHPDoc
+    # describes (list<string>, ...) because PHP does not enforce PHPDoc at
+    # runtime and these APIs are called by third-party packages.
+    treatPhpDocTypesAsCertain: false

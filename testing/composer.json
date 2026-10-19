@@ -1,0 +1,332 @@
+{
+    "name": "gcego/testing",
+    "description": "Testing toolkit for GCEGO Admin Studio: fluent and PHPUnit/Pest assertions for components, blueprints, registry, runtime, styling, data, security, tenancy, actions, forms, tables, infolists, widgets, layouts, navigation, pages, modules, panels, notifications, media and workflows; Livewire request helpers, fixtures, factory adapters, query and performance measurement, static and browser accessibility checks, state reset, contract verification and diagnostics.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "testing",
+        "phpunit",
+        "pest",
+        "livewire",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/testing",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/components": "^0.1",
+        "illuminate/container": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/support": "^13.0",
+        "phpunit/phpunit": "^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "gcego/actions": "^0.1",
+        "gcego/analytics": "^0.1",
+        "gcego/blueprints": "^0.1",
+        "gcego/core": "^0.1",
+        "gcego/data": "^0.1",
+        "gcego/forms": "^0.1",
+        "gcego/infolists": "^0.1",
+        "gcego/layouts": "^0.1",
+        "gcego/media": "^0.1",
+        "gcego/modules": "^0.1",
+        "gcego/navigation": "^0.1",
+        "gcego/notifications": "^0.1",
+        "gcego/pages": "^0.1",
+        "gcego/panels": "^0.1",
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "gcego/security": "^0.1",
+        "gcego/chroma": "^0.1",
+        "gcego/tables": "^0.1",
+        "gcego/widgets": "^0.1",
+        "gcego/workflows": "^0.1",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "livewire/livewire": "^4.4",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "suggest": {
+        "gcego/core": "Enables the core assertions.",
+        "gcego/blueprints": "Enables the blueprints assertions.",
+        "gcego/registry": "Enables the registry assertions.",
+        "gcego/runtime": "Enables the runtime assertions.",
+        "gcego/chroma": "Enables the styling assertions.",
+        "gcego/data": "Enables the data assertions.",
+        "gcego/security": "Enables the security assertions.",
+        "gcego/actions": "Enables the actions assertions.",
+        "gcego/forms": "Enables the forms assertions.",
+        "gcego/tables": "Enables the tables assertions.",
+        "gcego/infolists": "Enables the infolists assertions.",
+        "gcego/widgets": "Enables the widgets assertions.",
+        "gcego/layouts": "Enables the layouts assertions.",
+        "gcego/navigation": "Enables the navigation assertions.",
+        "gcego/pages": "Enables the pages assertions.",
+        "gcego/modules": "Enables the modules assertions.",
+        "gcego/panels": "Enables the panels assertions.",
+        "gcego/notifications": "Enables the notifications assertions.",
+        "gcego/media": "Enables the media assertions.",
+        "gcego/workflows": "Enables the workflows assertions.",
+        "orchestra/testbench": "Required for Gcego\\Testing\\Environment\\PackageTestCase.",
+        "livewire/livewire": "Required for the Livewire test adapter.",
+        "pestphp/pest": "Enables the optional Pest expectations."
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../chroma",
+            "options": {
+                "versions": {
+                    "gcego/chroma": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../data",
+            "options": {
+                "versions": {
+                    "gcego/data": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../security",
+            "options": {
+                "versions": {
+                    "gcego/security": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../actions",
+            "options": {
+                "versions": {
+                    "gcego/actions": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../forms",
+            "options": {
+                "versions": {
+                    "gcego/forms": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../tables",
+            "options": {
+                "versions": {
+                    "gcego/tables": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../infolists",
+            "options": {
+                "versions": {
+                    "gcego/infolists": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../widgets",
+            "options": {
+                "versions": {
+                    "gcego/widgets": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../layouts",
+            "options": {
+                "versions": {
+                    "gcego/layouts": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../navigation",
+            "options": {
+                "versions": {
+                    "gcego/navigation": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../pages",
+            "options": {
+                "versions": {
+                    "gcego/pages": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../modules",
+            "options": {
+                "versions": {
+                    "gcego/modules": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../panels",
+            "options": {
+                "versions": {
+                    "gcego/panels": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../notifications",
+            "options": {
+                "versions": {
+                    "gcego/notifications": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../media",
+            "options": {
+                "versions": {
+                    "gcego/media": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../workflows",
+            "options": {
+                "versions": {
+                    "gcego/workflows": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../analytics",
+            "options": {
+                "versions": {
+                    "gcego/analytics": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../luminaries",
+            "options": {
+                "versions": {
+                    "gcego/luminaries": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../swatches",
+            "options": {
+                "versions": {
+                    "gcego/swatches": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Testing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Testing\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Testing\\TestingServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,5 @@
+providers:
+  - BladeUI\Icons\BladeIconsServiceProvider
+  - BladeUI\Heroicons\BladeHeroiconsServiceProvider
+  - MallardDuck\LucideIcons\BladeLucideIconsServiceProvider
+  - Gcego\Luminaries\LuminariesServiceProvider

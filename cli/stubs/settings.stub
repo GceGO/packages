@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "settings:{{ name }}". Keys are global: read them with app(\Gcego\Settings\SettingsManager::class)->get('{{ key }}_enabled').
+return new SettingsGroup(
+    '{{ name }}',
+    '{{ title }}',
+    {{ requirement }},
+    new Setting(name: '{{ key }}_enabled', label: '{{ title }} enabled', default: true),
+    new Setting(name: '{{ key }}_label', label: '{{ title }} label', default: '{{ title }}', rules: ['max:120']),{{ scopes }}
+);

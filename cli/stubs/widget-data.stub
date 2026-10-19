@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Gcego\Widgets\Contracts\WidgetDataProvider;
+use Gcego\Widgets\Data\WidgetDataContext;
+use Gcego\Widgets\Data\WidgetDataResult;
+
+/**
+ * Data of the "{{ name }}" widget. Queries made here run as the viewing user:
+ * use gcego/data scoped queries for tenant data.
+ */
+final class {{ class }} implements WidgetDataProvider
+{
+    public function resolve(WidgetDataContext $context): WidgetDataResult
+    {
+        return WidgetDataResult::value(0);
+    }
+}

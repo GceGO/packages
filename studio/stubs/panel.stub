@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+use Gcego\Components\Property;
+use Gcego\Panels\Definitions\PageReference;
+use Gcego\Panels\Panel;
+use Gcego\Security\Requirements\Ability;{{ module_import }}
+
+// Who may enter: define the "{{ ability }}" Gate ability (deny by default until you do).
+return new Panel(
+    new Property(Panel::Name, '{{ name }}'),
+    new Property(Panel::Title, '{{ title }}'),
+    new Property(Panel::Path, '{{ path }}'),
+    new Property(Panel::Dashboard, 'dashboard'),
+    new Ability('{{ ability }}'),
+
+    new PageReference('dashboard'),{{ module_reference }}
+);

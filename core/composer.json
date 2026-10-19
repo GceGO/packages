@@ -1,0 +1,71 @@
+{
+    "name": "gcego/core",
+    "description": "Laravel integration kernel for GCEGO Admin Studio: configuration, lifecycle, package coordination, extensions and diagnostics.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "laravel",
+        "admin",
+        "framework"
+    ],
+    "homepage": "https://github.com/gcego/core",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "composer-runtime-api": "^2.2",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0"
+    },
+    "require-dev": {
+        "gcego/components": "@dev",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Core\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Core\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Core\\GcegoServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

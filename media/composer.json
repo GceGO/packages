@@ -1,0 +1,291 @@
+{
+    "name": "gcego/media",
+    "description": "Media for GCEGO Admin Studio: secure uploads (content-verified types, safe names and paths), collections, model attachments, private storage on any Laravel disk, authorized and signed downloads, image variants (GD), metadata (images, ffprobe for audio/video), queued processing, a media library and browser, malware-scanner hooks, tenancy, and forms, tables, infolists, actions, notifications and panels integration.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "media",
+        "uploads",
+        "attachments",
+        "images",
+        "livewire",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/media",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "ext-fileinfo": "*",
+        "gcego/actions": "^0.1",
+        "gcego/blueprints": "^0.1",
+        "gcego/components": "^0.1",
+        "gcego/core": "^0.1",
+        "gcego/data": "^0.1",
+        "gcego/forms": "^0.1",
+        "gcego/infolists": "^0.1",
+        "gcego/layouts": "^0.1",
+        "gcego/modules": "^0.1",
+        "gcego/navigation": "^0.1",
+        "gcego/notifications": "^0.1",
+        "gcego/pages": "^0.1",
+        "gcego/panels": "^0.1",
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "gcego/security": "^0.1",
+        "gcego/chroma": "^0.1",
+        "gcego/tables": "^0.1",
+        "gcego/widgets": "^0.1",
+        "illuminate/broadcasting": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/filesystem": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/mail": "^13.0",
+        "illuminate/notifications": "^13.0",
+        "illuminate/process": "^13.0",
+        "illuminate/queue": "^13.0",
+        "illuminate/routing": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/view": "^13.0",
+        "livewire/livewire": "^4.4"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../chroma",
+            "options": {
+                "versions": {
+                    "gcego/chroma": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../data",
+            "options": {
+                "versions": {
+                    "gcego/data": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../security",
+            "options": {
+                "versions": {
+                    "gcego/security": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../actions",
+            "options": {
+                "versions": {
+                    "gcego/actions": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../forms",
+            "options": {
+                "versions": {
+                    "gcego/forms": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../tables",
+            "options": {
+                "versions": {
+                    "gcego/tables": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../infolists",
+            "options": {
+                "versions": {
+                    "gcego/infolists": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../widgets",
+            "options": {
+                "versions": {
+                    "gcego/widgets": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../layouts",
+            "options": {
+                "versions": {
+                    "gcego/layouts": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../navigation",
+            "options": {
+                "versions": {
+                    "gcego/navigation": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../pages",
+            "options": {
+                "versions": {
+                    "gcego/pages": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../modules",
+            "options": {
+                "versions": {
+                    "gcego/modules": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../panels",
+            "options": {
+                "versions": {
+                    "gcego/panels": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../notifications",
+            "options": {
+                "versions": {
+                    "gcego/notifications": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../luminaries",
+            "options": {
+                "versions": {
+                    "gcego/luminaries": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../swatches",
+            "options": {
+                "versions": {
+                    "gcego/swatches": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Media\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Media\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Media\\MediaServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "suggest": {
+        "ext-gd": "Image metadata, thumbnails and variants.",
+        "ext-exif": "Image orientation correction.",
+        "league/flysystem-aws-s3-v3": "S3-compatible disks (Laravel's S3 driver)."
+    }
+}

@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "layout:{{ name }}".
+return new Layout(
+    '{{ name }}',
+    new Property(Layout::Label, '{{ title }}'),
+    {{ requirement }},
+
+    new Section(
+        '{{ title }}',
+        new Grid(
+            new Columns({{ columns }}),
+            new Content('First column.'),
+            new Content('Second column.'),
+        ),
+    ),
+);

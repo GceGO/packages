@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Gcego\Components\Property;
+use Gcego\Notifications\Dispatching\DispatchResult;
+use Gcego\Notifications\Notification;
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * The "{{ name }}" notification (gcego/notifications), for Notifiable models.
+ */
+final class {{ class }}
+{
+    public static function make(): Notification
+    {
+        return new Notification(
+            new Property(Notification::Name, '{{ name }}'),
+            new Property(Notification::Title, '{{ title }}'),
+            new Property(Notification::Body, '{{ body }}'),
+            new Property(Notification::Type, '{{ type }}'),
+            new Property(Notification::Category, '{{ category }}'),
+            new Property(Notification::Channels, [{{ channels }}]),
+        );
+    }
+
+    /**
+     * @param  Model|iterable<Model>  $recipients
+     */
+    public static function sendTo(Model|iterable $recipients): DispatchResult
+    {
+        return self::make()->sendTo($recipients);
+    }
+}

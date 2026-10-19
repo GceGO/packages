@@ -1,0 +1,28 @@
+/*
+ * GCEGO non-color design tokens (CSS custom properties): radius, shadows, typography, motion.
+ *
+ * Generated from Gcego\Chroma\Tokens\DefaultTokens, which is the source of truth;
+ * tests/Unit/TokensTest.php fails when the two disagree. Light values apply to :root,
+ * dark values when <html> has the "dark" class (set by the appearance controller).
+ * Color tokens are declared by gcego/swatches (swatches/resources/css/tokens.css).
+ */
+
+:root {
+    --gcego-radius: 0.5rem;
+    --gcego-radius-sm: 0.375rem;
+    --gcego-radius-lg: 0.75rem;
+    --gcego-shadow-card: 0 1px 2px 0 rgb(15 23 41 / 0.05), 0 1px 3px 0 rgb(15 23 41 / 0.04);
+    --gcego-shadow-overlay: 0 12px 32px -8px rgb(15 23 41 / 0.18), 0 4px 8px -4px rgb(15 23 41 / 0.08);
+    --gcego-font-sans: ui-sans-serif, system-ui, sans-serif;
+    --gcego-duration: 150ms;
+}
+
+:root.dark {
+    --gcego-radius: 0.5rem;
+    --gcego-radius-sm: 0.375rem;
+    --gcego-radius-lg: 0.75rem;
+    --gcego-shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.45);
+    --gcego-shadow-overlay: 0 16px 40px -8px rgb(0 0 0 / 0.65), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+    --gcego-font-sans: ui-sans-serif, system-ui, sans-serif;
+    --gcego-duration: 150ms;
+}

@@ -1,0 +1,9 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// A reusable form: use it in a Resource or Blueprint: require __DIR__.'/{{ relative }}' (from Module.php)
+// or require dirname(__DIR__).'/{{ relative }}' (from Resources/).
+return {{ form }};

@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Add to a Resource or Blueprint: require __DIR__.'/{{ relative }}' (from Module.php)
+// or require dirname(__DIR__).'/{{ relative }}' (from Resources/).
+return new Action(
+    '{{ name }}',
+    '{{ title }}',
+    new Property(Action::Ability, '{{ ability }}'),
+    new Property(Action::Record, true),
+    new Property(Action::Confirmation, true),
+    new Handler({{ handler }}::class),
+);

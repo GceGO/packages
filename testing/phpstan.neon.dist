@@ -1,0 +1,18 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: max
+    phpVersion:
+        min: 80300
+        max: 80599
+    paths:
+        - src
+        - config
+        - tests/Fixtures
+
+    tmpDir: build/phpstan
+    # Configuration and reports from other packages are re-checked at
+    # runtime because PHPDoc is not enforced and the values come from user
+    # configuration or other packages' public properties.
+    treatPhpDocTypesAsCertain: false

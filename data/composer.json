@@ -1,0 +1,78 @@
+{
+    "name": "gcego/data",
+    "description": "Data access for GCEGO Admin Studio: declarative sources, Eloquent, query builder and collection providers, secure filtering, searching, sorting, pagination, relationships and scoped record resolution.",
+    "type": "library",
+    "keywords": ["gcego", "data", "eloquent", "query", "pagination", "laravel", "admin"],
+    "homepage": "https://github.com/gcego/data",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/blueprints": "^0.1",
+        "gcego/components": "^0.1",
+        "gcego/core": "^0.1",
+        "illuminate/auth": "^13.0",
+        "illuminate/collections": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/pagination": "^13.0",
+        "illuminate/support": "^13.0"
+    },
+    "require-dev": {
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "suggest": {
+        "gcego/runtime": "Renders blueprints that contain a Source (a Source part renders nothing)."
+    },
+    "repositories": [
+        {"type": "path", "url": "../components", "options": {"versions": {"gcego/components": "0.1.0"}}},
+        {"type": "path", "url": "../core", "options": {"versions": {"gcego/core": "0.1.0"}}},
+        {"type": "path", "url": "../blueprints", "options": {"versions": {"gcego/blueprints": "0.1.0"}}},
+        {"type": "path", "url": "../registry", "options": {"versions": {"gcego/registry": "0.1.0"}}},
+        {"type": "path", "url": "../runtime", "options": {"versions": {"gcego/runtime": "0.1.0"}}}
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Data\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Data\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Data\\DataServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

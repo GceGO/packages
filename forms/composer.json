@@ -1,0 +1,182 @@
+{
+    "name": "gcego/forms",
+    "description": "Declarative forms for GCEGO Admin Studio: fields, layouts, validation, reactive state, repeaters, relationship options, uploads, secure dehydration and Livewire hosting.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "forms",
+        "fields",
+        "validation",
+        "livewire",
+        "laravel",
+        "admin"
+    ],
+    "homepage": "https://github.com/gcego/forms",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/actions": "^0.1",
+        "gcego/blueprints": "^0.1",
+        "gcego/components": "^0.1",
+        "gcego/core": "^0.1",
+        "gcego/data": "^0.1",
+        "gcego/luminaries": "^0.1",
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "gcego/security": "^0.1",
+        "gcego/chroma": "^0.1",
+        "illuminate/cache": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/filesystem": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/validation": "^13.0",
+        "illuminate/view": "^13.0",
+        "livewire/livewire": "^4.4",
+        "symfony/html-sanitizer": "^7.0|^8.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../chroma",
+            "options": {
+                "versions": {
+                    "gcego/chroma": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../data",
+            "options": {
+                "versions": {
+                    "gcego/data": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../security",
+            "options": {
+                "versions": {
+                    "gcego/security": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../actions",
+            "options": {
+                "versions": {
+                    "gcego/actions": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../luminaries",
+            "options": {
+                "versions": {
+                    "gcego/luminaries": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../swatches",
+            "options": {
+                "versions": {
+                    "gcego/swatches": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Forms\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Forms\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Forms\\FormsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

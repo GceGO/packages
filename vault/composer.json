@@ -1,0 +1,300 @@
+{
+    "name": "gcego/vault",
+    "description": "Roles, permissions and access governance for GCEGO Admin Studio: persistent roles with inheritance, a permission registry with discovery, global and tenant-scoped assignments, temporary grants, access requests with approvals, super-administrator governance, safe permission caching, auditing and the Vault administration screens. The storage and resolution layer behind gcego/security.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "vault",
+        "roles",
+        "permissions",
+        "authorization",
+        "rbac",
+        "access-governance",
+        "multi-tenant",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/vault",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/chroma": "^0.1",
+        "gcego/components": "^0.1",
+        "gcego/core": "^0.1",
+        "gcego/data": "^0.1",
+        "gcego/luminaries": "^0.1",
+        "gcego/modules": "^0.1",
+        "gcego/navigation": "^0.1",
+        "gcego/pages": "^0.1",
+        "gcego/panels": "^0.1",
+        "gcego/registry": "^0.1",
+        "gcego/runtime": "^0.1",
+        "gcego/security": "^0.1",
+        "illuminate/auth": "^13.0",
+        "illuminate/cache": "^13.0",
+        "illuminate/console": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/events": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/routing": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/validation": "^13.0",
+        "illuminate/view": "^13.0",
+        "livewire/livewire": "^4.4"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../runtime",
+            "options": {
+                "versions": {
+                    "gcego/runtime": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../chroma",
+            "options": {
+                "versions": {
+                    "gcego/chroma": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../data",
+            "options": {
+                "versions": {
+                    "gcego/data": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../security",
+            "options": {
+                "versions": {
+                    "gcego/security": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../actions",
+            "options": {
+                "versions": {
+                    "gcego/actions": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../forms",
+            "options": {
+                "versions": {
+                    "gcego/forms": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../tables",
+            "options": {
+                "versions": {
+                    "gcego/tables": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../infolists",
+            "options": {
+                "versions": {
+                    "gcego/infolists": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../widgets",
+            "options": {
+                "versions": {
+                    "gcego/widgets": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../layouts",
+            "options": {
+                "versions": {
+                    "gcego/layouts": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../navigation",
+            "options": {
+                "versions": {
+                    "gcego/navigation": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../pages",
+            "options": {
+                "versions": {
+                    "gcego/pages": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../modules",
+            "options": {
+                "versions": {
+                    "gcego/modules": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../panels",
+            "options": {
+                "versions": {
+                    "gcego/panels": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../notifications",
+            "options": {
+                "versions": {
+                    "gcego/notifications": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../media",
+            "options": {
+                "versions": {
+                    "gcego/media": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../workflows",
+            "options": {
+                "versions": {
+                    "gcego/workflows": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../luminaries",
+            "options": {
+                "versions": {
+                    "gcego/luminaries": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../swatches",
+            "options": {
+                "versions": {
+                    "gcego/swatches": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Vault\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Vault\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Vault\\VaultServiceProvider"
+            ],
+            "aliases": {
+                "Vault": "Gcego\\Vault\\Facades\\Vault"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

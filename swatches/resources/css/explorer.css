@@ -1,0 +1,15 @@
+/*
+ * The color explorer's own stylesheet, prebuilt into resources/dist/explorer.css
+ * ("composer build-explorer"), so the developer tool adds nothing to application
+ * builds. It previews gcego/chroma's real presets when chroma sits next to this
+ * package ("../../../chroma": vendor/gcego/ or packages/).
+ */
+
+@import "tailwindcss" source(none);
+@import "./swatches.css";
+@import "../../../chroma/resources/css/tokens.css";
+@import "../../../chroma/resources/css/theme.css";
+
+@source "../views/explorer";
+@source "../../src/Support/PreviewClasses.php";
+@source "../../../chroma/src/Presets";

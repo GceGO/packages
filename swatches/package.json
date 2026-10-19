@@ -1,0 +1,13 @@
+{
+    "name": "@gcego/swatches",
+    "private": true,
+    "description": "GCEGO color tokens, themes, Tailwind CSS v4 color bridge and appearance controller.",
+    "style": "resources/css/swatches.css",
+    "files": [
+        "resources/css",
+        "resources/js"
+    ],
+    "peerDependencies": {
+        "tailwindcss": "^4.0.0"
+    }
+}

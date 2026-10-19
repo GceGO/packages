@@ -1,0 +1,101 @@
+/*
+ * Generated from Gcego\Swatches\Tokens\SemanticTokens by "php artisan gcego:swatches:generate --package".
+ *
+ * Exposes every color token to Tailwind CSS v4: bg-surface, text-foreground, border-border,
+ * bg-primary text-primary-foreground, ring-ring, fill-chart-1 … The original gcego/chroma
+ * colors keep their gcego-* spellings too (bg-gcego-surface, text-gcego-text-muted).
+ * The dark: variant follows the appearance controller (the "dark" class on <html>).
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+    --color-background: var(--gcego-background);
+    --color-foreground: var(--gcego-foreground);
+    --color-surface: var(--gcego-surface);
+    --color-surface-foreground: var(--gcego-surface-foreground);
+    --color-surface-muted: var(--gcego-surface-muted);
+    --color-surface-muted-foreground: var(--gcego-surface-muted-foreground);
+    --color-card: var(--gcego-card);
+    --color-card-foreground: var(--gcego-card-foreground);
+    --color-popover: var(--gcego-popover);
+    --color-popover-foreground: var(--gcego-popover-foreground);
+    --color-muted: var(--gcego-muted);
+    --color-muted-foreground: var(--gcego-muted-foreground);
+    --color-overlay: var(--gcego-overlay);
+    --color-border: var(--gcego-border);
+    --color-border-strong: var(--gcego-border-strong);
+    --color-input: var(--gcego-input);
+    --color-ring: var(--gcego-ring);
+    --color-primary: var(--gcego-primary);
+    --color-primary-hover: var(--gcego-primary-hover);
+    --color-primary-active: var(--gcego-primary-active);
+    --color-primary-foreground: var(--gcego-primary-foreground);
+    --color-primary-soft: var(--gcego-primary-soft);
+    --color-secondary: var(--gcego-secondary);
+    --color-secondary-hover: var(--gcego-secondary-hover);
+    --color-secondary-foreground: var(--gcego-secondary-foreground);
+    --color-accent: var(--gcego-accent);
+    --color-accent-foreground: var(--gcego-accent-foreground);
+    --color-link: var(--gcego-link);
+    --color-link-hover: var(--gcego-link-hover);
+    --color-success: var(--gcego-success);
+    --color-success-foreground: var(--gcego-success-foreground);
+    --color-success-soft: var(--gcego-success-soft);
+    --color-warning: var(--gcego-warning);
+    --color-warning-foreground: var(--gcego-warning-foreground);
+    --color-warning-soft: var(--gcego-warning-soft);
+    --color-danger: var(--gcego-danger);
+    --color-danger-hover: var(--gcego-danger-hover);
+    --color-danger-foreground: var(--gcego-danger-foreground);
+    --color-danger-soft: var(--gcego-danger-soft);
+    --color-info: var(--gcego-info);
+    --color-info-foreground: var(--gcego-info-foreground);
+    --color-info-soft: var(--gcego-info-soft);
+    --color-selected: var(--gcego-selected);
+    --color-selected-foreground: var(--gcego-selected-foreground);
+    --color-disabled: var(--gcego-disabled);
+    --color-disabled-foreground: var(--gcego-disabled-foreground);
+    --color-invalid: var(--gcego-invalid);
+    --color-readonly: var(--gcego-readonly);
+    --color-sidebar: var(--gcego-sidebar);
+    --color-sidebar-foreground: var(--gcego-sidebar-foreground);
+    --color-sidebar-muted-foreground: var(--gcego-sidebar-muted-foreground);
+    --color-sidebar-border: var(--gcego-sidebar-border);
+    --color-sidebar-active: var(--gcego-sidebar-active);
+    --color-sidebar-active-foreground: var(--gcego-sidebar-active-foreground);
+    --color-topbar: var(--gcego-topbar);
+    --color-topbar-foreground: var(--gcego-topbar-foreground);
+    --color-topbar-border: var(--gcego-topbar-border);
+    --color-chart-1: var(--gcego-chart-1);
+    --color-chart-2: var(--gcego-chart-2);
+    --color-chart-3: var(--gcego-chart-3);
+    --color-chart-4: var(--gcego-chart-4);
+    --color-chart-5: var(--gcego-chart-5);
+    --color-chart-6: var(--gcego-chart-6);
+    --color-chart-7: var(--gcego-chart-7);
+    --color-chart-8: var(--gcego-chart-8);
+    --color-chart-positive: var(--gcego-chart-positive);
+    --color-chart-negative: var(--gcego-chart-negative);
+    --color-chart-neutral: var(--gcego-chart-neutral);
+    --color-chart-grid: var(--gcego-chart-grid);
+    --color-chart-axis: var(--gcego-chart-axis);
+
+    --color-gcego-background: var(--gcego-background);
+    --color-gcego-surface: var(--gcego-surface);
+    --color-gcego-surface-muted: var(--gcego-surface-muted);
+    --color-gcego-border: var(--gcego-border);
+    --color-gcego-border-strong: var(--gcego-border-strong);
+    --color-gcego-ring: var(--gcego-ring);
+    --color-gcego-primary: var(--gcego-primary);
+    --color-gcego-primary-hover: var(--gcego-primary-hover);
+    --color-gcego-primary-foreground: var(--gcego-primary-foreground);
+    --color-gcego-primary-soft: var(--gcego-primary-soft);
+    --color-gcego-success: var(--gcego-success);
+    --color-gcego-warning: var(--gcego-warning);
+    --color-gcego-danger: var(--gcego-danger);
+    --color-gcego-danger-foreground: var(--gcego-danger-foreground);
+    --color-gcego-info: var(--gcego-info);
+    --color-gcego-text: var(--gcego-text);
+    --color-gcego-text-muted: var(--gcego-text-muted);
+}

@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "page:{{ name }}".
+return new {{ page_class }}(
+    new Property({{ page_class }}::Name, '{{ name }}'),
+    new Property({{ page_class }}::Title, '{{ title }}'),
+    {{ requirement }},
+
+    new Section('{{ title }}', new Content('{{ title }} content.')),
+);

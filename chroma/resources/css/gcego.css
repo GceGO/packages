@@ -1,0 +1,27 @@
+/*
+ * GCEGO Admin Studio styling entry point. Import it after Tailwind:
+ *
+ *     @import "tailwindcss";
+ *     @import "../../vendor/gcego/chroma/resources/css/gcego.css";   (Composer install)
+ *     @import "../../packages/chroma/resources/css/gcego.css";      (this monorepo)
+ *
+ * The @source paths below are relative to this file. "../../../" is the
+ * directory holding the GCEGO packages: vendor/gcego/ when installed with
+ * Composer, packages/ in this monorepo. Package names are listed explicitly
+ * (missing ones are ignored), and only the two conventional locations that
+ * contain Tailwind classes are scanned, never whole packages:
+ *   - <package>/resources/views   Blade templates of renderers;
+ *   - <package>/src/Presets       PHP style recipes (literal class lists).
+ *
+ * Tailwind's scanner does not expand a "*" directory after "../", so the
+ * names are spelled out. A GCEGO package not listed here adds its own
+ * @source lines in its CSS (see docs/build-integration.md).
+ */
+
+/* Colors, themes and the dark: variant (gcego/swatches), then the non-color tokens. */
+@import "../../../swatches/resources/css/swatches.css";
+@import "./tokens.css";
+@import "./theme.css";
+
+@source "../../../{runtime,chroma,luminaries,data,security,actions,forms,tables,infolists,widgets,layouts,navigation,pages,modules,panels,studio,notifications,media,workflows,settings,analytics,vault}/resources/views";
+@source "../../../{runtime,chroma,luminaries,data,security,actions,forms,tables,infolists,widgets,layouts,navigation,pages,modules,panels,studio,notifications,media,workflows,settings,analytics,vault}/src/Presets";

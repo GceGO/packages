@@ -1,0 +1,20 @@
+/*
+ * Exposes the GCEGO non-color tokens to Tailwind CSS v4 as gcego-* utilities
+ * (rounded-gcego-lg, shadow-gcego-card, font-gcego, …). Color utilities
+ * (bg-surface, text-foreground, bg-gcego-surface …) and the dark: variant
+ * come from gcego/swatches.
+ *
+ * "inline" makes each utility reference the custom property directly, so values
+ * switch with light/dark mode and themes without rebuilding CSS.
+ */
+
+@theme inline {
+    --radius-gcego-sm: var(--gcego-radius-sm);
+    --radius-gcego: var(--gcego-radius);
+    --radius-gcego-lg: var(--gcego-radius-lg);
+
+    --shadow-gcego-card: var(--gcego-shadow-card);
+    --shadow-gcego-overlay: var(--gcego-shadow-overlay);
+
+    --font-gcego: var(--gcego-font-sans);
+}

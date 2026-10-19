@@ -1,0 +1,24 @@
+/*
+ * GCEGO Swatches: the color system for Tailwind CSS v4. Import it once, after Tailwind
+ * (gcego/chroma's gcego.css already does):
+ *
+ *     @import "tailwindcss";
+ *     @import "../../vendor/gcego/swatches/resources/css/swatches.css";
+ *
+ * It declares the --gcego-* color tokens (light on :root, dark on :root.dark), the
+ * dark: variant and the @theme inline bridge that turns
+ * every token into utilities: bg-surface, text-foreground, border-border,
+ * bg-primary text-primary-foreground, ring-ring, text-muted-foreground …
+ *
+ * Theme presets are printed at runtime for the active theme only. To ship all of
+ * them statically instead, also import ./themes.css and set
+ * gcego-swatches.css.static_presets to true.
+ *
+ * It never imports "tailwindcss" itself.
+ */
+
+@import "./tokens.css";
+@import "./tailwind.css";
+
+/* Only the Blade components: the developer explorer ships its own prebuilt stylesheet (resources/dist/explorer.css). */
+@source "../views/components";

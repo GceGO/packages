@@ -1,0 +1,66 @@
+{
+    "name": "gcego/blueprints",
+    "description": "Declarative blueprint composition for GCEGO Admin Studio: compose components into role-classified, validated, normalizable feature definitions.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "blueprints",
+        "components",
+        "declarative",
+        "admin"
+    ],
+    "homepage": "https://github.com/gcego/blueprints",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "gcego/components": "^0.1"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.14",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.1"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../components",
+            "options": {
+                "versions": {
+                    "gcego/components": "0.1.0"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Blueprints\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Blueprints\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

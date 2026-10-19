@@ -1,0 +1,8 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "settings-page:{{ name }}".
+return new SettingsPage(name: '{{ name }}', title: '{{ title }}', group: '{{ group }}'{{ scope }});

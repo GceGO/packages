@@ -1,0 +1,4 @@
+/* Standalone entry used by `composer build-css` and the build tests (no application sources). */
+@import "tailwindcss" source(none);
+@import "./swatches.css";
+@source "../../tests/Build/fixtures";

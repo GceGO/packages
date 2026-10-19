@@ -1,0 +1,16 @@
+{
+    "name": "@gcego/widgets",
+    "private": true,
+    "type": "module",
+    "description": "Chart adapter for gcego/widgets (Chart.js), loaded lazily from the host application's Vite build.",
+    "scripts": {
+        "test": "node --test \"tests/js/**/*.test.js\"",
+        "build:measure": "../../node_modules/.bin/vite build --config vite.measure.config.js"
+    },
+    "peerDependencies": {
+        "chart.js": "^4.5.1"
+    },
+    "devDependencies": {
+        "chart.js": "4.5.1"
+    }
+}

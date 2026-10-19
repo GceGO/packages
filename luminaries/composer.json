@@ -1,0 +1,77 @@
+{
+    "name": "gcego/luminaries",
+    "description": "Centralized icon management for GCEGO Admin Studio: providers over Blade Icons (Heroicons, Lucide, trusted custom SVG), semantic aliases, sizes, tones, accessible rendering and developer tooling.",
+    "type": "library",
+    "keywords": [
+        "gcego",
+        "icons",
+        "svg",
+        "blade-icons",
+        "heroicons",
+        "lucide",
+        "laravel"
+    ],
+    "homepage": "https://github.com/gcego/luminaries",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Atangageih Leke Collins",
+            "email": "lekeatenga@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "blade-ui-kit/blade-heroicons": "^2.3",
+        "blade-ui-kit/blade-icons": "^1.6",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "illuminate/console": "^13.0",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/view": "^13.0",
+        "mallardduck/blade-lucide-icons": "^1.9"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.14",
+        "livewire/livewire": "^4.4",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gcego\\Luminaries\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gcego\\Luminaries\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "benchmark": "@php benchmarks/run.php"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Luminaries\\LuminariesServiceProvider"
+            ],
+            "aliases": {
+                "Luminaries": "Gcego\\Luminaries\\Facades\\Luminaries"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

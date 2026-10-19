@@ -1,0 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+{{ imports }}
+
+// Discovered as "dataset:{{ name }}". Only the fields declared here can be queried;
+// tenant-scoped models stay scoped (gcego/security).
+return new Dataset(
+    '{{ name }}',
+    {{ model_class }}::class,
+    {{ requirement }},{{ fields }}{{ date_column }}
+);
