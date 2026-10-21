@@ -21,7 +21,7 @@ return [
         |   entrypoint: "directory" (Subjects/Subjects.php), "file" (every
         |   PHP file) or a regex matched against the path within the root.
         | Optional: 'scope' (prefixes identities) and 'required' (throw when
-        | the directory is missing). Roots of unregistered kinds are ignored.
+        | the directory is missing). Roots of unregistered kinds are ignored
         |
         */
 
