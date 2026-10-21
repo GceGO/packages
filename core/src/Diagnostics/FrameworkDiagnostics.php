@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Gcego\Core\Diagnostics;
 
 use Gcego\Core\Configuration\ConfigurationValidator;
+use Gcego\Core\Exceptions\ExtensionException;
 use Gcego\Core\Exceptions\PackageDependencyException;
 use Gcego\Core\Extensions\ExtensionManager;
 use Gcego\Core\Lifecycle\FrameworkState;
 use Gcego\Core\Lifecycle\LifecycleManager;
+use Gcego\Core\Packages\PackageDiscovery;
 use Gcego\Core\Packages\PackageManager;
 use Illuminate\Contracts\Config\Repository;
 use Throwable;
@@ -29,6 +31,9 @@ final readonly class FrameworkDiagnostics
         private LifecycleManager $lifecycle,
         private PackageManager $packages,
         private ExtensionManager $extensions,
+        private DiagnosticRegistry $registry = new DiagnosticRegistry,
+        private ?PackageDiscovery $discovery = null,
+        private ?CoreDiagnostics $infrastructure = null,
     ) {}
 
     public function run(): DiagnosticReport
@@ -39,7 +44,7 @@ final readonly class FrameworkDiagnostics
             try {
                 array_push($results, ...$run());
             } catch (Throwable $exception) {
-                $results[] = DiagnosticResult::failed($check, sprintf('The check could not run (%s).', $exception::class));
+                $results[] = DiagnosticResult::failed($check, sprintf('The check could not run (%s).', DiagnosticRedactor::exceptionClass($exception)));
             }
         }
 
@@ -58,6 +63,9 @@ final readonly class FrameworkDiagnostics
             'framework.boot' => fn (): array => [$this->boot()],
             'packages.dependencies' => fn (): array => [$this->dependencies()],
             'packages.components' => fn (): array => [$this->components()],
+            'extensions.dependencies' => fn (): array => [$this->extensionDependencies()],
+            'framework.infrastructure' => fn (): array => $this->infrastructure?->run() ?? [],
+            'diagnostics.custom' => $this->registry->run(...),
         ];
     }
 
@@ -116,8 +124,9 @@ final readonly class FrameworkDiagnostics
             ? $this->configurationValidator->validate($config)['values']['disabled_packages']
             : [];
 
-        $problems = $this->packages->problems($disabled);
-        $registered = array_map(static fn ($descriptor): string => $descriptor->id, $this->packages->descriptors());
+        $packages = $this->discovery?->snapshot() ?? $this->packages;
+        $problems = $packages->problems($disabled);
+        $registered = array_map(static fn ($descriptor): string => $descriptor->id, $packages->descriptors());
 
         if ($problems === []) {
             return DiagnosticResult::passed('packages.dependencies', sprintf('%d GCEGO package(s) registered with satisfied dependencies.', count($registered)), ['packages' => $registered]);
@@ -130,11 +139,37 @@ final readonly class FrameworkDiagnostics
         );
     }
 
+    private function extensionDependencies(): DiagnosticResult
+    {
+        $raw = $this->config->get('gcego', []);
+        $values = $this->configurationValidator->validate(is_array($raw) ? $raw : [])['values'];
+
+        // Before boot, use the prospective package order without running hooks.
+        $packages = ($this->discovery?->snapshot() ?? $this->packages)->resolve($values['disabled_packages']);
+
+        try {
+            $snapshot = $this->discovery?->snapshot() ?? $this->packages;
+            $capabilities = [];
+            foreach ($packages as $id) {
+                array_push($capabilities, ...$snapshot->descriptor($id)->capabilities);
+            }
+            $plan = $this->extensions->plan($values['disabled_extensions'], $packages, $capabilities);
+        } catch (ExtensionException $exception) {
+            return DiagnosticResult::failed('extensions.dependencies', $exception->getMessage());
+        }
+
+        return DiagnosticResult::passed(
+            'extensions.dependencies',
+            sprintf('%d extension(s) eligible; %d skipped.', count($plan['order']), count($plan['skipped'])),
+            ['extensions' => $plan['order'], 'skipped' => array_keys($plan['skipped'])],
+        );
+    }
+
     private function components(): DiagnosticResult
     {
         return class_exists(self::ComponentsPackageClass)
-            ? DiagnosticResult::passed('packages.components', 'gcego/components is available.')
-            : DiagnosticResult::warning('packages.components', 'gcego/components is not installed. Core does not need it, but GCEGO component packages do.');
+            ? DiagnosticResult::passed('packages.components', 'gcego/morfaw is available.')
+            : DiagnosticResult::warning('packages.components', 'gcego/morfaw is not installed. Core does not need it, but GCEGO component packages do.');
     }
 
     private function failureClass(): string
@@ -145,6 +180,6 @@ final readonly class FrameworkDiagnostics
             $failure = $failure->getPrevious();
         }
 
-        return $failure === null ? 'unknown error' : $failure::class;
+        return $failure === null ? 'unknown error' : DiagnosticRedactor::exceptionClass($failure);
     }
 }

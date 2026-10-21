@@ -9,7 +9,7 @@ use Gcego\Blueprints\Tests\Fixtures\ExampleSource;
 use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
 use Gcego\Blueprints\Tests\Fixtures\FakeModel;
 use Gcego\Blueprints\Tests\Fixtures\ResourceBlueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 it('replaces single-role parts in place and keeps everything else', function (): void {
     $original = new Blueprint('subjects', new ExampleForm('form'), new ExampleTable('old'), new ExampleAction('create'));

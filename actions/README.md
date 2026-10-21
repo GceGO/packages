@@ -66,7 +66,7 @@ app(ActionManager::class)->execute(new ActionRequest('blueprint:subjects', 'dele
 ## Requirements
 
 - PHP 8.3+, Laravel 13, Livewire 4.4+.
-- All of these GCEGO packages at ^0.1: `gcego/components`, `core`,
+- All of these GCEGO packages at ^0.1: `gcego/morfaw`, `core`,
   `blueprints`, `registry`, `runtime`, `styling`, `data` and `security`.
 
 ## Installation

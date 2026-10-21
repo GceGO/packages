@@ -7,6 +7,7 @@ namespace Gcego\Forms\Configuration;
 use BackedEnum;
 use Closure;
 use Gcego\Forms\Exceptions\InvalidFieldException;
+use Gcego\Forms\Reactive\FormEvaluation;
 use Gcego\Forms\State\FormState;
 use Gcego\Forms\State\StatePath;
 
@@ -19,6 +20,7 @@ use Gcego\Forms\State\StatePath;
  *     Condition::blank('code')
  *     Condition::not('category', 'arts')
  *     Condition::using(fn (FormState $state) => ..., dependsOn: ['category'])
+ *     Condition::computed(fn (Get $get): bool => $get('category') === 'science')
  *
  * Inside a repeater, a name of a sibling field refers to the same item.
  * Conditions are evaluated on the server only; the browser never executes them.
@@ -90,6 +92,22 @@ class Condition
     }
 
     /**
+     * A Filament-style closure, injected with $get, $set, $record, $operation
+     * and typed values. The fields it reads are discovered at runtime, so no
+     * dependsOn is needed: they are rendered live automatically.
+     *
+     * @param  bool  $negate  Pass when the closure does not return true (hidden(fn) becomes a visibility condition).
+     */
+    public static function computed(Closure $closure, bool $negate = false): static
+    {
+        return static::using(static function (FormState $state, ?string $itemPath) use ($closure, $negate): bool {
+            $result = app(FormEvaluation::class)->evaluate($closure, $state, $itemPath);
+
+            return $negate ? $result !== true : $result === true;
+        });
+    }
+
+    /**
      * @param  list<string>  $siblings  Field names of the enclosing repeater item.
      */
     public function passes(FormState $state, ?string $itemPath = null, array $siblings = []): bool
@@ -120,7 +138,7 @@ class Condition
     public function describe(): string
     {
         return match ($this->operator) {
-            self::Callback => 'callback on '.implode(', ', $this->dependsOn),
+            self::Callback => $this->dependsOn === [] ? 'callback' : 'callback on '.implode(', ', $this->dependsOn),
             self::Filled, self::Blank => $this->field.' is '.$this->operator,
             default => $this->field.($this->operator === self::NotEquals ? ' is not ' : ' is ').(string) json_encode($this->value),
         };

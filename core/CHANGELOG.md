@@ -3,10 +3,34 @@
 All notable changes to `gcego/core` are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - 2026-10-20
+
+### Fixed
+
+- Close package registration immediately after provider discovery, before dependency resolution or package hooks; preserve that boundary across failed attempts and retries.
+- Reject non-array root configuration during startup instead of silently substituting defaults.
+- Include loaded package providers in diagnostics before manual boot without changing the live registry.
+- Resolve transitive extension eligibility before dependency validation to avoid registration-order-dependent startup failures.
+- Reject recursive manager initialization and registrations that would miss an already computed initialization plan; preserve recovery after failure.
+- Retain deliberately disabled bootstrap outcomes in `bootResult()`.
+- Locate component sources through the installed class and test version discovery against installed Composer metadata.
 
 ### Added
 
+- Comprehensive Core diagnostics covering framework/environment identity, transition history, package/extension status, dependency integrity, registration incidents, Laravel integration, failure impact, capabilities, phase performance and production operational configuration.
+- Stable diagnostic codes, severity, remediation, related components, UTC report timestamps, structured JSON serialization and metadata-free public summaries.
+- Redaction of recognizable credentials and sensitive detail keys; reject nested/object diagnostic detail payloads and sanitize anonymous exception class names.
+- Opt-in detailed profiling, lightweight phase/status records and configurable slow-initialization thresholds.
+- Declared package version constraints, extension capability prerequisites and exclusive-capability integrity checks.
+- Explicit console and PSR logging runtime dependencies, a combined `composer check` command, and distribution exclusions for workspace-only files.
+- Immutable startup plans, isolated provider snapshots and `gcego:plan` with JSON output.
+- Package-contributed health checks through `DiagnosticCheck` and `DiagnosticRegistry`, with isolated execution and collision protection.
+- Typed framework, package and extension startup events through Laravel, with observer and logging failure isolation.
+- Per-step timings and failure history retained across retries and included in completed bootstrap results.
+- Dependency/dependant inspection and grouped active capability-provider lookup.
+- `gcego:diagnose` Artisan command with table and JSON output, failure exit codes and strict warning handling.
+- Extension dependency diagnostics without executing activation hooks.
+- `Gcego::capabilities()` and `Gcego::extension()` with matching framework contract methods.
 - `GcegoServiceProvider` with configuration merging, publishing (`gcego-config`), container bindings and automatic framework boot after Laravel boots.
 - `Gcego` entry point implementing `FrameworkInterface`.
 - `GcegoConfig` and `ConfigurationValidator` for validated, typed access to `config('gcego')`.

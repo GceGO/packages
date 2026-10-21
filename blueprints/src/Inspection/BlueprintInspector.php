@@ -7,7 +7,7 @@ namespace Gcego\Blueprints\Inspection;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Blueprints\Normalization\BlueprintNormalizer;
 use Gcego\Blueprints\Validation\BlueprintValidator;
-use Gcego\Components\ComponentTree;
+use Gcego\Components\Facades\Components;
 
 /**
  * Builds BlueprintInspection snapshots. Not coupled to any console or Laravel command.
@@ -38,7 +38,7 @@ final readonly class BlueprintInspector
             slug: $metadata->slug,
             class: $blueprint::class,
             type: $blueprint->type(),
-            componentCount: (new ComponentTree($blueprint))->count(),
+            componentCount: Components::tree($blueprint)->count(),
             parts: $parts,
             missingRequiredRoles: array_values(array_diff($policy->requiredRoles, $present)),
             missingOptionalRoles: array_values(array_diff($policy->allowedRoles ?? [], $present, $policy->requiredRoles)),

@@ -6,7 +6,7 @@ namespace Gcego\Layouts\Tests\Fixtures;
 
 use Gcego\Actions\Create;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;

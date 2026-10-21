@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Gcego\Vault\Livewire\Concerns;
 
+use Gcego\Vault\Support\Context;
 use Gcego\Vault\Support\HolderReference;
 use Gcego\Vault\VaultConfig;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
@@ -57,7 +59,7 @@ trait FindsPeople
 
     protected function visiblePerson(Model $person): bool
     {
-        return $this->scope() === '' || ($person instanceof \Illuminate\Contracts\Auth\Authenticatable && app(\Gcego\Vault\Support\Context::class)->isMember($person, $this->scope()));
+        return $this->scope() === '' || ($person instanceof Authenticatable && app(Context::class)->isMember($person, $this->scope()));
     }
 
     /**

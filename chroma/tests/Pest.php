@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 use Gcego\Chroma\Tests\TestCase;
+use Gcego\Components\ComponentServiceProvider;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Facade;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Build');
 

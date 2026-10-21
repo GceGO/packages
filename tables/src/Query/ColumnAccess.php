@@ -12,6 +12,8 @@ use Gcego\Tables\Schema\TableSchema;
 /**
  * Column read decisions for the current user, through gcego/security
  * FieldRules (one decision per column per request, without a record).
+ * Columns whose visible()/hidden() closure removes them for this user are
+ * neither readable nor masked, so they are never queried or shown.
  */
 final readonly class ColumnAccess
 {
@@ -30,10 +32,15 @@ final readonly class ColumnAccess
         }
 
         $decisions = $security->fields($rules);
+        $user = $security->context()->user;
         $readable = [];
         $masked = [];
 
         foreach ($schema->columnNames() as $name) {
+            if (! $schema->columns[$name]->isPresent(['user' => $user, 'table' => $schema->table])) {
+                continue;
+            }
+
             $level = $decisions->access($name);
 
             if ($level->canRead()) {

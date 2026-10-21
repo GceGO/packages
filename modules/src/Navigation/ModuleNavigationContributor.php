@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Modules\Navigation;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Modules\Definitions\ModuleDefinition;
 use Gcego\Modules\ModuleManager;
 use Gcego\Modules\ModulesConfig;

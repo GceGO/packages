@@ -54,6 +54,43 @@ new Text('grade', 'Grade', new Format(GradeFormatter::class));   // implements C
 
 `Format` output is plain text and is always escaped.
 
+## Closures (Filament style)
+
+```php
+Table::make()->columns([
+    Text::make('name')->sortable()->tooltip(fn (Subject $record): string => $record->code),
+    Text::make('full_name')->state(fn (Teacher $record): string => $record->first_name.' '.$record->last_name)
+        ->searchable(['first_name', 'last_name']),
+    Text::make('credits')->formatStateUsing(fn (?int $state): string => $state === null ? 'n/a' : $state.' cr'),
+    Badge::make('status')->variants(fn (Subject $record): array => [...]),
+    Text::make('salary')->visible(fn (?User $user): bool => $user?->can('viewSalaries') ?? false),
+]);
+```
+
+| Kind | Evaluated | Injected |
+| --- | --- | --- |
+| Presentation properties (`tooltip`, `placeholder`, `limit`, `variants`, ...) | per row, on a resolved copy of the column | `$state`, `$record` (also by model type), `$column` |
+| `state()` | per row, instead of reading the column name | `$record`, `$column` |
+| `formatStateUsing()` | per row, after `state()` | `$state`, `$record`, `$column` |
+| `visible(Closure)`, `hidden(Closure)` | once per request | `$user`, `$table`, container services |
+
+Closure results are checked against the property definition (a `limit` closure
+must return an int) and are always escaped. Properties that shape the query
+(`searchable`, `sortable`, `sort_column`, `hideable`, `visible`, `visible_from`,
+`exportable`) cannot be closures, so one request never sorts or searches a
+column differently from row to row.
+
+## Extending another module's table
+
+```php
+Components::extend('subjects.table', fn (SchemaPatch $patch) => $patch
+    ->insertAfter('name', Text::make('short_code')->sortable())
+    ->remove('legacy_code'));
+```
+
+The patched table is compiled and validated like any other, and the column
+access rules, sorting, searching and exports all see the added columns.
+
 ## Values
 
 | Rule | Details |

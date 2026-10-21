@@ -27,6 +27,10 @@ final readonly class GcegoConfig
         private bool $environmentChecks,
         private array $disabledPackages,
         private array $disabledExtensions,
+        private bool $profiling,
+        private float $slowBootMs,
+        private float $slowPackageMs,
+        private float $slowExtensionMs,
     ) {}
 
     /**
@@ -51,6 +55,10 @@ final readonly class GcegoConfig
             $values['environment_checks'],
             $values['disabled_packages'],
             $values['disabled_extensions'],
+            $values['profiling'],
+            $values['slow_boot_ms'],
+            $values['slow_package_ms'],
+            $values['slow_extension_ms'],
         );
     }
 
@@ -105,8 +113,28 @@ final readonly class GcegoConfig
         return in_array($id, $this->disabledExtensions, true);
     }
 
+    public function profiling(): bool
+    {
+        return $this->profiling;
+    }
+
+    public function slowBootMs(): float
+    {
+        return $this->slowBootMs;
+    }
+
+    public function slowPackageMs(): float
+    {
+        return $this->slowPackageMs;
+    }
+
+    public function slowExtensionMs(): float
+    {
+        return $this->slowExtensionMs;
+    }
+
     /**
-     * @return array{enabled: bool, name: string, auto_boot: bool, environment_checks: bool, packages: array{disabled: list<string>}, extensions: array{disabled: list<string>}}
+     * @return array{enabled: bool, name: string, auto_boot: bool, environment_checks: bool, packages: array{disabled: list<string>}, extensions: array{disabled: list<string>}, diagnostics: array{profiling: bool, slow_boot_ms: float, slow_package_ms: float, slow_extension_ms: float}}
      */
     public function toArray(): array
     {
@@ -117,6 +145,7 @@ final readonly class GcegoConfig
             'environment_checks' => $this->environmentChecks,
             'packages' => ['disabled' => $this->disabledPackages],
             'extensions' => ['disabled' => $this->disabledExtensions],
+            'diagnostics' => ['profiling' => $this->profiling, 'slow_boot_ms' => $this->slowBootMs, 'slow_package_ms' => $this->slowPackageMs, 'slow_extension_ms' => $this->slowExtensionMs],
         ];
     }
 }

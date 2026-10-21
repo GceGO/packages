@@ -6,10 +6,12 @@ namespace Gcego\Infolists\Layout;
 
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Infolists\Building\LayoutBuilder;
 use Gcego\Infolists\Configuration\VisibleWhen;
 use Gcego\Infolists\Contracts\InfolistComponent;
 use Gcego\Security\Contracts\Requirement;
@@ -23,6 +25,8 @@ use Illuminate\Support\Str;
  */
 abstract class LayoutComponent extends Component implements InfolistComponent
 {
+    use Makeable;
+
     public const string Columns = 'columns';
 
     public function heading(): ?string
@@ -63,6 +67,11 @@ abstract class LayoutComponent extends Component implements InfolistComponent
     }
 
     abstract public function view(): string;
+
+    public static function builderClass(): string
+    {
+        return LayoutBuilder::class;
+    }
 
     /**
      * @return list<class-string<ComponentInterface>>

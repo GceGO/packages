@@ -7,6 +7,7 @@ namespace Gcego\Sentinel\Tests;
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
 use Gcego\Chroma\ChromaServiceProvider;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Luminaries\LuminariesServiceProvider;
@@ -88,6 +89,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, PasskeysServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, BladeIconsServiceProvider::class, BladeHeroiconsServiceProvider::class, BladeLucideIconsServiceProvider::class, LuminariesServiceProvider::class, SentinelServiceProvider::class, ...self::$applicationProviders];
     }
 

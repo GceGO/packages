@@ -57,7 +57,7 @@ final readonly class LayoutKind implements DefinitionKind
         $layout = $this->layout($definition);
         $nodes = 0;
 
-        foreach ((new ComponentWalker)->preOrder($layout) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($layout) as $node) {
             $nodes++;
         }
 
@@ -73,7 +73,7 @@ final readonly class LayoutKind implements DefinitionKind
     {
         $errors = [];
 
-        foreach ((new ComponentWalker)->preOrder($layout) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($layout) as $node) {
             if ($node->component instanceof BlueprintPart && ! $node->component instanceof LayoutComponent) {
                 $errors[] = sprintf('%s at "%s" needs a blueprint (its Source and actions); put this layout in a Blueprint instead of registering it on its own.', class_basename($node->component), $node->path->toString());
             }

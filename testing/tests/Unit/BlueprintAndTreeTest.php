@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Testing\GcegoTest;
 use Gcego\Testing\Tests\Fixtures\Definitions;
 

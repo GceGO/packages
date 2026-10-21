@@ -67,7 +67,7 @@ final class ResourceGenerator extends AbstractGenerator
 
         $infolist = $this->kit->fields->infolist($fields);
         $form = $readOnly ? ['code' => '', 'imports' => []] : $this->kit->fields->form($fields);
-        $imports = ['Gcego\\Components\\Property', 'Gcego\\Data\\Source', 'Gcego\\Modules\\Resource', $model, ...$table['imports'], ...$form['imports']];
+        $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Data\\Source', 'Gcego\\Modules\\Resource', $model, ...$table['imports'], ...$form['imports']];
         $properties = sprintf("\n    new Property(Resource::RecordKey, '%s'),", $inspection['key']);
 
         if ($inspection['title'] !== null) {

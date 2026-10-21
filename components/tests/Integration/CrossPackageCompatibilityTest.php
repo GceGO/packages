@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
-use Gcego\Components\PropertyDefinition;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Components\Tests\Fixtures\ChildComponent;
-use Gcego\Components\Type;
 
 $packageRoot = dirname(__DIR__, 2);
 
@@ -31,10 +31,15 @@ function sourceFiles(string $packageRoot): array
     return $files;
 }
 
-it('requires only PHP at runtime', function () use ($packageRoot): void {
+it('requires Illuminate runtime dependencies and declares Laravel discovery', function () use ($packageRoot): void {
     $manifest = json_decode((string) file_get_contents($packageRoot.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 
-    expect(is_array($manifest) ? $manifest['require'] : null)->toBe(['php' => '^8.3'])
+    expect(is_array($manifest) ? $manifest['require'] : null)->toMatchArray([
+        'php' => '^8.3',
+        'illuminate/container' => '^12.0|^13.0',
+        'illuminate/support' => '^12.0|^13.0',
+        'illuminate/contracts' => '^12.0|^13.0',
+    ])
         ->and(is_array($manifest) ? $manifest['autoload'] : null)->toBe(['psr-4' => ['Gcego\\Components\\' => 'src/']]);
 });
 
@@ -43,7 +48,7 @@ it('autoloads every source file from its PSR-4 path', function () use ($packageR
         $relative = substr($file, strlen($packageRoot.'/src/'), -4);
         $symbol = 'Gcego\\Components\\'.str_replace('/', '\\', $relative);
 
-        expect(class_exists($symbol) || interface_exists($symbol) || enum_exists($symbol))->toBeTrue($symbol.' is not autoloadable');
+        expect(class_exists($symbol) || interface_exists($symbol) || enum_exists($symbol) || trait_exists($symbol))->toBeTrue($symbol.' is not autoloadable');
     }
 });
 
@@ -53,9 +58,9 @@ it('declares strict types in every source file', function () use ($packageRoot):
     }
 });
 
-it('does not reference frameworks or frontend runtimes', function () use ($packageRoot): void {
+it('does not depend on frontend runtimes', function () use ($packageRoot): void {
     foreach (sourceFiles($packageRoot) as $file) {
-        expect((string) file_get_contents($file))->not->toMatch('/\b(Illuminate|Laravel|Livewire|Filament|Tailwind|Eloquent|Blade)\\\\/');
+        expect((string) file_get_contents($file))->not->toMatch('/\b(Livewire|Filament|Tailwind|Eloquent|Blade)\\\\/');
     }
 });
 

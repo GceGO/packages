@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Exceptions;
 
+use Gcego\Components\Component;
+use Gcego\Components\Support\ValueDescriber;
 use InvalidArgumentException;
 
 /**
@@ -17,7 +19,7 @@ class InvalidChildException extends InvalidArgumentException implements Componen
         return new self(sprintf(
             'Circular component reference detected at "%s": %s contains itself as a descendant.',
             $path,
-            $componentClass,
+            ValueDescriber::className($componentClass),
         ));
     }
 

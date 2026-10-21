@@ -63,7 +63,9 @@ final class EntryRenderer extends BladeRenderer
 
         $path = $frame->path($entry->entryName());
         $masked = $frame->access->level($path) === FieldAccess::Redacted;
-        $display = $masked ? ['text' => null] : $entry->display($entry->value($frame->record), $frame->record, $frame->config);
+        $value = $masked ? null : $entry->value($frame->record);
+        $entry = $entry->forRecord($value, $frame->record, $frame->root, $masked ? [Entry::Label] : null);
+        $display = $masked ? ['text' => null] : $entry->display($value, $frame->record, $frame->config);
 
         if (! $masked && $entry->hidesWhenEmpty() && $entry->isEmpty($display)) {
             return ['skip' => true];
@@ -74,7 +76,7 @@ final class EntryRenderer extends BladeRenderer
         if (! $masked && $entry instanceof RepeatableEntry) {
             $children = $this->renderer->children($context);
 
-            foreach ($entry->items($entry->value($frame->record), $frame->config) as $item) {
+            foreach ($entry->items($value, $frame->config) as $item) {
                 $items[] = [
                     'key' => $item['key'],
                     'groups' => app(InfolistRenderContext::class)->run($frame->withItem($path, $item['item'], $item['key']), static fn (): array => Groups::from($children)),

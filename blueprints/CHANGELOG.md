@@ -7,7 +7,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- `Blueprint`, a `gcego/components` Component with name shorthand, metadata properties (`Name`, `Title`, `Description`, `Icon`, `Slug`), derived title and slug, and `BlueprintPart`-only children.
+- `Blueprint`, a `gcego/morfaw` Component with name shorthand, metadata properties (`Name`, `Title`, `Description`, `Icon`, `Slug`), derived title and slug, and `BlueprintPart`-only children.
 - `BlueprintRole` and the `BlueprintPart` / `PartContainer` contracts for open-ended, cardinality-aware role classification.
 - `BlueprintComposer`, `BlueprintComposition`, `BlueprintPartCollection`, `ClassifiedPart` and `CompositionPolicy`.
 - Lookup: `part()`, `requirePart()`, `parts()`, `hasPart()`, `roles()`; immutable `withPart()` and `withoutRole()`.

@@ -14,16 +14,19 @@ use Traversable;
  *
  * @implements IteratorAggregate<int, DiagnosticResult>
  */
-final readonly class DiagnosticReport implements Countable, IteratorAggregate
+final readonly class DiagnosticReport implements \JsonSerializable, Countable, IteratorAggregate
 {
     /**
      * @var list<DiagnosticResult>
      */
     private array $results;
 
+    public string $generatedAt;
+
     public function __construct(DiagnosticResult ...$results)
     {
         $this->results = array_values($results);
+        $this->generatedAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(DATE_ATOM);
     }
 
     /**
@@ -77,11 +80,32 @@ final readonly class DiagnosticReport implements Countable, IteratorAggregate
     }
 
     /**
-     * @return list<array{check: string, status: string, message: string, details: array<string, scalar|list<scalar>|null>}>
+     * @return list<array{check: string, code: string, status: string, severity: string, message: string, details: array<string, scalar|list<scalar>|null>, resolution: string|null, package: string|null, extension: string|null}>
      */
     public function toArray(): array
     {
         return array_map(static fn (DiagnosticResult $result): array => $result->toArray(), $this->results);
+    }
+
+    public function health(): string
+    {
+        return $this->hasFailures() ? 'critical' : ($this->hasWarnings() ? 'warning' : 'healthy');
+    }
+
+    /** Safe for public uptime endpoints: contains no component or environment metadata.
+     * @return array{health: string, healthy: bool, generatedAt: string}
+     */
+    public function publicSummary(): array
+    {
+        return ['health' => $this->health(), 'healthy' => $this->isHealthy(), 'generatedAt' => $this->generatedAt];
+    }
+
+    /** Detailed report: authorize access before returning this from HTTP endpoints.
+     * @return array{health: string, healthy: bool, generatedAt: string, checks: list<array{check: string, code: string, status: string, severity: string, message: string, details: array<string, scalar|list<scalar>|null>, resolution: string|null, package: string|null, extension: string|null}>}
+     */
+    public function toStructuredArray(): array
+    {
+        return [...$this->publicSummary(), 'checks' => $this->toArray()];
     }
 
     public function count(): int
@@ -103,5 +127,13 @@ final readonly class DiagnosticReport implements Countable, IteratorAggregate
     private function withStatus(DiagnosticStatus $status): array
     {
         return array_values(array_filter($this->results, static fn (DiagnosticResult $result): bool => $result->status === $status));
+    }
+
+    /** Detailed report: authorize access before returning this from HTTP endpoints.
+     * @return array{health: string, healthy: bool, generatedAt: string, checks: list<array{check: string, code: string, status: string, severity: string, message: string, details: array<string, scalar|list<scalar>|null>, resolution: string|null, package: string|null, extension: string|null}>}
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toStructuredArray();
     }
 }

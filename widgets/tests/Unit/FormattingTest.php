@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Widgets\Charts\Chart;
 use Gcego\Widgets\Charts\ChartDataNormalizer;
 use Gcego\Widgets\Charts\ChartDataset;

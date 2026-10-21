@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\ComponentServiceProvider;
+use Gcego\Components\Properties\Property;
 use Gcego\Core\Gcego;
 
-it('instantiates and validates real gcego/components definitions inside a GCEGO application', function (): void {
+it('instantiates and validates real gcego/morfaw definitions inside a GCEGO application', function (): void {
+    app()->register(ComponentServiceProvider::class);
+
     expect(app(Gcego::class)->isBooted())->toBeTrue();
 
     $dashboard = new Component(
@@ -21,7 +24,7 @@ it('instantiates and validates real gcego/components definitions inside a GCEGO 
 });
 
 it('keeps the dependency direction one-way', function (): void {
-    $componentsSource = dirname(__DIR__, 2).'/vendor/gcego/components/src';
+    $componentsSource = dirname((new ReflectionClass(Component::class))->getFileName());
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($componentsSource, FilesystemIterator::SKIP_DOTS));
 
     foreach ($files as $file) {

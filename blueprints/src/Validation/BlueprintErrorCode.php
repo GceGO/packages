@@ -6,7 +6,7 @@ namespace Gcego\Blueprints\Validation;
 
 /**
  * Blueprint-specific error codes. Component schema errors keep their
- * gcego/components code, prefixed "component.".
+ * gcego/morfaw code, prefixed "component.".
  */
 enum BlueprintErrorCode: string
 {

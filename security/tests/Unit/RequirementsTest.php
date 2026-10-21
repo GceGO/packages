@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Exceptions\InvalidPermissionException;
 use Gcego\Security\Exceptions\MissingAuthorizationContextException;
 use Gcego\Security\Fields\FieldRule;

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Actions\Execution\ActionStatus;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Modules\Module;
 use Gcego\Modules\Resource;

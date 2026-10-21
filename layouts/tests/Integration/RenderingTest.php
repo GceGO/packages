@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Actions;
 use Gcego\Layouts\Components\Aside;
 use Gcego\Layouts\Components\Card;

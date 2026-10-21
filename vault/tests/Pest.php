@@ -2,13 +2,24 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Security\SecurityManager;
+use Gcego\Vault\Caching\Invalidation;
+use Gcego\Vault\Models\Role;
+use Gcego\Vault\Permissions\VaultPermissions;
 use Gcego\Vault\Tests\Fixtures\Models\Membership;
 use Gcego\Vault\Tests\Fixtures\Models\User;
 use Gcego\Vault\Tests\TestCase;
 use Gcego\Vault\Vault;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Facade;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security', 'Performance');
 
@@ -47,9 +58,9 @@ function synced(): void
  * @param  list<string>  $permissions
  * @param  list<string>  $inherits
  */
-function role(string $name, array $permissions = [], array $inherits = [], string $tenant = ''): Gcego\Vault\Models\Role
+function role(string $name, array $permissions = [], array $inherits = [], string $tenant = ''): Role
 {
-    $role = new Gcego\Vault\Models\Role;
+    $role = new Role;
     $role->forceFill(['name' => $name, 'label' => ucfirst($name), 'tenant' => $tenant])->save();
     $connection = $role->getConnection();
 
@@ -58,10 +69,10 @@ function role(string $name, array $permissions = [], array $inherits = [], strin
     }
 
     foreach ($inherits as $parent) {
-        $connection->table('gcego_vault_role_inheritance')->insert(['role_id' => $role->id, 'inherits_id' => Gcego\Vault\Models\Role::query()->where('name', $parent)->value('id')]);
+        $connection->table('gcego_vault_role_inheritance')->insert(['role_id' => $role->id, 'inherits_id' => Role::query()->where('name', $parent)->value('id')]);
     }
 
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
 
     return $role;
 }
@@ -73,8 +84,8 @@ function role(string $name, array $permissions = [], array $inherits = [], strin
  */
 function administrator(string $name = 'Admin', array $also = [], array $institutions = []): User
 {
-    $permissions = [...array_keys(Gcego\Vault\Permissions\VaultPermissions::definitions()), ...$also];
-    $role = Gcego\Vault\Models\Role::query()->where('name', 'vault-admin')->first() ?? role('vault-admin', $permissions);
+    $permissions = [...array_keys(VaultPermissions::definitions()), ...$also];
+    $role = Role::query()->where('name', 'vault-admin')->first() ?? role('vault-admin', $permissions);
     $user = person($name, $institutions);
     $user->assignRole($role);
 

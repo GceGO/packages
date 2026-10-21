@@ -7,7 +7,7 @@ namespace Gcego\Runtime\Tests\Fixtures;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
 
 /**
  * A blueprint part standing in for a future gcego/tables table.

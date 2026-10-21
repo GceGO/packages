@@ -6,9 +6,12 @@ namespace Gcego\Components\Inspection;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
+use Gcego\Components\Facades\Components;
 use Gcego\Components\Normalization\ComponentNormalizer;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Support\ValueDescriber;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Components\Validation\ComponentValidator;
 use Gcego\Components\Validation\ValidationError;
 
@@ -21,10 +24,12 @@ use Gcego\Components\Validation\ValidationError;
 final readonly class ComponentInspector
 {
     public function __construct(
-        private ComponentValidator $validator = new ComponentValidator,
-        private ComponentNormalizer $normalizer = new ComponentNormalizer,
-        private ComponentWalker $walker = new ComponentWalker,
-    ) {}
+        private ComponentValidator $validator,
+        private ComponentNormalizer $normalizer,
+        private ComponentWalker $walker,
+    ) {
+        Components::getFacadeRoot();
+    }
 
     /**
      * Inspect one component; errors cover the component and all of its descendants.
@@ -65,7 +70,7 @@ final readonly class ComponentInspector
         $definition = $component::definition();
 
         return new ComponentInspection(
-            class: $component::class,
+            class: ValueDescriber::className($component::class),
             type: $component->type(),
             id: $component->id(),
             path: $node->path->toString(),
@@ -73,34 +78,19 @@ final readonly class ComponentInspector
             supportedProperties: $definition->propertyNames(),
             requiredProperties: $definition->requiredProperties(),
             allowsUnknownProperties: $definition->allowsUnknownProperties,
-            explicitProperties: $this->normalizeMap($component->properties()->toArray()),
-            effectiveProperties: $this->normalizeMap($component->effectiveProperties()),
-            defaults: $this->normalizeMap($definition->defaults()),
+            explicitProperties: $this->normalizer->normalizeProperties($component->properties()->toArray(), $definition, $node->path->toString()),
+            effectiveProperties: $this->normalizer->normalizeProperties($component->effectiveProperties(), $definition, $node->path->toString()),
+            defaults: $this->normalizer->normalizeProperties($definition->defaults(), $definition, $node->path->toString()),
             childCount: $component->childCount(),
             childrenAllowed: $definition->allowsChildren,
-            allowedChildren: $definition->allowedChildren,
+            allowedChildren: $definition->allowedChildren === null ? null : array_map(ValueDescriber::className(...), $definition->allowedChildren),
             minChildren: $definition->minChildren,
             maxChildren: $definition->maxChildren,
             configurationClasses: array_map(
-                static fn (ConfigurationNode $configuration): string => $configuration::class,
+                static fn (ConfigurationNode $configuration): string => ValueDescriber::className($configuration::class),
                 $component->configurations()->all(),
             ),
             errors: $errors,
         );
-    }
-
-    /**
-     * @param  array<string, mixed>  $values
-     * @return array<string, mixed>
-     */
-    private function normalizeMap(array $values): array
-    {
-        $normalized = [];
-
-        foreach ($values as $key => $value) {
-            $normalized[$key] = $this->normalizer->normalizeValue($value, sprintf('property "%s"', $key));
-        }
-
-        return $normalized;
     }
 }

@@ -40,7 +40,15 @@ final readonly class ExtensionDescriptor
      */
     public array $capabilities;
 
+    /** @var list<string> */
+    public array $exclusiveCapabilities;
+
+    /** @var list<string> */
+    public array $requiresCapabilities;
+
     /**
+     * @param  list<string>  $requiresCapabilities
+     * @param  list<string>  $exclusiveCapabilities
      * @param  list<string>  $requires
      * @param  list<string>  $optional
      * @param  list<string>  $whenPackages
@@ -53,6 +61,8 @@ final readonly class ExtensionDescriptor
         array $whenPackages = [],
         array $capabilities = [],
         public ?string $description = null,
+        array $requiresCapabilities = [],
+        array $exclusiveCapabilities = [],
     ) {
         if (! Identifier::isName($id)) {
             throw ExtensionException::invalidIdentifier($id);
@@ -61,7 +71,13 @@ final readonly class ExtensionDescriptor
         $this->requires = self::filter($id, $requires, Identifier::isName(...), '"requires" entries must be extension identifiers.');
         $this->optional = self::filter($id, $optional, Identifier::isName(...), '"optional" entries must be extension identifiers.');
         $this->whenPackages = self::filter($id, $whenPackages, Identifier::isPackage(...), '"whenPackages" entries must be Composer package names.');
+        $this->requiresCapabilities = self::filter($id, $requiresCapabilities, Identifier::isName(...), 'required capabilities must be lowercase dotted names.');
         $this->capabilities = self::filter($id, $capabilities, Identifier::isName(...), 'capabilities must be lowercase dotted names.');
+
+        $this->exclusiveCapabilities = self::filter($id, $exclusiveCapabilities, Identifier::isName(...), 'exclusive capabilities must be lowercase dotted names.');
+        if (array_diff($this->exclusiveCapabilities, $this->capabilities) !== []) {
+            throw ExtensionException::invalidMetadata($id, 'exclusive capabilities must also be declared as provided capabilities.');
+        }
 
         if (in_array($id, [...$this->requires, ...$this->optional], true)) {
             throw ExtensionException::invalidMetadata($id, 'an extension cannot depend on itself.');
@@ -80,7 +96,7 @@ final readonly class ExtensionDescriptor
     }
 
     /**
-     * @return array{id: string, requires: list<string>, optional: list<string>, whenPackages: list<string>, capabilities: list<string>, description: string|null}
+     * @return array{id: string, requires: list<string>, optional: list<string>, whenPackages: list<string>, capabilities: list<string>, description: string|null, requiresCapabilities: list<string>, exclusiveCapabilities: list<string>}
      */
     public function toArray(): array
     {
@@ -91,6 +107,8 @@ final readonly class ExtensionDescriptor
             'whenPackages' => $this->whenPackages,
             'capabilities' => $this->capabilities,
             'description' => $this->description,
+            'requiresCapabilities' => $this->requiresCapabilities,
+            'exclusiveCapabilities' => $this->exclusiveCapabilities,
         ];
     }
 

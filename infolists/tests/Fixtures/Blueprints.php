@@ -8,7 +8,7 @@ use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
 use Gcego\Actions\Restore;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

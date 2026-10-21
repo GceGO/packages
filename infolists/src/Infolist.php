@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Gcego\Infolists;
 
-use Gcego\Infolists\Building\InfolistBuilder;
 use Gcego\Actions\Action;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Infolists\Building\InfolistBuilder;
 use Gcego\Infolists\Contracts\InfolistComponent;
 use Gcego\Infolists\Schema\SchemaCompiler;
 use Gcego\Security\Contracts\Requirement;
@@ -41,6 +42,8 @@ use Throwable;
  */
 final class Infolist extends Component implements BlueprintPart
 {
+    use Makeable;
+
     /** Grid columns for top-level entries (default gcego-infolists.layouts.default_columns). */
     public const string Columns = 'columns';
 

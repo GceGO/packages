@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Vault\Caching\PermissionCache;
+use Gcego\Vault\Models\Assignment;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
 
@@ -54,7 +55,7 @@ it('never reuses an entry after its version token was evicted from the cache', f
 
     // The holder's version token disappears (eviction), then the assignment is revoked without Vault's knowledge.
     Cache::forget(app(PermissionCache::class)->key('v', 'h', sha1($user->getMorphClass().'|'.$user->id)));
-    Gcego\Vault\Models\Assignment::query()->update(['revoked_at' => Date::now(), 'active_key' => null]);
+    Assignment::query()->update(['revoked_at' => Date::now(), 'active_key' => null]);
     app()->forgetScopedInstances();
 
     expect($user->hasPermissionTo('books.viewAny'))->toBeFalse();

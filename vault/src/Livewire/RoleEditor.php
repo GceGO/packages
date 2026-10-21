@@ -9,6 +9,7 @@ use Gcego\Vault\Models\Permission;
 use Gcego\Vault\Models\Role;
 use Gcego\Vault\Permissions\VaultPermissions;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Locked;
 use Throwable;
 
@@ -152,9 +153,9 @@ final class RoleEditor extends VaultComponent
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Permission>
+     * @return Collection<int, Permission>
      */
-    private function catalog(): \Illuminate\Support\Collection
+    private function catalog(): Collection
     {
         $tenantRole = $this->scope() !== '';
 

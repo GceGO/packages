@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Pages\Authorization\PageAuthorizer;
 use Gcego\Pages\Components\Content;
 use Gcego\Pages\Livewire\PageHost;

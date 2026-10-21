@@ -10,7 +10,7 @@ use Gcego\Chroma\Tailwind;
 use Gcego\Chroma\Tests\Fixtures\ExampleCard;
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Registry\Registry;
 use Gcego\Runtime\Contracts\StylingResolver;
 use Gcego\Runtime\Livewire\BlueprintHost;

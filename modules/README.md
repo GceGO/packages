@@ -75,7 +75,7 @@ The module takes its only resource's name (`subjects`), and the resource takes i
 ```php
 use App\Models\Subject;
 use App\Models\Topic;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Modules\Module;
 use Gcego\Modules\Resource;
@@ -107,7 +107,7 @@ Two list pages: `/admin/subjects` and `/admin/topics`.
 use App\Models\Student;
 use Gcego\Actions\Create;
 use Gcego\Actions\Edit;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;
@@ -147,7 +147,7 @@ use App\Models\Topic;
 use Gcego\Actions\Create;
 use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

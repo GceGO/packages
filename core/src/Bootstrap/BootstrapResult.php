@@ -12,6 +12,7 @@ namespace Gcego\Core\Bootstrap;
 final readonly class BootstrapResult
 {
     /**
+     * @param  list<StartupTiming>  $timings  Includes failed attempts from retries.
      * @param  list<string>  $packages  Booted packages, in boot order.
      * @param  list<string>  $extensions  Activated extensions, in activation order.
      * @param  array<string, string>  $skippedExtensions  Extension id => reason.
@@ -22,6 +23,7 @@ final readonly class BootstrapResult
         public array $extensions = [],
         public array $skippedExtensions = [],
         public float $durationMs = 0.0,
+        public array $timings = [],
     ) {}
 
     public static function disabled(): self
@@ -35,7 +37,7 @@ final readonly class BootstrapResult
     }
 
     /**
-     * @return array{status: string, packages: list<string>, extensions: list<string>, skippedExtensions: array<string, string>, durationMs: float}
+     * @return array{status: string, packages: list<string>, extensions: list<string>, skippedExtensions: array<string, string>, durationMs: float, timings: list<array{kind: string, id: string, durationMs: float, succeeded: bool}>}
      */
     public function toArray(): array
     {
@@ -45,6 +47,7 @@ final readonly class BootstrapResult
             'extensions' => $this->extensions,
             'skippedExtensions' => $this->skippedExtensions,
             'durationMs' => $this->durationMs,
+            'timings' => array_map(static fn (StartupTiming $timing): array => $timing->toArray(), $this->timings),
         ];
     }
 }

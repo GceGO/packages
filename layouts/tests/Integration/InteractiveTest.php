@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Accordion;
 use Gcego\Layouts\Components\AccordionItem;
 use Gcego\Layouts\Components\Collapsible;

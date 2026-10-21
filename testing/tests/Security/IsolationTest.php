@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Actions\ActionManager;
 use Gcego\Actions\Execution\ActionRequest;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\PasswordInput;
 use Gcego\Forms\Fields\TextInput;

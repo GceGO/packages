@@ -17,7 +17,7 @@ new Group('Help', new Property(Group::Collapsible, false), …)       // a plain
 | Collapsible | `groups.collapsible` sets the default; `Collapsible` overrides it per group. Non-collapsible groups show a label (`aria-labelledby` on the list). |
 | Hiding | A group the user can see nothing in (no visible link or group inside) is not shown. Neither are its headings and dividers. |
 | Depth | Nesting is limited by `groups.max_depth` (default 3); deeper groups fail when the tree is built. |
-| Cycles | Cycles (only possible with hostile component implementations) are refused by gcego/components traversal. |
+| Cycles | Cycles (only possible with hostile component implementations) are refused by gcego/morfaw traversal. |
 
 ## Dropdowns
 

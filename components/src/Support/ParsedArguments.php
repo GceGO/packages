@@ -6,7 +6,7 @@ namespace Gcego\Components\Support;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
  * The constructor items of a component, separated by kind.

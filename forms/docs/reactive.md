@@ -9,6 +9,42 @@ new Textarea('details', VisibleWhen::filled('title')),          // inside a Repe
 new TextInput('x', VisibleWhen::using(fn (FormState $s) => $s->get('level') > 3, dependsOn: ['level'])),
 ```
 
+## Closures (Filament style)
+
+```php
+use Gcego\Components\Evaluation\Get;
+use Gcego\Components\Evaluation\Set;
+
+Form::make()->schema([
+    Select::make('type')->options(['person' => 'Person', 'business' => 'Business']),
+    TextInput::make('company')->visible(fn (Get $get): bool => $get('type') === 'business'),
+    TextInput::make('vat')->required(fn (Get $get): bool => $get('type') === 'business'),
+    TextInput::make('code')->disabled(fn (string $operation): bool => $operation === 'edit'),
+    TextInput::make('title')->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug((string) $state))),
+    TextInput::make('slug'),
+    Section::make('Billing')->hidden(fn (Get $get): bool => $get('type') === 'person')->schema([...]),
+]);
+```
+
+| Topic | Details |
+| --- | --- |
+| Injection | `$get` and `$set` (relative to the repeater item, `../` moves up), `$record` (or `?Model $record`), `$operation` (`create`, `edit` or `view`), typed services from the container. `afterStateUpdated` also receives `$state`, `$old` and `$component`. |
+| Same security | Closures compile into `VisibleWhen`, `RequiredWhen` and `DisabledWhen`, so they run on the server during rendering, validation and dehydration. A field a closure hides is never saved. |
+| Automatic live | No `dependsOn`: the fields a closure reads while the conditions are evaluated are rendered live. Reads that a short-circuit skips are not live until they can change the result. |
+| afterStateUpdated | Runs in the Livewire host after the user changes the field. Writes to undeclared fields are refused (`InvalidStateException`), and written values are validated on submit. |
+| Not checked at definition time | Unlike named conditions, closures are not checked for unknown fields or cycles when the form is compiled. Prefer `VisibleWhen` when a static condition is enough. |
+
+## Extending another module's form
+
+```php
+Components::extend('subjects.form', fn (SchemaPatch $patch) => $patch
+    ->insertAfter('code', TextInput::make('short_code'))
+    ->modify('name', fn (ComponentBuilder $name) => $name->required()));
+```
+
+Extensions apply wherever the blueprint's form is hosted, hydrated, rendered
+and submitted, so the added fields are declared fields like any other.
+
 ## Condition forms
 
 | Form | Passes when |

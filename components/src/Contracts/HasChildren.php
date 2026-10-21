@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Contracts;
 
-use Gcego\Components\ComponentCollection;
+use Gcego\Components\Collections\ComponentCollection;
 
 interface HasChildren
 {

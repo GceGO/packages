@@ -29,6 +29,7 @@ final class TestApplicationFactory
      */
     public const array Providers = [
         'Livewire\LivewireServiceProvider',
+        'Gcego\Components\ComponentServiceProvider',
         'Gcego\Core\GcegoServiceProvider',
         'Gcego\Registry\RegistryServiceProvider',
         'Gcego\Runtime\RuntimeServiceProvider',

@@ -4,7 +4,7 @@ Namespace `Gcego\Layouts`.
 
 ## Components
 
-Every component extends `LayoutComponent` (a gcego/components `Component`
+Every component extends `LayoutComponent` (a gcego/morfaw `Component`
 and a gcego/blueprints `PartContainer`, role `layout`).
 
 | Class | Shorthand | Properties / children |
@@ -146,4 +146,4 @@ reports no values.
 
 `InvalidLayoutException` covers invalid responsive values, configuration
 nodes and configuration. Component validation errors come from
-gcego/components, and rendering errors are the runtime's `RenderException`.
+gcego/morfaw, and rendering errors are the runtime's `RenderException`.

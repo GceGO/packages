@@ -13,7 +13,7 @@ Common options: `--dry-run`, `--force`, `--test` (adds a gcego/testing test), `-
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Section;
 use Gcego\Modules\Module;
 use Gcego\Pages\Components\Content;
@@ -54,7 +54,7 @@ use Gcego\Actions\Create;
 use Gcego\Actions\Edit;
 use Gcego\Cli\Tests\Fixtures\Enums\Status;
 use Gcego\Cli\Tests\Fixtures\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Fields\DatePicker;
@@ -152,7 +152,7 @@ How the model becomes the resource:
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Section;
 use Gcego\Pages\Components\Content;
 use Gcego\Pages\Page;
@@ -173,7 +173,7 @@ return new Page(
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Panels\Branding\Branding;
 use Gcego\Panels\Definitions\ModuleReference;
 use Gcego\Panels\Panel;
@@ -203,7 +203,7 @@ return new Panel(
 declare(strict_types=1);
 
 use Gcego\Cli\Tests\Fixtures\Enums\Status;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Fields\DatePicker;
 use Gcego\Forms\Fields\NumberInput;
@@ -235,7 +235,7 @@ return new Form(
 declare(strict_types=1);
 
 use Gcego\Cli\Tests\Fixtures\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Widgets\Configuration\Trend;
 use Gcego\Widgets\Data\Aggregate;
@@ -274,7 +274,7 @@ declare(strict_types=1);
 use App\GCEGo\Support\Actions\PublishSubject;
 use Gcego\Actions\Action;
 use Gcego\Actions\Configuration\Handler;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 // Add to a Resource or Blueprint with require __DIR__.'/Actions/PublishSubject.php'.
 return new Action(

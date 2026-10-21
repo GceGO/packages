@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Infolists\Diagnostics\InfolistInspector;
 use Gcego\Infolists\Entries\Image;

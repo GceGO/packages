@@ -6,11 +6,11 @@ namespace Gcego\Panels;
 
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Navigation\Navigation;
 use Gcego\Pages\Page;
 use Gcego\Panels\Branding\Branding;

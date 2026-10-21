@@ -2,7 +2,7 @@
 
 ## Definition versus execution
 
-An action is a gcego/components component (and a blueprint part with role
+An action is a gcego/morfaw component (and a blueprint part with role
 `action`). Constructing, validating, normalizing or registering one never
 authorizes, queries or runs anything. Execution happens only through
 `ActionManager::execute()`, which the Livewire `ActionHost` also uses.

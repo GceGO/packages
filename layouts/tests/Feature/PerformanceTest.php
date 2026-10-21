@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Card;
 use Gcego\Layouts\Components\Grid;
 use Gcego\Layouts\Components\Section;

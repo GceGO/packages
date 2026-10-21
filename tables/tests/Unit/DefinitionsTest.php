@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Pagination\PaginationMode;
 use Gcego\Tables\Columns\Badge;
 use Gcego\Tables\Columns\Boolean;

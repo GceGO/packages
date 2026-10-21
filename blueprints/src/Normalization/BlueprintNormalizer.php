@@ -16,7 +16,7 @@ use Gcego\Components\Normalization\ComponentNormalizer;
  *         'policy' => [requiredRoles, allowedRoles, singleRoles],
  *         'parts' => list<[role, multiple, path, class, type]>,  // document order
  *         'roles' => [role => [multiple, paths]],                // sorted by role
- *         'component' => <gcego/components normalization of the whole tree>,
+ *         'component' => <gcego/morfaw normalization of the whole tree>,
  *     ]
  *
  * Parts reference the component tree by path instead of being normalized a
@@ -54,7 +54,9 @@ final readonly class BlueprintNormalizer
             'policy' => $blueprint::compositionPolicy()->toArray(),
             'parts' => array_map(static fn (ClassifiedPart $entry): array => $entry->toArray(), $composition->parts()->entries()),
             'roles' => $roles,
-            'component' => (new ComponentNormalizer($this->includeSchema))->normalize($blueprint),
+            'component' => ($this->includeSchema
+                ? app(ComponentNormalizer::class, ['includeSchema' => true])
+                : app(ComponentNormalizer::class))->normalize($blueprint),
         ];
     }
 }

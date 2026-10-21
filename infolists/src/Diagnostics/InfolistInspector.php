@@ -113,7 +113,7 @@ final readonly class InfolistInspector
         $renderers = $this->container->bound(RendererRegistry::class) ? $this->container->make(RendererRegistry::class) : null;
         $slots = $this->container->bound(SlotRegistry::class) ? $this->container->make(SlotRegistry::class) : null;
 
-        foreach ((new ComponentWalker)->preOrder($infolist) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($infolist) as $node) {
             $component = $node->component;
 
             if (! $component instanceof Infolist && ! $component instanceof Entry && ! $component instanceof LayoutComponent) {

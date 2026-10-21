@@ -112,7 +112,7 @@ Notification::make()
     ->sendTo([$administrator, $recipient]);
 ```
 
-The declarative form, a gcego/components definition:
+The declarative form, a gcego/morfaw definition:
 
 <!-- example:declarative -->
 ```php

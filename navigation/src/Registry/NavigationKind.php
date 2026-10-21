@@ -50,7 +50,7 @@ final readonly class NavigationKind implements DefinitionKind
         $navigation = $this->navigation($definition);
         $nodes = -1;
 
-        foreach ((new ComponentWalker)->preOrder($navigation) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($navigation) as $node) {
             $nodes++;
         }
 

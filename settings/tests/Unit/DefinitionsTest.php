@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Exceptions\InvalidComponentException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Settings\Exceptions\InvalidSettingException;
 use Gcego\Settings\Groups\SettingsSection;
 use Gcego\Settings\Scopes\SettingScope;
@@ -91,7 +91,7 @@ it('derives scopes, precedence, requirements and a default page from the group',
         ->and($definitions->definition('table_density')->scopes)->toBe([SettingScope::Global, SettingScope::User])
         ->and($session->scopes)->toBe([SettingScope::Global])
         ->and($session->requirements)->toHaveCount(1)
-        ->and($definitions->page('security')->group())->toBe('security')
+        ->and($definitions->page('security')->groupName())->toBe('security')
         ->and($definitions->page('security')->scope())->toBe(SettingScope::Global)
         ->and($definitions->hasPage('institution'))->toBeFalse();
 });

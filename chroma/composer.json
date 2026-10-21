@@ -21,7 +21,7 @@
     ],
     "require": {
         "php": "^8.3",
-        "gcego/components": "^0.1",
+        "gcego/morfaw": "^0.1",
         "gcego/runtime": "^0.1",
         "gcego/swatches": "^0.1",
         "illuminate/contracts": "^13.0",
@@ -40,7 +40,7 @@
             "url": "../components",
             "options": {
                 "versions": {
-                    "gcego/components": "0.1.0"
+                    "gcego/morfaw": "0.1.0"
                 }
             }
         },

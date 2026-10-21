@@ -2,14 +2,20 @@
 
 declare(strict_types=1);
 
+use Gcego\Vault\Caching\Invalidation;
 use Gcego\Vault\Livewire\AccessRequestsScreen;
 use Gcego\Vault\Livewire\ApprovalQueue;
+use Gcego\Vault\Livewire\AuditHistory;
+use Gcego\Vault\Livewire\Diagnostics;
 use Gcego\Vault\Livewire\PermissionMatrix;
 use Gcego\Vault\Livewire\PersonAccess;
 use Gcego\Vault\Livewire\RoleDetails;
 use Gcego\Vault\Livewire\RoleEditor;
 use Gcego\Vault\Livewire\RolesIndex;
+use Gcego\Vault\Models\AccessRequest;
 use Gcego\Vault\Models\Role;
+use Gcego\Vault\Permissions\VaultPermissions;
+use Gcego\Vault\Support\HolderReference;
 use Gcego\Vault\Tests\Fixtures\Models\User;
 use Livewire\Livewire;
 
@@ -37,7 +43,7 @@ it('opens each screen for holders of its permission and refuses everyone else', 
     $this->actingAs(staff())->get($url)->assertOk();
 
     $other = person('Other');
-    $other->assignRole(role('panel-user', ['panels.desk.access', ...array_values(array_diff(array_keys(Gcego\Vault\Permissions\VaultPermissions::definitions()), [$permission]))]));
+    $other->assignRole(role('panel-user', ['panels.desk.access', ...array_values(array_diff(array_keys(VaultPermissions::definitions()), [$permission]))]));
     app()->forgetScopedInstances();
 
     $this->actingAs($other)->get($url)->assertForbidden();
@@ -122,7 +128,7 @@ it('assigns and revokes roles from a person\'s access screen', function (): void
     $admin = staff();
     $person = person('Pat');
     $this->actingAs($admin);
-    $reference = app(Gcego\Vault\Support\HolderReference::class)->encode($person);
+    $reference = app(HolderReference::class)->encode($person);
 
     Livewire::test(PersonAccess::class, ['holder' => $reference])->set('role', (string) $role->id)->call('assignRole')->assertSet('feedback.tone', 'success');
     expect($person->hasPermissionTo('books.viewAny'))->toBeTrue();
@@ -139,7 +145,7 @@ it('refuses self-promotion through the person screen', function (): void {
     $admin = staff();
     $this->actingAs($admin);
 
-    Livewire::test(PersonAccess::class, ['holder' => app(Gcego\Vault\Support\HolderReference::class)->encode($admin)])
+    Livewire::test(PersonAccess::class, ['holder' => app(HolderReference::class)->encode($admin)])
         ->set('role', (string) $role->id)->call('assignRole')
         ->assertSet('feedback.tone', 'error');
 
@@ -178,7 +184,7 @@ it('takes a request from the requester to approval in the screens', function ():
         ->call('submit')
         ->assertSet('feedback.tone', 'success');
 
-    $request = Gcego\Vault\Models\AccessRequest::query()->sole();
+    $request = AccessRequest::query()->sole();
     $this->actingAs(staff('Reviewer'));
     app()->forgetScopedInstances();
 
@@ -201,8 +207,8 @@ it('explains decisions on the diagnostics screen', function (): void {
     $this->actingAs(staff());
     $person = person('Diag');
 
-    Livewire::test(Gcego\Vault\Livewire\Diagnostics::class)
-        ->set('personRef', app(Gcego\Vault\Support\HolderReference::class)->encode($person))
+    Livewire::test(Diagnostics::class)
+        ->set('personRef', app(HolderReference::class)->encode($person))
         ->set('check', 'books.delete')
         ->assertSee('Decision: DENIED')
         ->assertSee('no role or direct grant gives books.delete');
@@ -211,7 +217,7 @@ it('explains decisions on the diagnostics screen', function (): void {
 it('escapes names everywhere they are shown', function (): void {
     $role = role('xss');
     $role->forceFill(['label' => '<script>alert(1)</script>'])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
 
     $this->actingAs(staff())->get('/desk/vault/roles/'.$role->id)->assertOk()
         ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
@@ -223,7 +229,7 @@ it('exports role definitions and the audit log for their holders only', function
     $this->actingAs(staff());
 
     Livewire::test(RolesIndex::class)->call('export')->assertFileDownloaded();
-    Livewire::test(Gcego\Vault\Livewire\AuditHistory::class)->call('export')->assertFileDownloaded();
+    Livewire::test(AuditHistory::class)->call('export')->assertFileDownloaded();
 });
 
 it('shows role members and lets authorized staff assign from the role screen', function (): void {
@@ -234,7 +240,7 @@ it('shows role members and lets authorized staff assign from the role screen', f
     Livewire::test(RoleDetails::class, ['role' => (string) $role->id])
         ->set('personSearch', 'Member')
         ->assertSee('Member Person')
-        ->call('pick', app(Gcego\Vault\Support\HolderReference::class)->encode($person))
+        ->call('pick', app(HolderReference::class)->encode($person))
         ->call('assign')
         ->assertSet('feedback.tone', 'success')
         ->assertSee('Member Person');

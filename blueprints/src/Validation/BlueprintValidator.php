@@ -12,7 +12,7 @@ use Gcego\Components\Validation\ErrorCode;
 
 /**
  * Validates a blueprint with full structure: component schema errors from
- * gcego/components (metadata, children, nested parts) plus role-aware
+ * gcego/morfaw (metadata, children, nested parts) plus role-aware
  * composition errors.
  *
  * Blueprint::validate() and assertValid() already reject the same
@@ -22,8 +22,8 @@ use Gcego\Components\Validation\ErrorCode;
 final readonly class BlueprintValidator
 {
     public function __construct(
-        private ComponentValidator $components = new ComponentValidator,
-        private ComponentWalker $walker = new ComponentWalker,
+        private ?ComponentValidator $components = null,
+        private ?ComponentWalker $walker = null,
     ) {}
 
     public function validate(BlueprintInterface $blueprint): BlueprintValidationResult
@@ -31,10 +31,10 @@ final readonly class BlueprintValidator
         $name = $blueprint->name() ?? $blueprint::class;
         $composition = $blueprint->composition();
         $compositionMessages = array_flip($composition->messages());
-        $rootPath = $this->walker->rootNode($blueprint)->path->toString();
+        $rootPath = ($this->walker ?? app(ComponentWalker::class))->rootNode($blueprint)->path->toString();
         $errors = [];
 
-        foreach ($this->components->validate($blueprint) as $error) {
+        foreach (($this->components ?? app(ComponentValidator::class))->validate($blueprint) as $error) {
             // The composition constraint reports the same issues as plain messages; keep only the structured form.
             if ($error->code === ErrorCode::ConstraintFailed && $error->path === $rootPath && isset($compositionMessages[$error->message])) {
                 continue;

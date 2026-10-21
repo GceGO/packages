@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use Gcego\Vault\Caching\Invalidation;
 use Gcego\Vault\Enums\AuditEvent;
 use Gcego\Vault\Exceptions\VaultAuthorizationException;
+use Gcego\Vault\Exceptions\VaultValidationException;
 use Gcego\Vault\Models\Assignment;
 use Gcego\Vault\Models\AuditEntry;
+use Gcego\Vault\Models\Role;
 use Illuminate\Support\Facades\Date;
 
 beforeEach(fn () => synced());
@@ -62,7 +65,7 @@ it('refuses to give access beyond the giver\'s own, including through inheritanc
     expect(refusal(fn () => vault()->assignments()->assignRole($admin, person('A'), 'deleter')))->toBe('beyond_authority')
         ->and(refusal(fn () => vault()->assignments()->assignRole($admin, person('B'), 'wrapper')))->toBe('beyond_authority')
         ->and(refusal(fn () => vault()->assignments()->grantPermission($admin, person('C'), 'books.delete')))->toBe('beyond_authority')
-        ->and(Assignment::query()->where('role_id', '!=', Gcego\Vault\Models\Role::query()->where('name', 'vault-admin')->value('id'))->count())->toBe(0);
+        ->and(Assignment::query()->where('role_id', '!=', Role::query()->where('name', 'vault-admin')->value('id'))->count())->toBe(0);
 });
 
 it('refuses to strip access above one\'s own, but always lets people give up their own', function (): void {
@@ -98,9 +101,9 @@ it('never lets a role defined by one tenant be used, or even found, in another',
     $admin = person('Head', [1, 2]);
     $admin->assignRole(role('tenant-admin', ['vault.roles.viewAny', 'vault.users.viewAny', 'vault.roles.assign', 'grades.update']), 'institution:2');
 
-    $northOnly = Gcego\Vault\Models\Role::query()->where('name', 'north-only')->sole();
+    $northOnly = Role::query()->where('name', 'north-only')->sole();
 
-    expect(fn () => vault()->assignments()->assignRole($admin, person('M', [2]), 'north-only', 'institution:2'))->toThrow(Gcego\Vault\Exceptions\VaultValidationException::class, 'There is no role "north-only" here.')
+    expect(fn () => vault()->assignments()->assignRole($admin, person('M', [2]), 'north-only', 'institution:2'))->toThrow(VaultValidationException::class, 'There is no role "north-only" here.')
         ->and(refusal(fn () => vault()->assignments()->assignRole($admin, person('N', [2]), $northOnly, 'institution:2')))->toBe('foreign_tenant')
         ->and(fn () => person('X', [2])->assignRole($northOnly, 'institution:2'))->toThrow(VaultAuthorizationException::class);
 });
@@ -126,13 +129,13 @@ it('only lets super administrators give super-administrator roles, and only glob
     synced();
     $root = role('root');
     $root->forceFill(['is_super' => true])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
     $admin = administrator();
     $superUser = person('Super');
     $superUser->assignRole('root');
 
     expect(refusal(fn () => vault()->assignments()->assignRole($admin, person('A'), 'root')))->toBe('super_required')
-        ->and(fn () => person('B', [1])->assignRole('root', 'institution:1'))->toThrow(Gcego\Vault\Exceptions\VaultValidationException::class);
+        ->and(fn () => person('B', [1])->assignRole('root', 'institution:1'))->toThrow(VaultValidationException::class);
 
     vault()->assignments()->assignRole($superUser, person('C'), 'root');
     expect(Assignment::query()->where('role_id', $root->id)->active()->count())->toBe(2);
@@ -160,8 +163,8 @@ it('rejects expiry in the past and beyond the configured maximum', function (): 
     role('viewer', ['books.viewAny']);
     $user = person('Time');
 
-    expect(fn () => $user->assignRole('viewer', until: Date::now()->subMinute()))->toThrow(Gcego\Vault\Exceptions\VaultValidationException::class)
-        ->and(fn () => $user->assignRole('viewer', until: Date::now()->addDays(400)))->toThrow(Gcego\Vault\Exceptions\VaultValidationException::class);
+    expect(fn () => $user->assignRole('viewer', until: Date::now()->subMinute()))->toThrow(VaultValidationException::class)
+        ->and(fn () => $user->assignRole('viewer', until: Date::now()->addDays(400)))->toThrow(VaultValidationException::class);
 });
 
 it('closes and audits expired access, and allows giving it again', function (): void {

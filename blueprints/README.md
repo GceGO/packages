@@ -30,12 +30,13 @@ GCEGO packages; this package's tests use fixtures in their place. The title
 mandatory.
 
 Blueprints are plain PHP. They do not render, query, route or authorize
-anything, and they need neither Laravel nor `gcego/core`.
+anything. They use the Laravel services registered by
+`Gcego\Components\ComponentServiceProvider` and do not depend on `gcego/core`.
 
 ## Requirements and installation
 
 - PHP 8.3+
-- `gcego/components` ^0.1
+- `gcego/morfaw` ^0.1 with `ComponentServiceProvider` registered
 
 ```bash
 composer require gcego/blueprints

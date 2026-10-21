@@ -7,7 +7,7 @@ namespace Gcego\Runtime\Tests\Fixtures;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Runtime\Contracts\StatefulComponent;
 use Gcego\Runtime\Exceptions\InvalidStateException;
 

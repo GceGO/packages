@@ -41,4 +41,12 @@ return [
         'disabled' => [],
     ],
 
+    'diagnostics' => [
+        // Detailed per-step timing is opt-in. Status and failure records stay available.
+        'profiling' => env('GCEGO_STUDIO_PROFILING', false),
+        'slow_boot_ms' => 100.0,
+        'slow_package_ms' => 50.0,
+        'slow_extension_ms' => 50.0,
+    ],
+
 ];

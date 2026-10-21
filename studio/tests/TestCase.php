@@ -8,6 +8,7 @@ use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
 use Gcego\Actions\ActionsServiceProvider;
 use Gcego\Chroma\ChromaServiceProvider;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Forms\FormsServiceProvider;
@@ -91,6 +92,7 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
         $authentication = self::$sentinel ? [SentinelServiceProvider::class] : [];
 
         return array_values(array_diff([LivewireServiceProvider::class, ...$authentication, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, ActionsServiceProvider::class, FormsServiceProvider::class, BladeIconsServiceProvider::class, BladeHeroiconsServiceProvider::class, BladeLucideIconsServiceProvider::class, LuminariesServiceProvider::class, TablesServiceProvider::class, InfolistsServiceProvider::class, WidgetsServiceProvider::class, LayoutsServiceProvider::class, NavigationServiceProvider::class, PagesServiceProvider::class, ModulesServiceProvider::class, PanelsServiceProvider::class, NotificationsServiceProvider::class, StudioServiceProvider::class], self::$without));

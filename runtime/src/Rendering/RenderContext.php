@@ -6,7 +6,7 @@ namespace Gcego\Runtime\Rendering;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Runtime\Exceptions\InvalidRenderContextException;
 use Gcego\Runtime\State\StatePath;
 
@@ -80,7 +80,7 @@ final readonly class RenderContext
             $approved[$key] = $value;
         }
 
-        return new self((new ComponentWalker)->rootNode($component), $identity, $mode, $locale, $panel, $theme, $headingLevel, $approved, $state, []);
+        return new self(app(ComponentWalker::class)->rootNode($component), $identity, $mode, $locale, $panel, $theme, $headingLevel, $approved, $state, []);
     }
 
     /**

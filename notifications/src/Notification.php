@@ -7,10 +7,10 @@ namespace Gcego\Notifications;
 use Gcego\Actions\Execution\ActionResult;
 use Gcego\Actions\Execution\ActionStatus;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Notifications\Builders\NotificationBuilder;
 use Gcego\Notifications\Definitions\NotificationAction;
 use Gcego\Notifications\Definitions\NotificationCategory;
@@ -37,7 +37,7 @@ use Illuminate\Database\Eloquent\Model;
  *         new Property(Notification::Type, 'success'),
  *     )
  *
- * An immutable gcego/components definition: constructing one never
+ * An immutable gcego/morfaw definition: constructing one never
  * queries, renders or delivers. Text is plain (always escaped); links are
  * NotificationAction children with checked URLs; metadata holds scalars
  * only. Delivery goes through NotificationManager and Laravel Notifications.

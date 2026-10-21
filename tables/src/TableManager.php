@@ -7,6 +7,7 @@ namespace Gcego\Tables;
 use Gcego\Actions\Resolution\ActionResolver;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
+use Gcego\Components\Facades\Components;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Data\DataManager;
 use Gcego\Data\Query\QueryContext;
@@ -51,9 +52,46 @@ final class TableManager
      */
     private WeakMap $schemas;
 
+    /**
+     * @var WeakMap<Table, array<string, Table>>
+     */
+    private WeakMap $extended;
+
     public function __construct(private readonly Container $container, private readonly TablesConfig $config)
     {
         $this->schemas = new WeakMap;
+        $this->extended = new WeakMap;
+    }
+
+    /**
+     * The blueprint's table with every Components::extend() registered for
+     * "{blueprint name}.table" applied, so modules can add, change or remove
+     * columns, filters and actions of another module's table:
+     *
+     *     Components::extend('subjects.table', fn (SchemaPatch $patch) => $patch
+     *         ->insertAfter('name', Text::make('short_code')->sortable()));
+     *
+     * Cached per table instance; the patched table is compiled and checked
+     * like any other.
+     */
+    public function extended(Table $table, string $blueprint): Table
+    {
+        if (isset($this->extended[$table][$blueprint])) {
+            return $this->extended[$table][$blueprint];
+        }
+
+        $patched = Components::extended($blueprint.'.table', $table);
+
+        if (! $patched instanceof Table) {
+            throw InvalidTableException::invalid('Table', sprintf('extensions of "%s.table" must keep the table as the root.', $blueprint));
+        }
+
+        $patched->assertValid();
+        $cache = $this->extended[$table] ?? [];
+        $cache[$blueprint] = $patched;
+        $this->extended[$table] = $cache;
+
+        return $patched;
     }
 
     public function schema(Table $table): TableSchema
@@ -76,7 +114,10 @@ final class TableManager
             throw new NotFoundHttpException('This definition has no table.');
         }
 
-        return new ResolvedTable($key, $blueprint, $table, $this->pathOf($blueprint, $table), $source, $this->schema($table));
+        $path = $this->pathOf($blueprint, $table);
+        $table = $this->extended($table, $blueprint->name() ?? $key);
+
+        return new ResolvedTable($key, $blueprint, $table, $path, $source, $this->schema($table));
     }
 
     /**
@@ -204,7 +245,7 @@ final class TableManager
 
     private function pathOf(BlueprintInterface $blueprint, Table $table): string
     {
-        foreach ((new ComponentWalker)->preOrder($blueprint) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($blueprint) as $node) {
             if ($node->component === $table) {
                 return $node->path->toString();
             }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Gcego\Settings;
 
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Luminaries\IconName;
 use Gcego\Settings\Definitions\SettingsDefinitionValidator;
 use Gcego\Settings\Definitions\SettingsNode;

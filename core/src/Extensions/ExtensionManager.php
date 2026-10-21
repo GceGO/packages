@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Gcego\Core\Extensions;
 
 use Gcego\Core\Bootstrap\BootstrapContext;
+use Gcego\Core\Bootstrap\StartupTelemetry;
 use Gcego\Core\Contracts\ExtensionInterface;
+use Gcego\Core\Diagnostics\DiagnosticRedactor;
+use Gcego\Core\Diagnostics\InfrastructureIssues;
 use Gcego\Core\Exceptions\BootstrapException;
 use Gcego\Core\Exceptions\ExtensionException;
 use Gcego\Core\Support\DependencyGraph;
@@ -42,12 +45,34 @@ final class ExtensionManager
 
     private bool $locked = false;
 
+    private bool $initializing = false;
+
+    public function __construct(private readonly StartupTelemetry $telemetry = new StartupTelemetry, private readonly InfrastructureIssues $issues = new InfrastructureIssues) {}
+
     /**
      * @throws ExtensionException
      */
     public function register(ExtensionInterface $extension): void
     {
-        $descriptor = $extension->descriptor();
+        if (in_array($extension, $this->extensions, true)) {
+            return;
+        }
+
+        if ($this->locked) {
+            $this->issues->record('extensions.registration.late', DiagnosticRedactor::className($extension::class));
+            throw ExtensionException::afterBoot('unregistered extension');
+        }
+        if ($this->initializing) {
+            $this->issues->record('extensions.registration.mutation', DiagnosticRedactor::className($extension::class));
+            throw ExtensionException::duringInitialization('unregistered extension');
+        }
+
+        try {
+            $descriptor = $extension->descriptor();
+        } catch (Throwable $exception) {
+            $this->issues->record('extensions.descriptor.invalid', exception: $exception);
+            throw $exception;
+        }
         $id = $descriptor->id;
 
         if (isset($this->extensions[$id])) {
@@ -55,11 +80,8 @@ final class ExtensionManager
                 return;
             }
 
+            $this->issues->record('extensions.registration.duplicate', $id);
             throw ExtensionException::duplicate($id, $this->extensions[$id]::class, $extension::class);
-        }
-
-        if ($this->locked) {
-            throw ExtensionException::afterBoot($id);
         }
 
         $this->extensions[$id] = $extension;
@@ -120,12 +142,13 @@ final class ExtensionManager
      * Compute which extensions activate, and in which order, without activating anything.
      *
      * @param  list<string>  $disabled
+     * @param  list<string>  $packageCapabilities
      * @param  list<string>  $activePackages
      * @return array{order: list<string>, skipped: array<string, string>}
      *
      * @throws ExtensionException
      */
-    public function plan(array $disabled, array $activePackages): array
+    public function plan(array $disabled, array $activePackages, array $packageCapabilities = []): array
     {
         $skipped = [];
 
@@ -153,15 +176,7 @@ final class ExtensionManager
                 }
 
                 foreach ($descriptor->requires as $requirement) {
-                    if (! isset($this->descriptors[$requirement])) {
-                        throw ExtensionException::missing($id, [$requirement]);
-                    }
-
-                    if (in_array($requirement, $disabled, true)) {
-                        throw ExtensionException::requiresDisabled($id, $requirement);
-                    }
-
-                    if (isset($skipped[$requirement])) {
+                    if (isset($skipped[$requirement]) && ! in_array($requirement, $disabled, true)) {
                         $skipped[$id] = sprintf('required extension %s is inactive', $requirement);
                         $changed = true;
 
@@ -170,6 +185,24 @@ final class ExtensionManager
                 }
             }
         } while ($changed);
+
+        // Validate only after eligibility has converged. Otherwise a dependent
+        // can fail before a later registration causes it to be skipped.
+        foreach ($this->descriptors as $id => $descriptor) {
+            if (isset($skipped[$id])) {
+                continue;
+            }
+
+            foreach ($descriptor->requires as $requirement) {
+                if (! isset($this->descriptors[$requirement])) {
+                    throw ExtensionException::missing($id, [$requirement]);
+                }
+
+                if (in_array($requirement, $disabled, true)) {
+                    throw ExtensionException::requiresDisabled($id, $requirement);
+                }
+            }
+        }
 
         $nodes = [];
 
@@ -186,6 +219,14 @@ final class ExtensionManager
             throw ExtensionException::circular($cycle);
         }
 
+        $available = $packageCapabilities;
+        foreach ($graph->order() as $id) {
+            if (array_diff($this->descriptors[$id]->requiresCapabilities, $available) !== []) {
+                throw new ExtensionException(sprintf('GCEGO extension "%s" requires capabilities that are not available before its activation.', $id), diagnosticCode: 'extensions.dependencies.capabilities');
+            }
+            array_push($available, ...$this->descriptors[$id]->capabilities);
+        }
+
         ksort($skipped);
 
         return ['order' => $graph->order(), 'skipped' => $skipped];
@@ -200,21 +241,34 @@ final class ExtensionManager
      */
     public function activate(BootstrapContext $context, array $disabled = []): void
     {
-        $plan = $this->plan($disabled, $context->packages);
-        $this->skipped = $plan['skipped'];
+        if ($this->initializing) {
+            $this->issues->record('extensions.recursive_boot');
+            throw new BootstrapException('Cannot activate GCEGO extensions recursively.');
+        }
 
-        foreach ($plan['order'] as $id) {
-            if (isset($this->active[$id])) {
-                continue;
+        $this->initializing = true;
+
+        try {
+            $plan = $this->plan($disabled, $context->packages, $context->capabilities);
+            $this->skipped = $plan['skipped'];
+
+            foreach ($plan['order'] as $id) {
+                if (isset($this->active[$id])) {
+                    continue;
+                }
+
+                try {
+                    $this->telemetry->measure('extension', $id, function () use ($id, $context): void {
+                        $this->extensions[$id]->activate($context);
+                        $this->active[$id] = true;
+                    });
+                } catch (Throwable $exception) {
+                    throw BootstrapException::extensionFailed($id, $exception);
+                }
+
             }
-
-            try {
-                $this->extensions[$id]->activate($context);
-            } catch (Throwable $exception) {
-                throw BootstrapException::extensionFailed($id, $exception);
-            }
-
-            $this->active[$id] = true;
+        } finally {
+            $this->initializing = false;
         }
     }
 

@@ -4,24 +4,31 @@ declare(strict_types=1);
 
 namespace Gcego\Tables\Columns;
 
-use Gcego\Tables\Building\ColumnBuilder;
 use BackedEnum;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Evaluation\EvaluationContext;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Support\FieldName;
+use Gcego\Tables\Building\ColumnBuilder;
 use Gcego\Tables\Configuration\Access;
 use Gcego\Tables\Configuration\Format;
 use Gcego\Tables\Contracts\TableComponent;
 use Gcego\Tables\Presets\TablePresets;
 use Gcego\Tables\Support\Formats;
+use Gcego\Tables\Support\ValueResolver;
 use Gcego\Tables\TablesConfig;
 use Illuminate\Support\Str;
 use UnitEnum;
+use WeakMap;
 
 /**
  * The base of every column: a declarative definition of how one value of a
@@ -30,6 +37,8 @@ use UnitEnum;
  *     new Text('name', 'Subject Name')
  *     new Text(new Property(Text::Name, 'name'), new Property(Text::Searchable, true), new Property(Text::Sortable, true))
  *     new Text('category.name', 'Category')            // a relation path: eager-loaded, never lazy
+ *     Text::make('name')->searchable()->sortable()->tooltip(fn (Subject $record): string => $record->code)
+ *     Text::make('full_name')->state(fn (Teacher $record): string => $record->first_name.' '.$record->last_name)
  *
  * The name is a trusted path into the row; the browser only ever refers to
  * columns by these names, and they are checked against the definition.
@@ -38,6 +47,29 @@ use UnitEnum;
  */
 abstract class Column extends Component implements TableComponent
 {
+    use Makeable;
+
+    /** fn (mixed $record): mixed computes the cell value instead of reading the column name from the row. */
+    public const string StateUsing = 'state_using';
+
+    /** fn (?Authenticatable $user): bool, once per request: false removes the column (not queried, sorted, searched or exported). */
+    public const string VisibleUsing = 'visible_using';
+
+    /** fn (?Authenticatable $user): bool, once per request: true removes the column. */
+    public const string HiddenUsing = 'hidden_using';
+
+    /**
+     * Closure-valued presentation properties per column instance (columns are immutable).
+     *
+     * @var WeakMap<self, list<string>>|null
+     */
+    private static ?WeakMap $computedKeys = null;
+
+    /**
+     * Properties that shape the query and the column manager; they cannot vary per row.
+     */
+    public const array Structural = [self::Name, self::Searchable, self::Sortable, self::SortColumn, self::Hideable, self::Visible, self::VisibleFrom, self::Exportable];
+
     public const string NamePattern = '/^[a-z_][A-Za-z0-9_]{0,63}(?:\.[a-z_][A-Za-z0-9_]{0,63}){0,3}$/';
 
     /** true searches the column itself; a list of fields searches those instead ("first_name", "last_name"). */
@@ -80,6 +112,80 @@ abstract class Column extends Component implements TableComponent
 
     public const array Breakpoints = ['sm', 'md', 'lg', 'xl'];
 
+    /**
+     * The cell value for a row: the state_using closure, or the column name read from the row.
+     */
+    public function value(mixed $record): mixed
+    {
+        $state = $this->properties()->get(self::StateUsing)?->value;
+
+        return $state instanceof Computed
+            ? Components::evaluator()->evaluate($state, $this->rowContext(null, $record), $this, sprintf('state() of column "%s"', $this->columnName()))
+            : ValueResolver::get($record, $this->columnName());
+    }
+
+    /**
+     * This column for one row: every closure-valued presentation property
+     * (tooltip, placeholder, a badge's variants, a link's url, ...) is
+     * evaluated with $state, $record and $column and checked against its
+     * definition. Columns without closures are returned as they are.
+     */
+    public function forRow(mixed $state, mixed $record): static
+    {
+        self::$computedKeys ??= new WeakMap;
+        $computed = self::$computedKeys[$this] ??= $this->computedPresentationKeys();
+
+        if ($computed === []) {
+            return $this;
+        }
+
+        $context = null;
+        $resolved = [];
+        $cleared = [];
+
+        foreach ($computed as $key) {
+            $context ??= $this->rowContext($state, $record);
+            $value = $this->evaluateProperty($key, $context);
+
+            if ($value === null) {
+                $cleared[] = $key;
+            } else {
+                $resolved[] = new Property($key, $value);
+            }
+        }
+
+        if ($resolved === [] && $cleared === []) {
+            return $this;
+        }
+
+        return $this->withoutProperty(...$cleared)->withProperty(...$resolved);
+    }
+
+    /**
+     * Whether the column exists for this request (visible()/hidden() closures).
+     *
+     * @param  array<string, mixed>  $parameters  Named injections, such as the user.
+     */
+    public function isPresent(array $parameters = []): bool
+    {
+        $context = EvaluationContext::make($parameters)->withTyped(...array_values(array_filter($parameters, is_object(...))));
+
+        foreach ([self::VisibleUsing => false, self::HiddenUsing => true] as $key => $removedWhen) {
+            $condition = $this->get($key);
+
+            if ($condition instanceof Computed && (Components::evaluator()->evaluate($condition, $context, $this, sprintf('%s of column "%s"', $key, $this->columnName())) === true) === $removedWhen) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function hasComputedState(): bool
+    {
+        return $this->get(self::StateUsing) instanceof Computed;
+    }
+
     public function columnName(): string
     {
         $name = $this->get(self::Name);
@@ -89,7 +195,7 @@ abstract class Column extends Component implements TableComponent
 
     public function label(): string
     {
-        $label = $this->get(self::Label);
+        $label = $this->evaluateProperty(self::Label, ['column' => $this]);
 
         return is_string($label) ? $label : Str::headline(str_replace('.', ' ', $this->columnName()));
     }
@@ -203,6 +309,28 @@ abstract class Column extends Component implements TableComponent
         ]));
     }
 
+    /**
+     * @return list<string>
+     */
+    private function computedPresentationKeys(): array
+    {
+        $keys = [];
+
+        foreach ($this->properties() as $key => $property) {
+            if ($property->value instanceof Computed && static::definition()->property((string) $key)?->isCallback() !== true) {
+                $keys[] = (string) $key;
+            }
+        }
+
+        return $keys;
+    }
+
+    private function rowContext(mixed $state, mixed $record): EvaluationContext
+    {
+        return EvaluationContext::make(['state' => $state, 'record' => $record, 'column' => $this])
+            ->withTyped(...(is_object($record) ? [$record] : []));
+    }
+
     public function placeholder(): string
     {
         $placeholder = $this->get(self::Placeholder);
@@ -314,9 +442,33 @@ abstract class Column extends Component implements TableComponent
                 new PropertyDefinition(self::Placeholder, Type::string()),
                 new PropertyDefinition(self::VisibleFrom, Type::string(), rule: $one(self::Breakpoints), ruleDescription: 'sm, md, lg or xl'),
                 new PropertyDefinition(self::Exportable, Type::bool(), default: true),
+                new PropertyDefinition(self::StateUsing, Type::instanceOf(Computed::class)),
+                new PropertyDefinition(self::VisibleUsing, Type::instanceOf(Computed::class)),
+                new PropertyDefinition(self::HiddenUsing, Type::instanceOf(Computed::class)),
             )
             ->withoutChildren()
             ->withAllowedConfigurations([Format::class, Access::class, Tailwind::class])
+            ->withConstraint(static function (ComponentInterface $column): ?string {
+                if (! $column instanceof self) {
+                    return null;
+                }
+
+                foreach (self::Structural as $key) {
+                    if ($column->isComputed($key)) {
+                        return sprintf('column "%s": %s shapes the query and cannot be a closure; use visible(fn) or hidden(fn) to remove the column for some users.', $column->columnName(), $key);
+                    }
+                }
+
+                if ($column->hasComputedState() && $column->get(self::Searchable) === true) {
+                    return sprintf('column "%s" has a computed state; search it through searchable([...source fields]).', $column->columnName());
+                }
+
+                if ($column->hasComputedState() && $column->isSortable() && $column->get(self::SortColumn) === null) {
+                    return sprintf('column "%s" has a computed state; sort it through a SortColumn of the source.', $column->columnName());
+                }
+
+                return null;
+            })
             ->withConstraint(static function (ComponentInterface $column): ?string {
                 if (! $column instanceof self || ! $column->isSortable()) {
                     return null;

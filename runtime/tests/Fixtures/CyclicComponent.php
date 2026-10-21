@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Gcego\Runtime\Tests\Fixtures;
 
+use Gcego\Components\Collections\ComponentCollection;
+use Gcego\Components\Collections\ConfigurationCollection;
+use Gcego\Components\Collections\PropertyCollection;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentCollection;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\ConfigurationCollection;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyCollection;
+use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Components\Validation\ValidationResult;
 
 /**

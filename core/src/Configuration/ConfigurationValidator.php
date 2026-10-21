@@ -15,13 +15,13 @@ use Gcego\Core\Support\Identifier;
  * - Unknown keys are warnings, not errors, so older published config files keep working.
  * - Messages name keys and types only, never values.
  *
- * @phpstan-type Values array{enabled: bool, name: string, auto_boot: bool, environment_checks: bool, disabled_packages: list<string>, disabled_extensions: list<string>}
+ * @phpstan-type Values array{enabled: bool, name: string, auto_boot: bool, environment_checks: bool, disabled_packages: list<string>, disabled_extensions: list<string>, profiling: bool, slow_boot_ms: float, slow_package_ms: float, slow_extension_ms: float}
  */
 final class ConfigurationValidator
 {
     public const int MaxNameLength = 120;
 
-    private const array KnownKeys = ['enabled', 'name', 'auto_boot', 'environment_checks', 'packages', 'extensions'];
+    private const array KnownKeys = ['enabled', 'name', 'auto_boot', 'environment_checks', 'packages', 'extensions', 'diagnostics'];
 
     private const array KnownSectionKeys = ['disabled'];
 
@@ -40,7 +40,27 @@ final class ConfigurationValidator
             }
         }
 
+        $diagnostics = $config['diagnostics'] ?? [];
+        if (! is_array($diagnostics)) {
+            $errors[] = 'gcego.diagnostics must be an array.';
+            $diagnostics = [];
+        }
+        foreach (array_keys($diagnostics) as $key) {
+            if (! in_array($key, ['profiling', 'slow_boot_ms', 'slow_package_ms', 'slow_extension_ms'], true)) {
+                $warnings[] = 'gcego.diagnostics contains an unsupported option.';
+            }
+        }
+        $profilingErrors = [];
+        $profiling = $this->boolean($diagnostics, 'profiling', false, $profilingErrors);
+        foreach ($profilingErrors as $error) {
+            $errors[] = str_replace('gcego.profiling', 'gcego.diagnostics.profiling', $error);
+        }
+
         $values = [
+            'profiling' => $profiling,
+            'slow_boot_ms' => $this->threshold($diagnostics, 'slow_boot_ms', 100.0, $errors),
+            'slow_package_ms' => $this->threshold($diagnostics, 'slow_package_ms', 50.0, $errors),
+            'slow_extension_ms' => $this->threshold($diagnostics, 'slow_extension_ms', 50.0, $errors),
             'enabled' => $this->boolean($config, 'enabled', true, $errors),
             'name' => $this->name($config, $errors),
             'auto_boot' => $this->boolean($config, 'auto_boot', true, $errors),
@@ -151,6 +171,21 @@ final class ConfigurationValidator
         }
 
         return array_values(array_unique($valid));
+    }
+
+    /** @param array<mixed> $options
+     * @param  list<string>  $errors
+     */
+    private function threshold(array $options, string $key, float $default, array &$errors): float
+    {
+        $value = $options[$key] ?? $default;
+        if ((! is_int($value) && ! is_float($value)) || ! is_finite((float) $value) || $value <= 0) {
+            $errors[] = sprintf('gcego.diagnostics.%s must be a positive finite number.', $key);
+
+            return $default;
+        }
+
+        return (float) $value;
     }
 
     private function describeType(mixed $value): string

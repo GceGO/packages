@@ -22,7 +22,7 @@ new Blueprint('subjects', new Permission('subjects.view'), new Source(Subject::c
 ```
 
 ```php
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Security;
 
 new Security(new Property(Security::Permission, 'subjects.view'));
@@ -49,7 +49,7 @@ $subject = $security->record(new Source(Subject::class), $id, 'update');   // sc
 ## Requirements
 
 - PHP 8.3+ and Laravel 13.
-- GCEGO packages, all ^0.1: `gcego/components`, `core`, `blueprints`,
+- GCEGO packages, all ^0.1: `gcego/morfaw`, `core`, `blueprints`,
   `registry`, `runtime` and `data`.
 - Optional: `spatie/laravel-permission`, adapted, never required. gcego/sentinel
   (or the application) keeps handling authentication.

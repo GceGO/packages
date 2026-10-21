@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Forms\Form;
 use Gcego\Infolists\Infolist;

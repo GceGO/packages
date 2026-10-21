@@ -14,7 +14,7 @@ use Gcego\Actions\Edit;
 use Gcego\Actions\Execution\ActionContext;
 use Gcego\Actions\View;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Query\Query;
 use Gcego\Data\Source;
 use Gcego\Modules\Definitions\ModuleDefinition;

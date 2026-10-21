@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Exceptions;
 
+use Gcego\Components\Support\ValueDescriber;
 use OutOfBoundsException;
 
 /**
@@ -17,7 +18,7 @@ class MissingPropertyException extends OutOfBoundsException implements Component
         return new self(sprintf(
             'Component "%s" (%s) has no value for property "%s" and its definition declares no default.',
             $componentType,
-            $componentClass,
+            ValueDescriber::className($componentClass),
             $key,
         ));
     }

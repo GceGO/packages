@@ -95,7 +95,7 @@ final readonly class DefinitionAuthorizer
         $nodes = [];
         $root = null;
 
-        foreach ((new ComponentWalker)->preOrder($definition) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($definition) as $node) {
             $root ??= $node;
             $nodes[$node->path->toString()] ??= $node;
         }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Pages\Components\Content;
 use Gcego\Pages\Types\CustomPage;
 use Gcego\Security\Requirements\Ability;

@@ -75,7 +75,7 @@ final readonly class PageInspector
         $diagnostics = [...$diagnostics, ...$this->routeConflicts($identity, $page)];
         $hosts = 1;
 
-        foreach ((new ComponentWalker)->preOrder($page) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($page) as $node) {
             $component = $node->component;
             $path = $node->path->toString();
             $components[] = [

@@ -12,9 +12,12 @@ use Gcego\Actions\Resolution\ActionResolver;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Chroma\ChromaManager;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Evaluation\State;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Data\Source;
 use Gcego\Forms\Exceptions\InvalidStateException;
+use Gcego\Forms\Fields\Field;
 use Gcego\Forms\Fields\FileUpload;
 use Gcego\Forms\Fields\PasswordInput;
 use Gcego\Forms\Fields\Repeater;
@@ -88,11 +91,18 @@ final class FormHost extends Component
      */
     public array $data = [];
 
+    /**
+     * Values before the current client update, for afterStateUpdated's $old (never sent to the browser).
+     *
+     * @var array<string, mixed>
+     */
+    private array $previous = [];
+
     public function mount(string $definition, ?string $action = null, string|int|null $record = null): void
     {
         [$this->definition, $blueprint] = app(ActionResolver::class)->blueprint($definition);
         $form = $this->form($blueprint);
-        app(SecurityManager::class)->definition($blueprint, $this->formPath($blueprint, $form))->authorize();
+        app(SecurityManager::class)->definition($blueprint, $this->formPath($blueprint, $this->baseForm($blueprint)))->authorize();
 
         $this->record = $record;
         $this->action = $action ?? $this->defaultAction($blueprint);
@@ -119,8 +129,45 @@ final class FormHost extends Component
     public function updating(string $property, mixed $value): void
     {
         if ($property === 'data' || str_starts_with($property, 'data.')) {
-            $this->assertDeclared($property === 'data' ? '' : substr($property, 5));
+            $path = $property === 'data' ? '' : substr($property, 5);
+            $this->assertDeclared($path);
+            $this->previous[$path] = $this->state()->get($path);
         }
+    }
+
+    /**
+     * Run the updated field's afterStateUpdated closure. It may only set
+     * declared fields; everything it sets is validated on submit like any input.
+     */
+    public function updated(string $property, mixed $value): void
+    {
+        if (! str_starts_with($property, 'data.')) {
+            return;
+        }
+
+        $path = substr($property, 5);
+        $forms = app(FormManager::class);
+        $entry = $this->entryFor($forms->schema($this->form()), $path);
+        $hook = $entry?->field->get(Field::AfterStateUpdated);
+
+        if ($entry === null || ! $hook instanceof Computed) {
+            return;
+        }
+
+        $state = new State($this->data);
+        $itemPath = $entry->repeater === null ? null : substr($path, 0, (int) strrpos($path, '.'));
+        $recording = $state->record(fn (): mixed => $forms->evaluating($this->model(), fn (): mixed => $forms->evaluation()->evaluate(
+            $hook->closure,
+            $state,
+            $itemPath,
+            ['state' => $value, 'old' => $this->previous[$path] ?? null, 'component' => $entry->field],
+        ), $this->operation()));
+
+        foreach ($recording['writes'] as $written) {
+            $this->assertDeclared($written);
+        }
+
+        $this->data = $state->all();
     }
 
     public function addItem(string $path): void
@@ -237,8 +284,10 @@ final class FormHost extends Component
             $errors[(string) preg_replace('/^data\./', '', $key)] = array_values(array_filter((array) $messages, is_string(...)));
         }
 
-        $frame = new FormRenderFrame($schema, new FormState($this->data), $forms->access($schema, $model), 'data', $errors, step: $this->step, model: $this->sourceModel(), idPrefix: is_string($id = $this->getId()) ? $id : null);
-        $content = app(FormRenderContext::class)->run($frame, fn (): string => app(Runtime::class)->render($form, RenderMode::Livewire, identity: $this->definition)->toHtml());
+        $state = new FormState($this->data);
+        $live = $forms->evaluating($model, fn (): array => $forms->livePaths($schema, $state), $this->operation());
+        $frame = new FormRenderFrame($schema, $state, $forms->access($schema, $model), 'data', $errors, step: $this->step, model: $this->sourceModel(), idPrefix: is_string($id = $this->getId()) ? $id : null, live: $live);
+        $content = $forms->evaluating($model, fn (): string => app(FormRenderContext::class)->run($frame, fn (): string => app(Runtime::class)->render($form, RenderMode::Livewire, identity: $this->definition)->toHtml()), $this->operation());
 
         foreach ($errors as $path => $messages) {
             $entry = $this->entryFor($schema, $path);
@@ -383,16 +432,34 @@ final class FormHost extends Component
         return app(ActionResolver::class)->blueprint($this->definition)[1];
     }
 
+    /**
+     * The blueprint's form with the extensions registered for "{blueprint name}.form".
+     */
     private function form(?BlueprintInterface $blueprint = null): Form
     {
-        $form = ($blueprint ?? $this->blueprint())->part(BlueprintRole::Form);
+        $blueprint ??= $this->blueprint();
+
+        return app(FormManager::class)->extended($this->baseForm($blueprint), $blueprint->name() ?? $this->definition);
+    }
+
+    private function baseForm(BlueprintInterface $blueprint): Form
+    {
+        $form = $blueprint->part(BlueprintRole::Form);
 
         return $form instanceof Form ? $form : abort(404);
     }
 
+    /**
+     * The $operation form closures receive: the action when it is create, edit or view.
+     */
+    private function operation(): ?string
+    {
+        return in_array($this->action, ['create', 'edit', 'view'], true) ? $this->action : null;
+    }
+
     private function formPath(BlueprintInterface $blueprint, Form $form): string
     {
-        foreach ((new ComponentWalker)->preOrder($blueprint) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($blueprint) as $node) {
             if ($node->component === $form) {
                 return $node->path->toString();
             }

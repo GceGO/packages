@@ -47,7 +47,7 @@ final readonly class SettingsPageKind implements DefinitionKind
     {
         $page = $this->page($definition);
 
-        return ['title' => $page->title(), 'group' => $page->group(), 'scope' => $page->scope()->value];
+        return ['title' => $page->title(), 'group' => $page->groupName(), 'scope' => $page->scope()->value];
     }
 
     private function page(object $definition): SettingsPage

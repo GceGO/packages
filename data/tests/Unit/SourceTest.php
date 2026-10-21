@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Blueprints\BlueprintRole;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Definition\SourceCompiler;
 use Gcego\Data\Definition\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidSourceException;

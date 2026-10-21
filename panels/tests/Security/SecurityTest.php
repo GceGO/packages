@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Panels\Context\PanelContext;
 use Gcego\Panels\Context\PanelContextResolver;
 use Gcego\Panels\Contracts\PanelAccessPolicy;

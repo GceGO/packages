@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Navigation\Tests\Fixtures\Providers;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Navigation\Components\Item;
 use Gcego\Navigation\Contracts\MultipleNavigationsContributor;
 

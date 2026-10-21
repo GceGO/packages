@@ -20,11 +20,14 @@
     "require": {
         "php": "^8.3",
         "composer-runtime-api": "^2.2",
+        "composer/semver": "^3.4",
+        "illuminate/console": "^13.0",
         "illuminate/contracts": "^13.0",
-        "illuminate/support": "^13.0"
+        "illuminate/support": "^13.0",
+        "psr/log": "^3.0"
     },
     "require-dev": {
-        "gcego/components": "@dev",
+        "gcego/morfaw": "@dev",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "orchestra/testbench": "^11.0",
@@ -51,7 +54,13 @@
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
         "format": "vendor/bin/pint",
-        "benchmark": "@php benchmarks/run.php"
+        "benchmark": "@php benchmarks/run.php",
+        "check": [
+            "@composer validate --strict",
+            "vendor/bin/pint --test",
+            "vendor/bin/phpstan analyse --debug --no-progress",
+            "@test"
+        ]
     },
     "extra": {
         "laravel": {
@@ -67,5 +76,27 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "archive": {
+        "exclude": [
+            "/vendor",
+            "/build",
+            "/coverage",
+            "/tests",
+            "/benchmarks",
+            "/.github",
+            "/.agents",
+            "/.aws",
+            "/.codex",
+            "/.idea",
+            "/.vscode",
+            "/.env",
+            "/.env.*",
+            "/.phpunit.cache",
+            "/.phpunit.result.cache",
+            "/composer.lock",
+            "/phpunit.xml",
+            "/phpstan.neon"
+        ]
+    }
 }

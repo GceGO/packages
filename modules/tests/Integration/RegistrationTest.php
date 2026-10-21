@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Modules\Compilation\ModuleCompiler;
 use Gcego\Modules\Exceptions\InvalidModuleException;

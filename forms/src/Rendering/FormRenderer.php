@@ -58,7 +58,7 @@ final class FormRenderer extends BladeRenderer
         $schema = $this->forms->schema($component);
         $frame = new FormRenderFrame($schema, new FormState($this->forms->hydrate($component)), $this->forms->access($schema));
 
-        return RenderResult::trustedHtml($this->frames->run($frame, fn (): string => parent::render($component, $context)->toHtml()));
+        return RenderResult::trustedHtml($this->forms->evaluating(null, fn (): string => $this->frames->run($frame, fn (): string => parent::render($component, $context)->toHtml())));
     }
 
     protected function view(): string

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Forms\Schema;
 
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Forms\Configuration\DisabledWhen;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Configuration\RequiredWhen;
@@ -48,7 +48,7 @@ final class SchemaCompiler
         $this->steps = [];
         $root = null;
 
-        foreach ((new ComponentWalker)->preOrder($form) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($form) as $node) {
             $root ??= $node;
 
             if ($node->parentPath !== null) {

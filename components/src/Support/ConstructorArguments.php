@@ -8,7 +8,7 @@ use Gcego\Components\Contracts\Buildable;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
 use Gcego\Components\Exceptions\InvalidConfigurationException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
  * Classifies component constructor arguments.

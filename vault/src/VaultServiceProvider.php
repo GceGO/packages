@@ -6,6 +6,8 @@ namespace Gcego\Vault;
 
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
+use Gcego\Navigation\NavigationManager;
+use Gcego\Panels\PanelManager;
 use Gcego\Security\Contracts\PermissionProvider;
 use Gcego\Security\Contracts\TenantResolver;
 use Gcego\Security\Roles\RoleResolver;
@@ -32,18 +34,29 @@ use Gcego\Vault\Console\SyncCommand;
 use Gcego\Vault\Governance\AccessRequests;
 use Gcego\Vault\Governance\Authority;
 use Gcego\Vault\Governance\EscalationGuard;
+use Gcego\Vault\Integration\PanelVaultExtension;
+use Gcego\Vault\Integration\VaultNavigationContributor;
+use Gcego\Vault\Livewire\AccessRequestsScreen;
+use Gcego\Vault\Livewire\ApprovalQueue;
+use Gcego\Vault\Livewire\AuditHistory;
+use Gcego\Vault\Livewire\Diagnostics;
+use Gcego\Vault\Livewire\PeopleIndex;
+use Gcego\Vault\Livewire\PermissionMatrix;
+use Gcego\Vault\Livewire\PermissionRegistryScreen;
+use Gcego\Vault\Livewire\PersonAccess;
+use Gcego\Vault\Livewire\RoleDetails;
+use Gcego\Vault\Livewire\RoleEditor;
+use Gcego\Vault\Livewire\RolesIndex;
+use Gcego\Vault\Livewire\TemporaryAccess;
+use Gcego\Vault\Livewire\VaultSettings;
 use Gcego\Vault\Middleware\RequirePermission;
 use Gcego\Vault\Permissions\PermissionDiscovery;
 use Gcego\Vault\Permissions\PermissionRegistry;
 use Gcego\Vault\Roles\RoleManager;
 use Gcego\Vault\Support\Context;
-use Gcego\Vault\Tenancy\VaultTenantResolver;
-use Gcego\Navigation\NavigationManager;
-use Gcego\Panels\PanelManager;
-use Gcego\Vault\Integration\PanelVaultExtension;
-use Gcego\Vault\Integration\VaultNavigationContributor;
 use Gcego\Vault\Support\HolderReference;
 use Gcego\Vault\Support\VaultStyles;
+use Gcego\Vault\Tenancy\VaultTenantResolver;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
@@ -73,19 +86,19 @@ final class VaultServiceProvider extends ServiceProvider implements PackageInter
 
     /** Livewire components of the Vault screens (see Integration\Screens). */
     public const array Components = [
-        'gcego-vault-roles' => \Gcego\Vault\Livewire\RolesIndex::class,
-        'gcego-vault-role-editor' => \Gcego\Vault\Livewire\RoleEditor::class,
-        'gcego-vault-role-details' => \Gcego\Vault\Livewire\RoleDetails::class,
-        'gcego-vault-permissions' => \Gcego\Vault\Livewire\PermissionRegistryScreen::class,
-        'gcego-vault-matrix' => \Gcego\Vault\Livewire\PermissionMatrix::class,
-        'gcego-vault-people' => \Gcego\Vault\Livewire\PeopleIndex::class,
-        'gcego-vault-person' => \Gcego\Vault\Livewire\PersonAccess::class,
-        'gcego-vault-temporary' => \Gcego\Vault\Livewire\TemporaryAccess::class,
-        'gcego-vault-requests' => \Gcego\Vault\Livewire\AccessRequestsScreen::class,
-        'gcego-vault-approvals' => \Gcego\Vault\Livewire\ApprovalQueue::class,
-        'gcego-vault-audit' => \Gcego\Vault\Livewire\AuditHistory::class,
-        'gcego-vault-diagnostics' => \Gcego\Vault\Livewire\Diagnostics::class,
-        'gcego-vault-settings' => \Gcego\Vault\Livewire\VaultSettings::class,
+        'gcego-vault-roles' => RolesIndex::class,
+        'gcego-vault-role-editor' => RoleEditor::class,
+        'gcego-vault-role-details' => RoleDetails::class,
+        'gcego-vault-permissions' => PermissionRegistryScreen::class,
+        'gcego-vault-matrix' => PermissionMatrix::class,
+        'gcego-vault-people' => PeopleIndex::class,
+        'gcego-vault-person' => PersonAccess::class,
+        'gcego-vault-temporary' => TemporaryAccess::class,
+        'gcego-vault-requests' => AccessRequestsScreen::class,
+        'gcego-vault-approvals' => ApprovalQueue::class,
+        'gcego-vault-audit' => AuditHistory::class,
+        'gcego-vault-diagnostics' => Diagnostics::class,
+        'gcego-vault-settings' => VaultSettings::class,
     ];
 
     public function register(): void

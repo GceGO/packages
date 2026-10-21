@@ -69,7 +69,7 @@ final readonly class ActionResolver
         $actions = [];
         $names = [];
 
-        foreach ((new ComponentWalker)->preOrder($blueprint) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($blueprint) as $node) {
             $action = $node->component;
 
             if (! $action instanceof Action) {

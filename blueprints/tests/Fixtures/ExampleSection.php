@@ -8,9 +8,9 @@ use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Blueprints\Contracts\PartContainer;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 /**
  * A layout section that groups other parts (PartContainer).

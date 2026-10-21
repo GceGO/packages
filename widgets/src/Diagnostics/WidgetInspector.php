@@ -74,7 +74,7 @@ final readonly class WidgetInspector
         $renderers = $this->container->bound(RendererRegistry::class) ? $this->container->make(RendererRegistry::class) : null;
         $slots = $this->container->bound(SlotRegistry::class) ? $this->container->make(SlotRegistry::class) : null;
 
-        foreach ((new ComponentWalker)->preOrder($widget) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($widget) as $node) {
             $child = $node->component;
 
             if (! $child instanceof Widget) {

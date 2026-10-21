@@ -64,7 +64,7 @@ final class NavigationGenerator extends AbstractGenerator
         $imports = ['Gcego\\Navigation\\Components\\Group', 'Gcego\\Navigation\\Components\\Item', 'Gcego\\Navigation\\Navigation'];
 
         if ($permission !== null) {
-            $imports[] = 'Gcego\\Components\\Property';
+            $imports[] = 'Gcego\\Components\\Properties\\Property';
         }
 
         $this->next(sprintf("Use it in a panel: new Property(Panel::Navigation, '%s'), or render navigation:%s.", $name, $name));

@@ -35,7 +35,7 @@ it('shows the registry with sources, roots, cache status, paging and failures', 
         ->and(collect($registry['roots'])->pluck('path'))->toContain('app/GCEGo/Panels');
 
     @mkdir(ws('app/GCEGo/Pages'));
-    file_put_contents(ws('app/GCEGo/Pages/broken.php'), "<?php\nreturn new Gcego\\Pages\\Page(new Gcego\\Components\\Property(Gcego\\Pages\\Page::Name, 'Bad Name'));\n");
+    file_put_contents(ws('app/GCEGo/Pages/broken.php'), "<?php\nreturn new Gcego\\Pages\\Page(new Gcego\\Components\\Properties\\Property(Gcego\\Pages\\Page::Name, 'Bad Name'));\n");
     [$code, $output] = gcego('gcego:registry');
 
     expect($code)->toBe(ExitCode::ValidationFailed)->and($output)->toContain('app/GCEGo/Pages/broken.php')->toContain('A page needs a Name');

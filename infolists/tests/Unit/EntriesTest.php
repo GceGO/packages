@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Infolists\Configuration\Format;
 use Gcego\Infolists\Configuration\Resolve;
 use Gcego\Infolists\Configuration\VisibleWhen;

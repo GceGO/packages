@@ -9,7 +9,7 @@ use Gcego\Chroma\Slot;
 use Gcego\Chroma\SlotMode;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 it('accepts one class per line or class strings', function (): void {
     $lines = new Slot(Tailwind::Wrapper, [

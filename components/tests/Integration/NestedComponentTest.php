@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Tests\Fixtures\ChildComponent;
 use Gcego\Components\Tests\Fixtures\ExampleComponent;
 use Gcego\Components\Tests\Fixtures\FakeModel;
 use Gcego\Components\Tests\Fixtures\ParentComponent;
 use Gcego\Components\Tests\Fixtures\Style;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Components\Validation\ErrorCode;
 
 /**

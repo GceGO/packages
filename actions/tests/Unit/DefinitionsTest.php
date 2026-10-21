@@ -24,7 +24,7 @@ use Gcego\Actions\Handlers\DeleteRecord;
 use Gcego\Actions\Restore;
 use Gcego\Actions\Tests\Fixtures\PublishSubject;
 use Gcego\Actions\View;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Luminaries\Icons\Alias;
 use Gcego\Luminaries\Icons\Heroicon;
 

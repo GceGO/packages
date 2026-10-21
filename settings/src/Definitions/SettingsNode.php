@@ -7,12 +7,12 @@ namespace Gcego\Settings\Definitions;
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Settings\Support\NamedArguments;
 
 /**
- * The base of settings definitions: gcego/components definitions that also
+ * The base of settings definitions: gcego/morfaw definitions that also
  * accept named arguments (see NamedArguments). Immutable; constructing one
  * never queries, reads configuration or writes anything.
  */

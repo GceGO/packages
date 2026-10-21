@@ -52,9 +52,9 @@ final readonly class EnvironmentChecker
     {
         $details = ['version' => $this->phpVersion, 'minimum' => self::MinimumPhpVersion];
 
-        return version_compare($this->phpVersion, self::MinimumPhpVersion, '>=')
+        return (version_compare($this->phpVersion, self::MinimumPhpVersion, '>=') && version_compare($this->phpVersion, '9.0.0', '<'))
             ? DiagnosticResult::passed('php.version', sprintf('PHP %s is supported.', $this->phpVersion), $details)
-            : DiagnosticResult::failed('php.version', sprintf('PHP %s is older than the required %s.', $this->phpVersion, self::MinimumPhpVersion), $details);
+            : DiagnosticResult::failed('php.version', (version_compare($this->phpVersion, '9.0.0', '>=') ? 'PHP must satisfy the supported ^8.3 version range.' : sprintf('PHP %s is older than the required %s.', $this->phpVersion, self::MinimumPhpVersion)), $details);
     }
 
     private function extensions(): DiagnosticResult
@@ -72,8 +72,8 @@ final readonly class EnvironmentChecker
         $version = $this->app->version();
         $details = ['version' => $version, 'minimum' => self::MinimumLaravelVersion];
 
-        return version_compare($version, self::MinimumLaravelVersion, '>=')
+        return (version_compare($version, self::MinimumLaravelVersion, '>=') && version_compare($version, '14.0.0', '<'))
             ? DiagnosticResult::passed('laravel.version', sprintf('Laravel %s is supported.', $version), $details)
-            : DiagnosticResult::failed('laravel.version', sprintf('Laravel %s is older than the required %s.', $version, self::MinimumLaravelVersion), $details);
+            : DiagnosticResult::failed('laravel.version', (version_compare($version, '14.0.0', '>=') ? 'Laravel must satisfy the supported ^13.0 version range.' : sprintf('Laravel %s is older than the required %s.', $version, self::MinimumLaravelVersion)), $details);
     }
 }

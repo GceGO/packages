@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Contracts\DataProvider;
 use Gcego\Data\DataManager;
 use Gcego\Data\Definition\SourceDefinition;

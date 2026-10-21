@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Runtime\Tests\Fixtures;
 
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
 
 /**
  * A component whose renderer points at a missing view.

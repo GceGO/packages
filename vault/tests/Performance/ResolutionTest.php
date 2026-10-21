@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
+use Gcego\Vault\Caching\Invalidation;
 use Gcego\Vault\Models\Permission;
 use Gcego\Vault\Models\Role;
 use Gcego\Vault\Tests\Fixtures\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Builds 2,000 permissions, 200 roles in 20 inheritance chains 10 deep, and
@@ -80,7 +81,7 @@ function largeWorld(): array
         DB::table('gcego_vault_assignments')->insert($chunk);
     }
 
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
 
     return $users;
 }

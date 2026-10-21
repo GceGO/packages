@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Gcego\Blueprints\Blueprint;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
 use Gcego\Runtime\Rendering\RendererRegistry;
@@ -24,10 +25,15 @@ use Gcego\Runtime\Tests\Fixtures\ExampleTable;
 use Gcego\Runtime\Tests\Fixtures\ListContainerRenderer;
 use Gcego\Runtime\Tests\Fixtures\ParagraphRenderer;
 use Gcego\Runtime\Tests\Fixtures\TableRenderer;
+use Illuminate\Support\Facades\Facade;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\Foundation\Application;
 
 require __DIR__.'/../vendor/autoload.php';
+
+$app = new Illuminate\Foundation\Application(dirname(__DIR__));
+Facade::setFacadeApplication($app);
+$app->register(ComponentServiceProvider::class);
 
 $components = max(10, (int) ($argv[1] ?? 500));
 $iterations = max(1, (int) ($argv[2] ?? 20));

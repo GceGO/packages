@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Infolists\InfolistManager;
 use Gcego\Infolists\Tests\Fixtures\Models\Category;
 use Gcego\Infolists\Tests\Fixtures\Models\Membership;
@@ -13,8 +14,15 @@ use Gcego\Infolists\Tests\TestCase;
 use Gcego\Security\SecurityManager;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature');
 

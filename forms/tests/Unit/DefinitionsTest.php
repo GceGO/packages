@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Forms\Configuration\Condition;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Configuration\Rules;

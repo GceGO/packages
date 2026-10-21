@@ -6,6 +6,7 @@ namespace Gcego\Forms\Tests;
 
 use Gcego\Actions\ActionsServiceProvider;
 use Gcego\Chroma\ChromaServiceProvider;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Forms\FormsServiceProvider;
@@ -56,6 +57,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, LuminariesServiceProvider::class, ActionsServiceProvider::class, FormsServiceProvider::class];
     }
 

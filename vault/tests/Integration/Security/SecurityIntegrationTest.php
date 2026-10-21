@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Security\Exceptions\TenantAccessException;
 use Gcego\Security\Permissions\Permission;
 use Gcego\Security\SecurityManager;
 use Gcego\Vault\Tests\Fixtures\Models\Book;
@@ -63,7 +64,7 @@ it('adds tenant roles to verified memberships only, and only in their tenant', f
         ->and(app(SecurityManager::class)->check(new Permission('grades.update'))->allowed)->toBeFalse();
 
     actAs($teacher);
-    expect(fn () => app(SecurityManager::class)->enterTenant('2'))->toThrow(Gcego\Security\Exceptions\TenantAccessException::class);
+    expect(fn () => app(SecurityManager::class)->enterTenant('2'))->toThrow(TenantAccessException::class);
 });
 
 it('reports global Vault roles to gcego/security', function (): void {

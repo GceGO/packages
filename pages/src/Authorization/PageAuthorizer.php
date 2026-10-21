@@ -86,7 +86,7 @@ final class PageAuthorizer
      */
     public function allowsChild(string $identity, Page $page, string $path): bool
     {
-        foreach ((new ComponentWalker)->preOrder($page) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($page) as $node) {
             if ($node->path->toString() !== $path) {
                 continue;
             }

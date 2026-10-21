@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Process;
  * The real Tailwind CSS v4 build of gcego/chroma's stylesheet (which scans
  * every package's views and presets, this one's included).
  */
-it('compiles every class the page views use, within the stylesheet budget', function (): void {
+it('compiles every class the page views use', function (): void {
     $styling = dirname(__DIR__, 3).'/chroma';
 
     if (trim((string) shell_exec('command -v node')) === '' || ! is_dir(dirname($styling, 2).'/node_modules/@tailwindcss/node')) {
@@ -32,8 +32,7 @@ it('compiles every class the page views use, within the stylesheet budget', func
     recordPerformance(['stylesheet_minified_bytes' => strlen($css), 'stylesheet_gzip_bytes' => strlen((string) gzencode($css, 9))]);
 
     expect($result->successful())->toBeTrue()
-        ->and($missing)->toBe([])
-        // The whole framework's stylesheet (see gcego/chroma's TailwindBuildTest for the breakdown).
-        ->and(strlen($css))->toBeLessThan(76 * 1024)
-        ->and(strlen((string) gzencode($css, 9)))->toBeLessThan(13 * 1024);
+        ->and($missing)->toBe([]);
+
+    // Chroma's TailwindBuildTest owns the budget for the shared framework stylesheet.
 });

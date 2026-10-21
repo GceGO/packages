@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Forms\Fields\ChoiceField;
 use Gcego\Forms\Form;
 use Gcego\Forms\FormManager;
@@ -15,7 +16,14 @@ use Gcego\Forms\Tests\TestCase;
 use Gcego\Runtime\Runtime;
 use Gcego\Security\SecurityManager;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Facade;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature');
 

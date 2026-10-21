@@ -6,10 +6,10 @@ namespace Gcego\Analytics\Reports;
 
 use Gcego\Analytics\Definitions\AnalyticsNode;
 use Gcego\Analytics\Filters\DateRangePreset;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 /**
  * A report: grouped rows of a dataset.

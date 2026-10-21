@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Gcego\Forms;
 
+use Closure;
+use Gcego\Components\Facades\Components;
 use Gcego\Forms\Diagnostics\FormInspector;
 use Gcego\Forms\Diagnostics\FormReport;
+use Gcego\Forms\Exceptions\InvalidFieldException;
 use Gcego\Forms\Exceptions\InvalidStateException;
 use Gcego\Forms\Fields\ChoiceField;
 use Gcego\Forms\Fields\Field;
@@ -15,6 +18,7 @@ use Gcego\Forms\Fields\Repeater;
 use Gcego\Forms\Options\OptionCollection;
 use Gcego\Forms\Options\OptionsResolver;
 use Gcego\Forms\Reactive\ConditionEvaluator;
+use Gcego\Forms\Reactive\FormEvaluation;
 use Gcego\Forms\Schema\FormSchema;
 use Gcego\Forms\Schema\SchemaCompiler;
 use Gcego\Forms\State\FieldAccess;
@@ -49,9 +53,84 @@ final class FormManager
      */
     private WeakMap $schemas;
 
+    /**
+     * @var WeakMap<Form, array<string, Form>>
+     */
+    private WeakMap $extended;
+
     public function __construct(private readonly Container $container, private readonly FormsConfig $config)
     {
         $this->schemas = new WeakMap;
+        $this->extended = new WeakMap;
+    }
+
+    /**
+     * The blueprint's form with every Components::extend() registered for
+     * "{blueprint name}.form" applied, so modules can add, change or remove
+     * fields of another module's form:
+     *
+     *     Components::extend('subjects.form', fn (SchemaPatch $patch) => $patch
+     *         ->insertAfter('code', TextInput::make('short_code')));
+     *
+     * The result is cached per form instance, so every lifecycle (render,
+     * update, submit) works on the same patched form.
+     */
+    public function extended(Form $form, string $blueprint): Form
+    {
+        if (isset($this->extended[$form][$blueprint])) {
+            return $this->extended[$form][$blueprint];
+        }
+
+        $patched = Components::extended($blueprint.'.form', $form);
+
+        if (! $patched instanceof Form) {
+            throw InvalidFieldException::invalid('Form', sprintf('extensions of "%s.form" must keep the form as the root.', $blueprint));
+        }
+
+        $cache = $this->extended[$form] ?? [];
+        $cache[$blueprint] = $patched;
+        $this->extended[$form] = $cache;
+
+        return $patched;
+    }
+
+    /**
+     * Field paths rendered live for this state: those conditions declare, plus
+     * those closures read while the conditions are evaluated.
+     *
+     * @return list<string>
+     */
+    public function livePaths(FormSchema $schema, FormState $state): array
+    {
+        $conditions = $this->conditions();
+        $discovered = $this->evaluation()->discover(static function () use ($conditions, $schema, $state): void {
+            foreach ($conditions->instances($schema, $state, visibleOnly: false) as $instance) {
+                if ($conditions->visible($instance, $state)) {
+                    $conditions->required($instance, $state);
+                    $conditions->disabled($instance, $state);
+                }
+            }
+        });
+
+        return array_values(array_unique([...$schema->live, ...array_filter($discovered, static fn (string $path): bool => $schema->entry($path) !== null)]));
+    }
+
+    /**
+     * Run the callback with $record and $operation available to form closures.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $callback
+     * @return T
+     */
+    public function evaluating(?Model $record, Closure $callback, ?string $operation = null): mixed
+    {
+        return $this->evaluation()->within(['record' => $record, 'operation' => $operation ?? ($record === null ? 'create' : 'edit')], $callback);
+    }
+
+    public function evaluation(): FormEvaluation
+    {
+        return $this->container->make(FormEvaluation::class);
     }
 
     public function schema(Form $form): FormSchema
@@ -66,7 +145,7 @@ final class FormManager
     {
         $schema = $this->schema($form);
 
-        return $this->container->make(StateHydrator::class)->hydrate($schema, $this->access($schema, $record), $record);
+        return $this->evaluating($record, fn (): array => $this->container->make(StateHydrator::class)->hydrate($schema, $this->access($schema, $record), $record));
     }
 
     /**
@@ -79,6 +158,16 @@ final class FormManager
      * @throws ValidationException|InvalidStateException
      */
     public function process(Form $form, array $submitted, ?Model $record = null, ?string $model = null): array
+    {
+        return $this->evaluating($record, fn (): array => $this->processWithin($form, $submitted, $record, $model));
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $submitted
+     * @param  class-string<Model>|null  $model
+     * @return array<string, mixed>
+     */
+    private function processWithin(Form $form, array $submitted, ?Model $record, ?string $model): array
     {
         $schema = $this->schema($form);
         $state = $this->normalize($schema, $submitted);
@@ -99,12 +188,14 @@ final class FormManager
      */
     public function submission(Form $form, array $submitted, ?Model $record = null, ?string $model = null): Submission
     {
-        $schema = $this->schema($form);
-        $state = $this->normalize($schema, $submitted);
-        $access = $this->access($schema, $record);
-        $validated = $this->container->make(ValidationEngine::class)->validate($schema, $state, $access, $record, model: $model ?? ($record === null ? null : $record::class));
+        return $this->evaluating($record, function () use ($form, $submitted, $record, $model): Submission {
+            $schema = $this->schema($form);
+            $state = $this->normalize($schema, $submitted);
+            $access = $this->access($schema, $record);
+            $validated = $this->container->make(ValidationEngine::class)->validate($schema, $state, $access, $record, model: $model ?? ($record === null ? null : $record::class));
 
-        return $this->container->make(StateDehydrator::class)->submission($schema, $state, $validated, $access, $record);
+            return $this->container->make(StateDehydrator::class)->submission($schema, $state, $validated, $access, $record);
+        });
     }
 
     /**
@@ -117,9 +208,11 @@ final class FormManager
      */
     public function validateStep(Form $form, array $submitted, int $step, ?Model $record = null, ?string $model = null): void
     {
-        $schema = $this->schema($form);
-        $state = $this->normalize($schema, $submitted);
-        $this->container->make(ValidationEngine::class)->validate($schema, $state, $this->access($schema, $record), $record, $step, $model ?? ($record === null ? null : $record::class));
+        $this->evaluating($record, function () use ($form, $submitted, $step, $record, $model): void {
+            $schema = $this->schema($form);
+            $state = $this->normalize($schema, $submitted);
+            $this->container->make(ValidationEngine::class)->validate($schema, $state, $this->access($schema, $record), $record, $step, $model ?? ($record === null ? null : $record::class));
+        });
     }
 
     /**

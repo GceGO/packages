@@ -20,7 +20,7 @@ app(Gcego\Runtime\Runtime::class)->render('blueprint:subjects');    // via gcego
 ## Requirements
 
 - PHP 8.3+, Laravel 13, Livewire 4.4+
-- `gcego/components`, `gcego/core`, `gcego/blueprints` and `gcego/registry` ^0.1
+- `gcego/morfaw`, `gcego/core`, `gcego/blueprints` and `gcego/registry` ^0.1
 - Tailwind CSS v4 and Alpine.js are provided by the application; runtime adds no JavaScript or CSS
 
 ## Installation

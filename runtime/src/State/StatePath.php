@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Runtime\State;
 
-use Gcego\Components\ComponentPath;
+use Gcego\Components\Trees\ComponentPath;
 use Gcego\Runtime\Exceptions\InvalidStateException;
 
 /**

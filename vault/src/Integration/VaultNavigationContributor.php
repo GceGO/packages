@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Vault\Integration;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Navigation\Components\Group;
 use Gcego\Navigation\Components\Item;
 use Gcego\Navigation\Contracts\MultipleNavigationsContributor;

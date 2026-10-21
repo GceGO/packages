@@ -1,5 +1,29 @@
 # Composition
 
+## Layout schemas
+
+```php
+use Gcego\Components\Component;
+use Gcego\Components\Facades\Components;
+
+$items = Component::collect([
+    Component::item('statistics'),
+    Component::item('activity'),
+]);
+
+$layout = Components::schema([
+    Component::section('dashboard')->label('Dashboard')->components([
+        Component::group('metrics')->child($items),
+    ]),
+])->assertValid();
+```
+
+The schema is the root component. Sections describe major areas, groups collect
+related components, and items are leaves. Names are required and non-empty.
+`components()` and `child()` append children; both return new builders.
+`collect()` consumes iterables, builds child builders, skips null entries and
+preserves declaration order. `normalize()` and `tree()` work on the schema root.
+
 ## Children
 
 ```php
@@ -108,7 +132,7 @@ use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Components\Traversal\TraversalOrder;
 use Gcego\Components\Traversal\Visit;
 
-$walker = new ComponentWalker; // or new ComponentWalker(maxDepth: 64)
+$walker = app(ComponentWalker::class); // uses provider configuration
 
 foreach ($walker->preOrder($root) as $node) {}
 foreach ($walker->postOrder($root) as $node) {}
@@ -129,3 +153,21 @@ All traversals are lazy generators, so breaking out of a `foreach` stops the
 walk. They are iterative, so deep trees cannot overflow the call stack. They
 throw `InvalidChildException` when a component appears among its own ancestors
 or when nesting exceeds `maxDepth`.
+
+## Builder transformations
+
+Use `prependChildren()` to put new children first, `replaceChildren()` to replace
+the list, and `clearChildren()` to remove it. `filterChildren()` and `mapChildren()`
+receive unbuilt children and their current indexes; returning null from map
+omits a child. Child-only entry points reject properties and configuration nodes;
+use `set()`/`with()` and `configure()` for those values. One classifier owns
+flattening, contract priority, null skipping and the 32-level list nesting limit.
+
+`configure()` appends nodes, `replaceConfigurations()` replaces them and
+`clearConfigurations()` removes them. These operations return new builders.
+See [full usage](usage.md) and the [builder API](api-reference.md#buildingcomponentbuilder).
+
+A `TreeNode` argument to relationship queries is resolved against the tree's own
+path index and component identity. Unrelated nodes produce the same null/empty/zero
+results as missing paths. An unnamed schema root uses `#0`; the full example names
+its root `admin` for readable paths. Prefer explicit ids for stable application lookup.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Components\Exceptions;
 
 use BadMethodCallException;
+use Gcego\Components\Building\ComponentBuilder;
 use Gcego\Components\Support\ValueDescriber;
 
 /**
@@ -15,7 +16,27 @@ class InvalidBuilderException extends BadMethodCallException implements Componen
 {
     public static function notAComponent(string $class): self
     {
-        return new self(sprintf('%s is not a GCEGO component class, so it cannot be built.', $class));
+        return new self(sprintf('%s is not a GCEGO component class, so it cannot be built.', ValueDescriber::className($class)));
+    }
+
+    public static function notInstantiableComponent(string $class): self
+    {
+        return new self(sprintf('Component "%s" must be concrete and have a public constructor.', ValueDescriber::className($class)));
+    }
+
+    public static function invalidBuilder(string $componentClass, string $builderClass): self
+    {
+        return new self(sprintf('Builder "%s" for %s must be a concrete %s for that component.', ValueDescriber::className($builderClass), ValueDescriber::className($componentClass), ComponentBuilder::class));
+    }
+
+    public static function wrongComponent(string $expected, string $actual): self
+    {
+        return new self(sprintf('Builder for %s returned %s. The built component must be an instance of %s.', ValueDescriber::className($expected), ValueDescriber::className($actual), ValueDescriber::className($expected)));
+    }
+
+    public static function nestingTooDeep(string $componentClass, int $maxDepth): self
+    {
+        return new self(sprintf('Builder items for %s exceed the maximum nesting depth of %d.', ValueDescriber::className($componentClass), $maxDepth));
     }
 
     public static function unknownMethod(string $componentClass, string $method): self
@@ -48,6 +69,15 @@ class InvalidBuilderException extends BadMethodCallException implements Componen
         ));
     }
 
+    public static function invalidChild(string $componentClass, mixed $item): self
+    {
+        return new self(sprintf(
+            '%s cannot nest %s. Child lists accept only components, builders, iterables of children and null entries.',
+            self::basename($componentClass),
+            ValueDescriber::describe($item),
+        ));
+    }
+
     public static function positionalAfterItem(string $componentClass, mixed $value): self
     {
         return new self(sprintf(
@@ -69,6 +99,7 @@ class InvalidBuilderException extends BadMethodCallException implements Componen
 
     private static function basename(string $class): string
     {
+        $class = ValueDescriber::className($class);
         $position = strrpos($class, '\\');
 
         return $position === false ? $class : substr($class, $position + 1);

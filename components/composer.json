@@ -1,6 +1,7 @@
 {
-    "name": "gcego/components",
-    "description": "Framework-independent declarative component foundation for GCEGO Admin Studio: properties, schemas, composition, validation, traversal and normalization.",
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "gcego/morfaw",
+    "description": "Laravel component foundation for GCEGO Admin Studio, registered through ComponentServiceProvider: schemas, composition, validation, traversal and normalization.",
     "type": "library",
     "keywords": [
         "gcego",
@@ -9,7 +10,7 @@
         "schema",
         "admin"
     ],
-    "homepage": "https://github.com/gcego/components",
+    "homepage": "https://github.com/gcego/morfaw",
     "license": "MIT",
     "authors": [
         {
@@ -19,9 +20,13 @@
         }
     ],
     "require": {
-        "php": "^8.3"
+        "php": "^8.3",
+        "illuminate/container": "^12.0|^13.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
     },
     "require-dev": {
+        "laravel/framework": "^12.0|^13.0",
         "laravel/pint": "^1.14",
         "pestphp/pest": "^4.0",
         "phpstan/phpstan": "^2.1"
@@ -33,12 +38,19 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Gcego\\Components\\Tests\\": "tests/"
+            "Gcego\\Components\\Tests\\Fixtures\\": "tests/Fixtures/"
         }
     },
     "scripts": {
         "analyse": "vendor/bin/phpstan analyse",
         "test": "vendor/bin/pest",
+        "check": [
+            "@composer validate --strict",
+            "@composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+            "vendor/bin/pint --test",
+            "vendor/bin/phpstan analyse --debug --no-progress",
+            "@test"
+        ],
         "test-coverage": "vendor/bin/pest --coverage --min=90",
         "format": "vendor/bin/pint",
         "benchmark": "@php benchmarks/run.php"
@@ -50,5 +62,37 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Components\\ComponentServiceProvider"
+            ],
+            "aliases": {
+                "Components": "Gcego\\Components\\Facades\\Components"
+            }
+        }
+    },
+    "archive": {
+        "exclude": [
+            "/vendor",
+            "/build",
+            "/coverage",
+            "/tests",
+            "/benchmarks",
+            "/.github",
+            "/.agents",
+            "/.aws",
+            "/.codex",
+            "/.idea",
+            "/.vscode",
+            "/.env",
+            "/.env.*",
+            "/.phpunit.cache",
+            "/.phpunit.result.cache",
+            "/composer.lock",
+            "/phpunit.xml",
+            "/phpstan.neon"
+        ]
+    }
 }

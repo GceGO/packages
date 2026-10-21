@@ -7,11 +7,11 @@ namespace Gcego\Navigation;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Chroma\Tailwind;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\Type;
 use Gcego\Security\Contracts\Requirement;
 use Illuminate\Support\Str;
 
@@ -142,7 +142,7 @@ final class Navigation extends NavigationNode implements BlueprintPart
                 $errors = [];
                 $seen = [];
 
-                foreach ((new ComponentWalker)->preOrder($navigation) as $node) {
+                foreach (app(ComponentWalker::class)->preOrder($navigation) as $node) {
                     if ($node->isRoot()) {
                         continue;
                     }

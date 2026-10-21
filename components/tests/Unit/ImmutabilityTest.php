@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Tests\Fixtures\ChildComponent;
 use Gcego\Components\Tests\Fixtures\ExampleComponent;
 use Gcego\Components\Tests\Fixtures\ParentComponent;

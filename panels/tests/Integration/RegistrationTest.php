@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Pages\Routing\PageRouteResolver;
 use Gcego\Panels\Definitions\ModuleReference;
 use Gcego\Panels\Definitions\PageReference;

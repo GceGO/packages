@@ -8,7 +8,7 @@ gcego/runtime    component → renderer  (ExampleTable → TableRenderer → Bla
 ```
 
 The runtime resolves definitions through the registry, validates them through
-`gcego/components` and `gcego/blueprints`, picks renderers, and produces Blade
+`gcego/morfaw` and `gcego/blueprints`, picks renderers, and produces Blade
 output, either statically or inside a Livewire host. It does not discover
 definitions, compose blueprints, query data, style components or authorize
 users.
@@ -73,7 +73,7 @@ lifecycle state of its own. `gcego/core` only records that the package booted.
 
 ## Occurrence identity
 
-Every occurrence has the deterministic path from `gcego/components`
+Every occurrence has the deterministic path from `gcego/morfaw`
 (`subjects.table.#0`). The context derives from it:
 
 - `domId()`: a stable, unique HTML id;

@@ -17,7 +17,7 @@ it('inspects and validates a large registry within bounds', function (): void {
     @mkdir(ws('app/GCEGo/Pages'), 0777, true);
 
     foreach (range(1, 300) as $number) {
-        file_put_contents(ws("app/GCEGo/Pages/page-{$number}.php"), "<?php\n\nuse Gcego\\Components\\Property;\nuse Gcego\\Pages\\Page;\nuse Gcego\\Security\\Requirements\\Authenticated;\n\nreturn new Page(new Property(Page::Name, 'page-{$number}'), new Property(Page::Title, 'Page {$number}'), new Authenticated);\n");
+        file_put_contents(ws("app/GCEGo/Pages/page-{$number}.php"), "<?php\n\nuse Gcego\\Components\\Properties\\Property;\nuse Gcego\\Pages\\Page;\nuse Gcego\\Security\\Requirements\\Authenticated;\n\nreturn new Page(new Property(Page::Name, 'page-{$number}'), new Property(Page::Title, 'Page {$number}'), new Authenticated);\n");
     }
 
     $memory = memory_get_usage();

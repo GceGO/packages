@@ -3,8 +3,8 @@
 ## Layers
 
 - **Definitions** (`Workflow`, `State`, `Transition`, `Branch`, `Approval`, `Stage`, `Task`, `Deadline`, `Automation`):
-  - immutable gcego/components;
-  - `WorkflowNode` maps named constructor arguments to `Property` values, because gcego/components itself refuses named arguments;
+  - immutable gcego/morfaw;
+  - `WorkflowNode` maps named constructor arguments to `Property` values, because gcego/morfaw itself refuses named arguments;
   - `Workflow::problems()` adds the structural rules to component validation;
   - the registry validates each definition when it registers it. Construction does no I/O.
 - **Registry:**

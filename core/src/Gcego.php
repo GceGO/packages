@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Gcego\Core;
 
+use Gcego\Core\Bootstrap\BootstrapPlan;
 use Gcego\Core\Bootstrap\BootstrapResult;
 use Gcego\Core\Bootstrap\FrameworkBootstrapper;
+use Gcego\Core\Bootstrap\StartupPlanner;
+use Gcego\Core\Bootstrap\StartupTelemetry;
+use Gcego\Core\Bootstrap\StartupTiming;
 use Gcego\Core\Configuration\GcegoConfig;
 use Gcego\Core\Contracts\FrameworkInterface;
 use Gcego\Core\Diagnostics\DiagnosticReport;
@@ -133,19 +137,67 @@ final readonly class Gcego implements FrameworkInterface
 
     public function hasCapability(string $capability): bool
     {
+        return in_array($capability, $this->capabilities(), true);
+    }
+
+    /**
+     * @return list<string> Unique capabilities of active packages and extensions, sorted by name.
+     */
+    public function capabilities(): array
+    {
+        $capabilities = [];
+
         foreach ($this->packageManager->booted() as $id) {
-            if ($this->packageManager->descriptor($id)->hasCapability($capability)) {
-                return true;
-            }
+            array_push($capabilities, ...$this->packageManager->descriptor($id)->capabilities);
         }
 
         foreach ($this->extensionManager->active() as $id) {
-            if ($this->extensionManager->descriptor($id)->hasCapability($capability)) {
-                return true;
-            }
+            array_push($capabilities, ...$this->extensionManager->descriptor($id)->capabilities);
         }
 
-        return false;
+        $capabilities = array_values(array_unique($capabilities));
+        sort($capabilities);
+
+        return $capabilities;
+    }
+
+    public function extension(string $id): ExtensionDescriptor
+    {
+        return $this->extensionManager->descriptor($id);
+    }
+
+    public function plan(): BootstrapPlan
+    {
+        return $this->container->make(StartupPlanner::class)->plan();
+    }
+
+    /** @return list<StartupTiming> */
+    public function timings(): array
+    {
+        return $this->container->make(StartupTelemetry::class)->timings();
+    }
+
+    /** @return list<string> */
+    public function packageDependencies(string $id, bool $transitive = false, bool $includeOptional = false): array
+    {
+        return $this->packageManager->dependencies($id, $transitive, $includeOptional);
+    }
+
+    /** @return list<string> */
+    public function packageDependants(string $id, bool $transitive = false, bool $includeOptional = false): array
+    {
+        return $this->packageManager->dependants($id, $transitive, $includeOptional);
+    }
+
+    /** @return array{packages: list<string>, extensions: list<string>} Active providers only. */
+    public function capabilityProviders(string $capability): array
+    {
+        $packages = array_values(array_filter($this->packageManager->booted(), fn (string $id): bool => $this->packageManager->descriptor($id)->hasCapability($capability)));
+        $extensions = array_values(array_filter($this->extensionManager->active(), fn (string $id): bool => $this->extensionManager->descriptor($id)->hasCapability($capability)));
+        sort($packages);
+        sort($extensions);
+
+        return ['packages' => $packages, 'extensions' => $extensions];
     }
 
     public function diagnose(): DiagnosticReport

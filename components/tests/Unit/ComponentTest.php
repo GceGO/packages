@@ -3,18 +3,18 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\ComponentTree;
 use Gcego\Components\Exceptions\DuplicatePropertyException;
 use Gcego\Components\Exceptions\InvalidComponentException;
 use Gcego\Components\Exceptions\InvalidConfigurationException;
 use Gcego\Components\Exceptions\MissingPropertyException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Tests\Fixtures\Alignment;
 use Gcego\Components\Tests\Fixtures\ChildComponent;
 use Gcego\Components\Tests\Fixtures\ExampleComponent;
 use Gcego\Components\Tests\Fixtures\ParentComponent;
 use Gcego\Components\Tests\Fixtures\Status;
 use Gcego\Components\Tests\Fixtures\Style;
+use Gcego\Components\Trees\ComponentTree;
 
 it('can be empty', function (): void {
     $component = new Component;

@@ -17,6 +17,8 @@ it('describes a package', function (): void {
         'optional' => ['gcego/forms'],
         'capabilities' => ['tables'],
         'description' => 'Tables',
+        'versionConstraints' => [],
+        'exclusiveCapabilities' => [],
     ])
         ->and($descriptor->hasCapability('tables'))->toBeTrue()
         ->and($descriptor->hasCapability('forms'))->toBeFalse()
@@ -54,6 +56,8 @@ it('describes an extension', function (): void {
         'whenPackages' => ['gcego/tables'],
         'capabilities' => ['export'],
         'description' => 'Export',
+        'requiresCapabilities' => [],
+        'exclusiveCapabilities' => [],
     ])
         ->and($descriptor->hasCapability('export'))->toBeTrue();
 });

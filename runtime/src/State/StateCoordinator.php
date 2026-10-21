@@ -20,7 +20,7 @@ use Gcego\Runtime\Exceptions\InvalidStateException;
 final readonly class StateCoordinator
 {
     public function __construct(
-        private ComponentWalker $walker = new ComponentWalker,
+        private ?ComponentWalker $walker = null,
     ) {}
 
     /**
@@ -101,7 +101,7 @@ final readonly class StateCoordinator
     {
         $occurrences = [];
 
-        foreach ($this->walker->preOrder($root) as $node) {
+        foreach (($this->walker ?? app(ComponentWalker::class))->preOrder($root) as $node) {
             if ($node->component instanceof StatefulComponent) {
                 $occurrences[StatePath::for($node->path)->key] = $node->component;
             }

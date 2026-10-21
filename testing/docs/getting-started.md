@@ -82,7 +82,7 @@ Component, blueprint, HTML and accessibility assertions need no application. `Gc
 <!-- example:plain-components -->
 ```php
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Testing\GcegoTest;
 
 GcegoTest::component(new Component(new Property(Component::Name, 'summary')))->assertValid()->assertName('summary');

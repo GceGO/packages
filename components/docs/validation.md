@@ -17,7 +17,7 @@ so every error can be reported with its path.
 ## Collected mode
 
 ```php
-$result = $component->validate();   // or (new ComponentValidator)->validate($component)
+$result = $component->validate();   // or app(ComponentValidator::class)->validate($component)
 
 $result->isValid();
 $result->errors();                       // list<ValidationError>
@@ -32,7 +32,7 @@ echo $result->format();
 
 ```php
 $component->assertValid();   // returns $component when valid
-(new ComponentValidator)->assertValid($component);
+app(ComponentValidator::class)->assertValid($component);
 ```
 
 When validation fails, both throw `InvalidComponentException`. The message
@@ -53,7 +53,8 @@ Path: subjects.table
 A `ValidationError` exposes `code`, `message`, `path`, `componentType`,
 `componentClass`, `subject`, `expected`, `received` and `hint`. String values in
 `received` are truncated to 40 characters, and arrays and objects are described
-by type only, so error output does not leak payloads.
+by type only. Ordinary strings remain visible in bounded diagnostics; do not
+assume error messages redact secrets.
 
 ## Error codes
 
@@ -104,3 +105,16 @@ it('rejects a misspelled option', function (): void {
         ->and($result->first()?->hint)->toBe('Did you mean "searchable"?');
 });
 ```
+
+## Builder and form-control validation
+
+`$builder->buildValidated()` builds and checks the whole tree.
+`$builder->validate()` builds and returns collected schema errors. Neither
+`build()` nor `normalize()` validates implicitly. `validate()` may still throw
+for cycles/depth violations or errors in trusted application callbacks.
+
+Catalog controls validate configuration types, supported properties and configured
+bounds. Text length bounds must be ordered; numeric metadata must be finite and
+steps positive. A form control's `required` flag does not require a configured
+`value` property or validate incoming request data. Perform server-side request
+validation in the consuming application.

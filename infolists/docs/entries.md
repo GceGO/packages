@@ -50,6 +50,43 @@ new Link('category.name', 'Category', new Property(Link::Route, 'categories.show
 new Image('scan_path', 'Scan', new Property(Image::Disk, 's3'), new Property(Image::Private, true));
 ```
 
+## Closures (Filament style)
+
+```php
+Infolist::make()->schema([
+    Section::make('Details')->columns(2)->schema([
+        Text::make('name')->tooltip(fn (Subject $record): string => $record->code),
+        Text::make('summary')->state(fn (Subject $record): string => $record->name.' ('.$record->code.')'),
+        Text::make('credits')->formatStateUsing(fn (?int $state): string => $state === null ? 'n/a' : $state.' credits'),
+        Text::make('status')->hidden(fn (?User $user): bool => ! $user?->can('viewStatus')),
+    ]),
+    Section::make('Pricing')->visible(fn (Subject $record): bool => $record->credits > 1)->schema([...]),
+    RepeatableEntry::make('topics')->schema([
+        Text::make('title')->formatStateUsing(fn (string $state, Topic $record, Subject $root): string => $root->code.' / '.$state),
+    ]),
+]);
+```
+
+| Injected | Value |
+| --- | --- |
+| `$record` | the record being shown (the item inside a repeatable entry), also by model type |
+| `$root` | the infolist's record, also inside repeatable items |
+| `$state` | the entry's value (`state()` and `formatStateUsing()`, and presentation properties) |
+| `$entry`, `$user` | the entry, and the current user |
+
+Results are checked against the property (a `tooltip` closure must return a
+string or bool) and escaped. A masked entry only resolves its label. Records
+are never built by the container: a closure that asks for a model type that is
+not in the context fails clearly instead of receiving an empty model.
+
+## Extending another module's infolist
+
+```php
+Components::extend('subjects.infolist', fn (SchemaPatch $patch) => $patch
+    ->insertAfter('name', Text::make('short_code'))
+    ->remove('internal_code'));
+```
+
 ## Custom entries
 
 Extend `Entry` and implement:

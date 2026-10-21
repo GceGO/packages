@@ -2,12 +2,20 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Testing\Integrations\PestIntegration;
 use Gcego\Testing\Tests\Fixtures\Models\Membership;
 use Gcego\Testing\Tests\Fixtures\Models\Subject;
 use Gcego\Testing\Tests\Fixtures\Models\User;
 use Gcego\Testing\Tests\TestCase;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Facade;
 use PHPUnit\Framework\AssertionFailedError;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security');
 

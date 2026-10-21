@@ -21,8 +21,15 @@ use Gcego\Blueprints\Tests\Fixtures\ExampleSource;
 use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
 use Gcego\Blueprints\Tests\Fixtures\FakeModel;
 use Gcego\Blueprints\Validation\BlueprintValidator;
+use Gcego\Components\ComponentServiceProvider;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Facade;
 
 require __DIR__.'/../vendor/autoload.php';
+
+$app = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($app);
+$app->register(ComponentServiceProvider::class);
 
 $count = max(1, (int) ($argv[1] ?? 300));
 $iterations = max(1, (int) ($argv[2] ?? 10));

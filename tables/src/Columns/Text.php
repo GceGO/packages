@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Gcego\Tables\Columns;
 
 use Gcego\Components\Building\ComponentBuilder;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Infolists\Entries\Text as TextEntry;
 use Gcego\Tables\Support\ValueResolver;

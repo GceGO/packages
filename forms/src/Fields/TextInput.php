@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Gcego\Forms\Fields;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Components\Support\Absent;
-use Gcego\Components\Type;
 
 /**
  * A single-line text control:

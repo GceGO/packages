@@ -43,7 +43,7 @@ final class LayoutGenerator extends AbstractGenerator
         $requirement = $this->requirement($context);
 
         return [$this->file($context, $this->kit->paths->directory('layout').'/'.$name.'.php', 'layout', [
-            'imports' => $this->imports(['Gcego\\Components\\Property', 'Gcego\\Layouts\\Components\\Grid', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Layouts\\Configuration\\Columns', 'Gcego\\Layouts\\Layout', 'Gcego\\Pages\\Components\\Content', $requirement['import']]),
+            'imports' => $this->imports(['Gcego\\Components\\Properties\\Property', 'Gcego\\Layouts\\Components\\Grid', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Layouts\\Configuration\\Columns', 'Gcego\\Layouts\\Layout', 'Gcego\\Pages\\Components\\Content', $requirement['import']]),
             'name' => StubValue::string($name),
             'title' => StubValue::string($context->string('title') ?? $this->kit->names->title($context->name)),
             'columns' => StubValue::code($columns),

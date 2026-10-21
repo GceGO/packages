@@ -7,7 +7,7 @@ use Gcego\Actions\Configuration\Handler;
 use Gcego\Actions\Configuration\Input;
 use Gcego\Analytics\Tests\Fixtures\Actions\ExportSubjectPerformance;
 use Gcego\Analytics\Tests\Fixtures\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Modules\Module;
 use Gcego\Modules\Resource;

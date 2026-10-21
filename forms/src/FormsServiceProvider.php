@@ -20,6 +20,7 @@ use Gcego\Forms\Livewire\FormHost;
 use Gcego\Forms\Options\OptionsResolver;
 use Gcego\Forms\Presets\FormPresets;
 use Gcego\Forms\Reactive\ConditionEvaluator;
+use Gcego\Forms\Reactive\FormEvaluation;
 use Gcego\Forms\Rendering\FieldRenderer;
 use Gcego\Forms\Rendering\FormRenderContext;
 use Gcego\Forms\Rendering\FormRenderer;
@@ -60,6 +61,7 @@ final class FormsServiceProvider extends ServiceProvider implements PackageInter
         $this->app->singleton(ConditionEvaluator::class);
         $this->app->singleton(StateHydrator::class);
         $this->app->scoped(FormRenderContext::class);
+        $this->app->scoped(FormEvaluation::class);
         $this->app->scoped(OptionsResolver::class);
         $this->app->scoped(ValidationEngine::class);
         $this->app->scoped(StateDehydrator::class);

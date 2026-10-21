@@ -6,8 +6,9 @@ namespace Gcego\Components\Validation;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Exceptions\InvalidComponentException;
+use Gcego\Components\Facades\Components;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 
 /**
  * Validates a component and all of its descendants against their schemas.
@@ -18,10 +19,12 @@ use Gcego\Components\TreeNode;
 final readonly class ComponentValidator
 {
     public function __construct(
-        private PropertyValidator $propertyValidator = new PropertyValidator,
-        private ChildValidator $childValidator = new ChildValidator,
-        private ComponentWalker $walker = new ComponentWalker,
-    ) {}
+        private PropertyValidator $propertyValidator,
+        private ChildValidator $childValidator,
+        private ComponentWalker $walker,
+    ) {
+        Components::getFacadeRoot();
+    }
 
     public function validate(ComponentInterface $root): ValidationResult
     {

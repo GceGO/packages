@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Gcego\Infolists\Entries;
 
-use Gcego\Infolists\Building\EntryBuilder;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Infolists\Building\EntryBuilder;
 use Gcego\Infolists\Configuration\Access;
 use Gcego\Infolists\Configuration\Format;
 use Gcego\Infolists\Configuration\Resolve;
@@ -17,9 +20,11 @@ use Gcego\Infolists\Configuration\VisibleWhen;
 use Gcego\Infolists\Contracts\InfolistComponent;
 use Gcego\Infolists\InfolistsConfig;
 use Gcego\Infolists\Presets\InfolistPresets;
+use Gcego\Infolists\Support\RecordEvaluation;
 use Gcego\Tables\Support\Formats;
 use Gcego\Tables\Support\ValueResolver;
 use Illuminate\Support\Str;
+use WeakMap;
 
 /**
  * The base of every read-only entry: a label and one value of the record.
@@ -27,6 +32,7 @@ use Illuminate\Support\Str;
  *     new Text('name', 'Subject Name')
  *     new Text(new Property(Text::Name, 'name'), new Property(Text::Label, 'Subject Name'), new Property(Text::Copyable, true))
  *     new Text('category.name', 'Category')           // a trusted relation path: eager-loaded, scoped, never lazy
+ *     Text::make('code')->copyable()->tooltip(fn (Subject $record): string => $record->name)
  *
  * The name is a trusted path into the record, never browser input. Values
  * are formatted to plain text or validated attributes; nothing stored in a
@@ -34,6 +40,15 @@ use Illuminate\Support\Str;
  */
 abstract class Entry extends Component implements InfolistComponent
 {
+    use Makeable;
+
+    /**
+     * Closure-valued properties per entry instance (entries are immutable).
+     *
+     * @var WeakMap<self, list<string>>|null
+     */
+    private static ?WeakMap $computedKeys = null;
+
     public const string NamePattern = '/^[a-z_][A-Za-z0-9_]{0,63}(?:\.[a-z_][A-Za-z0-9_]{0,63}){0,3}$/';
 
     /** Shown when the value is empty (default: gcego-infolists.formatting.empty_placeholder). */
@@ -123,6 +138,59 @@ abstract class Entry extends Component implements InfolistComponent
         $resolve = $this->configurations()->first(Resolve::class);
 
         return $resolve instanceof Resolve ? $resolve->value($record) : ValueResolver::get($record, $this->entryName());
+    }
+
+    /**
+     * This entry for one record: closure-valued properties (label, tooltip,
+     * placeholder, a badge's variants, ...) are evaluated with $state,
+     * $record, $root, $entry and $user, and checked against their definition.
+     *
+     * @param  list<string>|null  $only  Evaluate only these properties (masked entries resolve their label, never value-derived ones).
+     */
+    public function forRecord(mixed $state, mixed $record, mixed $root = null, ?array $only = null): static
+    {
+        self::$computedKeys ??= new WeakMap;
+        $computed = self::$computedKeys[$this] ??= $this->computedKeys();
+
+        if ($only !== null) {
+            $computed = array_values(array_intersect($computed, $only));
+        }
+
+        if ($computed === []) {
+            return $this;
+        }
+
+        $context = RecordEvaluation::context($record, ['state' => $state, 'root' => $root ?? $record, 'entry' => $this]);
+        $resolved = [];
+        $cleared = [];
+
+        foreach ($computed as $key) {
+            $value = $this->evaluateProperty($key, $context);
+
+            if ($value === null) {
+                $cleared[] = $key;
+            } else {
+                $resolved[] = new Property($key, $value);
+            }
+        }
+
+        return $this->withoutProperty(...$cleared)->withProperty(...$resolved);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function computedKeys(): array
+    {
+        $keys = [];
+
+        foreach ($this->properties() as $key => $property) {
+            if ($property->value instanceof Computed && static::definition()->property((string) $key)?->isCallback() !== true) {
+                $keys[] = (string) $key;
+            }
+        }
+
+        return $keys;
     }
 
     public function spanClass(int $columns): string

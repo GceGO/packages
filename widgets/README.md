@@ -54,7 +54,7 @@ new Stat(new Property(Stat::Name, 'total_students'), new Property(Stat::Label, '
     new Tailwind(new Slot(Tailwind::Wrapper, ['rounded-2xl', 'border', 'border-slate-200', 'bg-white', 'p-6', 'shadow-sm'])))
 ```
 
-`new Property(Stat::Value, fn () => …)` is not possible: gcego/components
+`new Property(Stat::Value, fn () => …)` is not possible: gcego/morfaw
 refuses closures in properties by design. Use a positional closure, `new
 Value(fn () => …)`, or `gcego/data`'s `Callback`.
 

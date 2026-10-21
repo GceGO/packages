@@ -6,7 +6,7 @@ namespace Gcego\Pages\State;
 
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Layouts\Components\Tab;
 use Gcego\Layouts\Components\Tabs;
@@ -43,7 +43,7 @@ final readonly class PageState
     {
         $names = [];
 
-        foreach ((new ComponentWalker)->preOrder($page) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($page) as $node) {
             if ($node->component instanceof Tab) {
                 $names[] = $node->component->tabName();
             }

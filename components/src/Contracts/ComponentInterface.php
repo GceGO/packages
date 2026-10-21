@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Contracts;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\ConfigurationCollection;
+use Gcego\Components\Collections\ConfigurationCollection;
+use Gcego\Components\Schema\ComponentDefinition;
 
 /**
  * A renderable node of a declarative component tree.

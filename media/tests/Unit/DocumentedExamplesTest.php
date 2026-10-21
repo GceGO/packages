@@ -16,7 +16,7 @@ function readmeExample(string $name, array $variables = []): mixed
 {
     $readme = (string) file_get_contents(dirname(__DIR__, 2).'/README.md');
     preg_match('/<!-- example:'.$name.' -->\s*```php\n(.*?)```/s', $readme, $match);
-    $code = "use Gcego\\Components\\Property;\nuse Gcego\\Media\\Definitions\\Fit;\nuse Gcego\\Media\\Definitions\\Variant;\nuse Gcego\\Media\\Fields\\MediaUpload;\nuse Gcego\\Media\\MediaCollection;\nuse Gcego\\Media\\MediaManager;\n".($match[1] ?? 'throw new RuntimeException("missing example");');
+    $code = "use Gcego\\Components\\Properties\\Property;\nuse Gcego\\Media\\Definitions\\Fit;\nuse Gcego\\Media\\Definitions\\Variant;\nuse Gcego\\Media\\Fields\\MediaUpload;\nuse Gcego\\Media\\MediaCollection;\nuse Gcego\\Media\\MediaManager;\n".($match[1] ?? 'throw new RuntimeException("missing example");');
 
     return (static function () use ($code, $variables): mixed {
         extract($variables);

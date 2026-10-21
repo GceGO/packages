@@ -6,7 +6,7 @@ namespace Gcego\Pages\Tests\Fixtures;
 
 use Gcego\Actions\Delete;
 use Gcego\Actions\View;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

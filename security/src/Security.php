@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Security;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Authorization\AuthorizationContext;
 use Gcego\Security\Authorization\AuthorizationDecision;
 use Gcego\Security\Authorization\AuthorizationEngine;
@@ -21,7 +21,7 @@ use Gcego\Security\Requirements\VerifiedEmail;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Requirements in the gcego/components Property syntax:
+ * Requirements in the gcego/morfaw Property syntax:
  *
  *     new Security(
  *         new Property(Security::Permission, 'subjects.view'),

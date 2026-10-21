@@ -10,7 +10,7 @@ use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Layouts\Components\Aside;
 use Gcego\Layouts\Components\Divider;
 use Gcego\Layouts\Components\Grid;
@@ -59,7 +59,7 @@ final readonly class LayoutInspector
         }
 
         /** @var list<TreeNode> $tree */
-        $tree = iterator_to_array((new ComponentWalker)->preOrder($layout), false);
+        $tree = iterator_to_array(app(ComponentWalker::class)->preOrder($layout), false);
         $parents = [];
 
         foreach ($tree as $node) {

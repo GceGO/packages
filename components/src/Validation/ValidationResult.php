@@ -85,7 +85,13 @@ final readonly class ValidationResult implements Countable, IteratorAggregate
 
     public function format(): string
     {
-        return implode("\n\n", array_map(static fn (ValidationError $error): string => $error->format(), $this->errors));
+        $messages = [];
+
+        foreach ($this->errors as $error) {
+            $messages[] = $error->format();
+        }
+
+        return implode("\n\n", $messages);
     }
 
     /**

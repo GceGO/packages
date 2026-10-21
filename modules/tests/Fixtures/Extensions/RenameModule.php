@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Modules\Tests\Fixtures\Extensions;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Modules\Contracts\ModuleExtension;
 use Gcego\Modules\Module;
 

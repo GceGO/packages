@@ -9,7 +9,7 @@ use Gcego\Actions\Create;
 use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\Access;
 use Gcego\Forms\Configuration\DisabledWhen;

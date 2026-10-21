@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Gcego\Tables;
 
-use Gcego\Tables\Building\TableBuilder;
 use Gcego\Actions\Action;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Data\Sorting\Sort;
+use Gcego\Tables\Building\TableBuilder;
 use Gcego\Tables\Configuration\Pagination;
 use Gcego\Tables\Configuration\Search;
 use Gcego\Tables\Contracts\TableComponent;
@@ -42,6 +43,8 @@ use Throwable;
  */
 final class Table extends Component implements BlueprintPart
 {
+    use Makeable;
+
     /** Allow sorting by several columns (up to gcego-data.sorting.max_fields). */
     public const string MultiSort = 'multi_sort';
 

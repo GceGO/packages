@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Notifications\Database\DatabaseNotificationRepository;
 use Gcego\Notifications\Database\NotificationViewer;
 use Gcego\Notifications\Notification;
@@ -20,10 +21,17 @@ use Gcego\Security\SecurityConfig;
 use Gcego\Security\SecurityManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Testing\TestResponse;
 use Livewire\Mechanisms\HandleRequests\HandleRequests;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security', 'Browser');
 

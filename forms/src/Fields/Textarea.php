@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Gcego\Forms\Fields;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 /**
  * Multi-line plain text: new Textarea('description', 'Description', new Property(Textarea::Rows, 6), new Property(Textarea::MaxLength, 2000), new Property(Textarea::Counter, true))

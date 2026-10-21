@@ -6,10 +6,18 @@ use Gcego\Cli\Tests\Fixtures\Models\Membership;
 use Gcego\Cli\Tests\Fixtures\Models\Subject;
 use Gcego\Cli\Tests\Fixtures\Models\User;
 use Gcego\Cli\Tests\TestCase;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Registry\Kinds\DefinitionKinds;
 use Gcego\Security\SecurityConfig;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Facade;
 use Symfony\Component\Console\Output\BufferedOutput;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security');
 

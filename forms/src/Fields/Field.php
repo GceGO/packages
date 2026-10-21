@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace Gcego\Forms\Fields;
 
-use Gcego\Forms\Building\FieldBuilder;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Forms\Building\FieldBuilder;
 use Gcego\Forms\Contracts\FormComponent;
 use Gcego\Forms\FormsConfig;
+use Gcego\Forms\Reactive\FormEvaluation;
+use Gcego\Forms\State\FormState;
 use Gcego\Forms\State\StatePath;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -19,6 +23,7 @@ use Illuminate\Support\Str;
  * The base of every field: a declarative definition, never a value holder.
  *
  *     new TextInput('name', 'Subject Name')
+ *     TextInput::make('name', 'Subject Name')->required()->visible(fn (Get $get): bool => ...)
  *     new TextInput(new Property(TextInput::Name, 'name'), new Property(TextInput::Required, true))
  *
  * Common properties live here; each field type adds only its own. Field
@@ -28,6 +33,8 @@ use Illuminate\Support\Str;
  */
 abstract class Field extends Component implements FormComponent
 {
+    use Makeable;
+
     public const string Placeholder = 'placeholder';
 
     /** Initial value when there is no record value. */
@@ -52,6 +59,9 @@ abstract class Field extends Component implements FormComponent
 
     /** Send changes to the server immediately (fields others depend on are live automatically). */
     public const string Live = 'live';
+
+    /** fn (Set $set, mixed $state, mixed $old): runs after the user changes the field. */
+    public const string AfterStateUpdated = 'after_state_updated';
 
     /** Columns spanned inside a Grid (1 to 4). */
     public const string ColumnSpan = 'column_span';
@@ -186,9 +196,14 @@ abstract class Field extends Component implements FormComponent
         return $value;
     }
 
+    /**
+     * The default value; a closure default (fn (?Model $record, string $operation) => ...) is evaluated.
+     */
     public function emptyState(): mixed
     {
-        return $this->get(self::Default);
+        $default = $this->get(self::Default);
+
+        return $default instanceof Computed ? app(FormEvaluation::class)->evaluate($default->closure, new FormState) : $default;
     }
 
     public static function builderClass(): string
@@ -215,6 +230,7 @@ abstract class Field extends Component implements FormComponent
                 new PropertyDefinition(self::Live, Type::bool(), default: false),
                 new PropertyDefinition(self::ColumnSpan, Type::int(), rule: static fn (mixed $value): bool => is_int($value) && $value >= 1 && $value <= 4, ruleDescription: 'between 1 and 4'),
                 new PropertyDefinition(self::Autofocus, Type::bool(), default: false),
+                new PropertyDefinition(self::AfterStateUpdated, Type::instanceOf(Computed::class)),
             )
             ->withoutChildren();
     }

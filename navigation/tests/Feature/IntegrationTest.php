@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
 use Gcego\Chroma\Slots\SlotRegistry;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Layouts\Components\Aside;
 use Gcego\Layouts\Components\Main;

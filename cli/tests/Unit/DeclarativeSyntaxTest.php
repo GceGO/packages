@@ -6,7 +6,7 @@ use Gcego\Actions\Create;
 use Gcego\Actions\Edit;
 use Gcego\Blueprints\Blueprint;
 use Gcego\Cli\Tests\Fixtures\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

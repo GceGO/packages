@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Settings\Scopes\SettingScope;
 use Gcego\Settings\Setting;
 use Gcego\Settings\SettingsGroup;

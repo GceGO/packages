@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Luminaries\Icons\Heroicon;
 use Gcego\Workflows\Approvals\Approval;
 use Gcego\Workflows\Approvals\ApprovalPolicy;

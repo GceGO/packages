@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Actions\Create;
 use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

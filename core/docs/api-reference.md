@@ -14,10 +14,17 @@ Resolve it with `app(Gcego::class)`, `app(FrameworkInterface::class)`, or constr
 | `state()` | `Lifecycle\FrameworkState` | |
 | `isEnabled()` / `isBooted()` | `bool` | |
 | `boot()` | `Bootstrap\BootstrapResult` | idempotent; throws `BootstrapException` |
-| `bootResult()` | `?BootstrapResult` | `null` before a successful boot |
+| `plan()` | `BootstrapPlan` | preview from registered packages and loaded providers, without hooks |
+| `timings()` | `list<StartupTiming>` | all recorded initialization attempts, including failures |
+| `packageDependencies(string $id, bool $transitive = false, bool $includeOptional = false)` | `list<string>` | sorted dependency IDs from live metadata |
+| `packageDependants(string $id, bool $transitive = false, bool $includeOptional = false)` | `list<string>` | sorted registered dependant IDs |
+| `capabilityProviders(string $capability)` | `array{packages: list<string>, extensions: list<string>}` | sorted active provider IDs |
+| `bootResult()` | `?BootstrapResult` | `null` before a completed boot attempt; retains disabled outcomes |
 | `packages()` | `list<PackageDescriptor>` | registered packages, in registration order |
 | `hasPackage(string $id)` / `isPackageActive(string $id)` | `bool` | registered / booted |
 | `package(string $id)` | `PackageDescriptor` | throws `PackageRegistrationException` when unknown |
+| `capabilities()` | `list<string>` | unique active capabilities, sorted by name |
+| `extension(string $id)` | `ExtensionDescriptor` | registered extension; throws when unknown |
 | `extensions()` | `list<ExtensionDescriptor>` | registered extensions |
 | `hasExtension(string $id)` / `isExtensionActive(string $id)` | `bool` | registered / activated |
 | `hasCapability(string $capability)` | `bool` | from active packages and extensions |
@@ -131,3 +138,60 @@ All implement `Exceptions\GcegoException`: `ConfigurationException`,
 `InvalidLifecycleException`, `BootstrapException`,
 `PackageRegistrationException`, `PackageDependencyException`,
 `ExtensionException`. See [architecture](architecture.md#error-handling).
+
+## Planning, health extensions and observability
+
+- `BootstrapPlan`: immutable preview with `enabled`, `packages`, `extensions`,
+  `skippedExtensions`, `disabledPackages`, `capabilities`, `problems`,
+  `isValid()` and `toArray()`. See [startup planning](startup-planning.md).
+- `StartupTiming`: immutable `kind`, `id`, `durationMs`, `succeeded`, `toArray()`.
+  `BootstrapResult::timings` is a snapshot of timing history.
+- `Contracts\DiagnosticCheck`: `id(): string`, `run(): DiagnosticResult`.
+- `DiagnosticRegistry`: `register(DiagnosticCheck): void`,
+  `run(): list<DiagnosticResult>`. Invalid registration throws
+  `DiagnosticException`; check execution errors become failed results.
+- Typed event payloads and their semantics are documented in
+  [startup events](startup-events.md).
+- `PackageManager::dependencies()` and `dependants()` accept the same arguments
+  as their framework entry-point counterparts. `snapshot()` copies cached
+  registrations into an unlocked manager without boot state.
+- `PackageDiscovery::discover()` registers loaded providers in the live manager;
+  `snapshot()` returns a temporary manager including loaded providers.
+- `StartupPlanner::plan()` implements preview generation.
+- `StartupTelemetry::timings()` returns accumulated timing records.
+  `publish(object)` dispatches observations with failure isolation.
+  `measure('package'|'extension', string, callable(): void)` records a step and
+  rethrows initialization failures after publishing the failure event.
+
+## Comprehensive diagnostics and declaration metadata
+
+`DiagnosticResult` additionally exposes `severity()` and
+`recommendedResolution()`. Its constructor/factories accept optional
+`resolution`, `package` and `extension` arguments. Structured rows retain
+`check`, `status`, `message`, `details` and add `code`, `severity`, `resolution`,
+`package`, `extension`. Details remain scalars or lists of scalars.
+
+`DiagnosticReport` adds `generatedAt` (UTC), `health()` (`healthy`, `warning`,
+`critical`), `toStructuredArray()` (the report envelope), and `publicSummary()`
+(health and timestamp only). Both result/report implement `JsonSerializable`.
+`toArray()` retains the list-of-rows shape. `isHealthy()` still means no errors.
+
+`LifecycleManager::history()` returns the latest 100 accepted/rejected transitions
+as `{from, to, accepted, timestamp}` records. `InfrastructureIssues` stores the
+latest 100 sanitized incident records. `IntegrationState` tracks Core provider
+and command-registration milestones. `CoreDiagnostics` supplies built-in
+infrastructure checks; `FrameworkDiagnostics` isolates groups and merges custom
+checks. These services inspect Core only, without adding HTTP endpoints.
+
+`PackageDescriptor` adds `versionConstraints` (`array<string, string>`) and
+`exclusiveCapabilities` (`list<string>`). `ExtensionDescriptor` adds
+`requiresCapabilities` and `exclusiveCapabilities` (`list<string>`).
+`ExtensionManager::plan()` accepts optional package capabilities as its third
+argument. Version/dependency exceptions expose `diagnosticCode` for stable
+machine-readable failure categories.
+
+`GcegoConfig` adds `profiling()`, `slowBootMs()`, `slowPackageMs()`,
+`slowExtensionMs()`. `StartupTelemetry` adds `steps()`, `phases()`, `durationMs()`
+and profiling state. Essential status is independent of opt-in timing history.
+Package snapshots may preserve registration locks using `snapshot(true)`; the
+discovery inspector uses this form so previews cannot reopen a closed package set.

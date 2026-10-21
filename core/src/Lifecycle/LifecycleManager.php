@@ -19,6 +19,15 @@ final class LifecycleManager
 
     private ?Throwable $failure = null;
 
+    /** @var list<array{from: string, to: string, accepted: bool, timestamp: string}> */
+    private array $history = [];
+
+    /** @return list<array{from: string, to: string, accepted: bool, timestamp: string}> */
+    public function history(): array
+    {
+        return $this->history;
+    }
+
     public function state(): FrameworkState
     {
         return $this->state;
@@ -82,7 +91,12 @@ final class LifecycleManager
      */
     public function transitionTo(FrameworkState $next): void
     {
-        if (! $this->state->canTransitionTo($next)) {
+        $accepted = $this->state->canTransitionTo($next);
+        $this->history[] = ['from' => $this->state->value, 'to' => $next->value, 'accepted' => $accepted, 'timestamp' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(DATE_ATOM)];
+        if (count($this->history) > 100) {
+            array_shift($this->history);
+        }
+        if (! $accepted) {
             throw InvalidLifecycleException::transition($this->state, $next);
         }
 

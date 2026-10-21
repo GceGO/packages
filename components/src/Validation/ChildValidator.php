@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Validation;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Component;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Support\ValueDescriber;
+use Gcego\Components\Trees\TreeNode;
 
 /**
  * Validates the children and configuration nodes of one component occurrence.
  */
 final class ChildValidator
 {
+    public function __construct()
+    {
+        Components::getFacadeRoot();
+    }
+
     /**
      * @param  list<TreeNode>  $children  The occurrence's child nodes, in order.
      * @return list<ValidationError>
@@ -37,9 +45,9 @@ final class ChildValidator
                         $node,
                         ErrorCode::InvalidChild,
                         sprintf('Component "%s" does not accept a child of type "%s".', $name, $child->component->type()),
-                        subject: $child->component::class,
-                        expected: 'one of '.implode(', ', $definition->allowedChildren ?? []),
-                        received: $child->component::class,
+                        subject: ValueDescriber::className($child->component::class),
+                        expected: 'one of '.implode(', ', array_map(ValueDescriber::className(...), $definition->allowedChildren ?? [])),
+                        received: ValueDescriber::className($child->component::class),
                         path: $child->path->toString(),
                     );
                 }
@@ -71,10 +79,10 @@ final class ChildValidator
                 $errors[] = ValidationError::at(
                     $node,
                     ErrorCode::InvalidConfiguration,
-                    sprintf('Component "%s" does not accept configuration "%s".', $name, $configuration::class),
-                    subject: $configuration::class,
-                    expected: $definition->allowedConfigurations === [] ? 'no configuration nodes' : 'one of '.implode(', ', $definition->allowedConfigurations ?? []),
-                    received: $configuration::class,
+                    sprintf('Component "%s" does not accept configuration "%s".', $name, ValueDescriber::className($configuration::class)),
+                    subject: ValueDescriber::className($configuration::class),
+                    expected: $definition->allowedConfigurations === [] ? 'no configuration nodes' : 'one of '.implode(', ', array_map(ValueDescriber::className(...), $definition->allowedConfigurations ?? [])),
+                    received: ValueDescriber::className($configuration::class),
                 );
             }
         }

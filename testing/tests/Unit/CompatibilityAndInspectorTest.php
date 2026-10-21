@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Actions\ActionsServiceProvider;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Security\SecurityServiceProvider;
 use Gcego\Testing\Compatibility\CompatibilityResult;
@@ -66,6 +67,7 @@ it('lists the installed providers in dependency order', function (): void {
     $providers = TestApplicationFactory::providers();
 
     expect($providers[0])->toBe(LivewireServiceProvider::class)
+        ->and($providers[1])->toBe(ComponentServiceProvider::class)
         ->and(array_search(SecurityServiceProvider::class, $providers, true))->toBeLessThan(array_search(ActionsServiceProvider::class, $providers, true))
         ->and(end($providers))->toBe(TestingServiceProvider::class)
         ->and(TestApplicationFactory::providers([GcegoServiceProvider::class]))->toBe([GcegoServiceProvider::class, TestingServiceProvider::class]);

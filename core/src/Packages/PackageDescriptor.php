@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Core\Packages;
 
+use Composer\Semver\VersionParser;
 use Gcego\Core\Exceptions\PackageRegistrationException;
 use Gcego\Core\Support\Identifier;
 
@@ -16,7 +17,7 @@ use Gcego\Core\Support\Identifier;
  * - optional: GCEGO packages that boot first when present.
  * - capabilities: names other packages can test with Gcego::hasCapability().
  *
- * Composer-level library dependencies (such as gcego/components) belong in
+ * Composer-level library dependencies (such as gcego/morfaw) belong in
  * composer.json, not here: Composer resolves installation and versions.
  */
 final readonly class PackageDescriptor
@@ -36,7 +37,15 @@ final readonly class PackageDescriptor
      */
     public array $capabilities;
 
+    /** @var list<string> */
+    public array $exclusiveCapabilities;
+
+    /** @var array<string, string> */
+    public array $versionConstraints;
+
     /**
+     * @param  array<string, string>  $versionConstraints
+     * @param  list<string>  $exclusiveCapabilities
      * @param  list<string>  $requires
      * @param  list<string>  $optional
      * @param  list<string>  $capabilities
@@ -48,6 +57,8 @@ final readonly class PackageDescriptor
         array $optional = [],
         array $capabilities = [],
         public ?string $description = null,
+        array $versionConstraints = [],
+        array $exclusiveCapabilities = [],
     ) {
         if (! Identifier::isPackage($id)) {
             throw PackageRegistrationException::invalidIdentifier($id);
@@ -60,6 +71,22 @@ final readonly class PackageDescriptor
         $this->requires = self::packages($id, 'requires', $requires);
         $this->optional = self::packages($id, 'optional', $optional);
         $this->capabilities = self::names($id, $capabilities);
+        foreach ($versionConstraints as $dependency => $constraint) {
+            if (! is_string($dependency) || ! in_array($dependency, [...$this->requires, ...$this->optional], true) || ! is_string($constraint) || trim($constraint) === '') {
+                throw PackageRegistrationException::invalidMetadata($id, 'version constraints must target declared required or optional packages.');
+            }
+            try {
+                (new VersionParser)->parseConstraints($constraint);
+            } catch (\UnexpectedValueException) {
+                throw PackageRegistrationException::invalidMetadata($id, 'a dependency version constraint is invalid.');
+            }
+        }
+        $this->versionConstraints = $versionConstraints;
+
+        $this->exclusiveCapabilities = self::names($id, $exclusiveCapabilities);
+        if (array_diff($this->exclusiveCapabilities, $this->capabilities) !== []) {
+            throw PackageRegistrationException::invalidMetadata($id, 'exclusive capabilities must also be declared as provided capabilities.');
+        }
 
         if (in_array($id, [...$this->requires, ...$this->optional], true)) {
             throw PackageRegistrationException::invalidMetadata($id, 'a package cannot depend on itself.');
@@ -74,7 +101,7 @@ final readonly class PackageDescriptor
 
     public function withVersion(?string $version): self
     {
-        return new self($this->id, $version, $this->requires, $this->optional, $this->capabilities, $this->description);
+        return new self($this->id, $version, $this->requires, $this->optional, $this->capabilities, $this->description, $this->versionConstraints, $this->exclusiveCapabilities);
     }
 
     public function hasCapability(string $capability): bool
@@ -83,7 +110,7 @@ final readonly class PackageDescriptor
     }
 
     /**
-     * @return array{id: string, version: string|null, requires: list<string>, optional: list<string>, capabilities: list<string>, description: string|null}
+     * @return array{id: string, version: string|null, requires: list<string>, optional: list<string>, capabilities: list<string>, description: string|null, versionConstraints: array<string, string>, exclusiveCapabilities: list<string>}
      */
     public function toArray(): array
     {
@@ -94,6 +121,8 @@ final readonly class PackageDescriptor
             'optional' => $this->optional,
             'capabilities' => $this->capabilities,
             'description' => $this->description,
+            'versionConstraints' => $this->versionConstraints,
+            'exclusiveCapabilities' => $this->exclusiveCapabilities,
         ];
     }
 

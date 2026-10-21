@@ -7,7 +7,7 @@ namespace Gcego\Runtime\Rendering;
 use ArrayIterator;
 use Countable;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Illuminate\Contracts\Support\Htmlable;
 use IteratorAggregate;
 use Traversable;
@@ -32,9 +32,9 @@ final readonly class Children implements Countable, Htmlable, IteratorAggregate
         private RenderContext $context,
         private ComponentRenderer $renderer,
         private ?int $headingLevel = null,
-        ComponentWalker $walker = new ComponentWalker,
+        ?ComponentWalker $walker = null,
     ) {
-        $this->nodes = $walker->childNodes($context->node);
+        $this->nodes = ($walker ?? app(ComponentWalker::class))->childNodes($context->node);
     }
 
     /**

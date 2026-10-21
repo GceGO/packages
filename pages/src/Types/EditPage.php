@@ -7,7 +7,7 @@ namespace Gcego\Pages\Types;
 use Gcego\Actions\Action;
 use Gcego\Actions\ActionPlacement;
 use Gcego\Actions\Edit;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
  * A page that edits one record with a gcego/forms Form, saved through the

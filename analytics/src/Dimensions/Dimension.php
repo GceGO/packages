@@ -6,9 +6,9 @@ namespace Gcego\Analytics\Dimensions;
 
 use Gcego\Analytics\Contracts\DimensionLabels;
 use Gcego\Analytics\Definitions\AnalyticsNode;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Illuminate\Database\Eloquent\Model;
 
 /**

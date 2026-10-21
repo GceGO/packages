@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Gcego\Modules;
 
-use Gcego\Modules\Building\ResourceBuilder;
 use Gcego\Actions\Action;
 use Gcego\Actions\ActionGroup;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Data\Source;
 use Gcego\Forms\Form;
 use Gcego\Infolists\Infolist;
+use Gcego\Modules\Building\ResourceBuilder;
 use Gcego\Modules\Definitions\RecordSet;
 use Gcego\Navigation\Presets\NavigationPresets;
 use Gcego\Pages\Page;

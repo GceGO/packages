@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Gcego\Layouts;
 
 use Gcego\Chroma\Tailwind;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\Type;
 use Gcego\Layouts\Components\Accordion;
 use Gcego\Layouts\Components\AccordionItem;
 use Gcego\Layouts\Components\Aside;
@@ -89,7 +89,7 @@ final class Layout extends LayoutComponent
         $components = [];
         $errors = [];
 
-        foreach ((new ComponentWalker)->preOrder($root) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($root) as $node) {
             $components[$node->path->toString()] = $node->component;
             $parent = $node->parentPath === null ? null : ($components[$node->parentPath->toString()] ?? null);
 

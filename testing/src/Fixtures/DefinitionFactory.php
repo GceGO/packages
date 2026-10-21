@@ -11,7 +11,7 @@ use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
 use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Search\Search;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\Options;

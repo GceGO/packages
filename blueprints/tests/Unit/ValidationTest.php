@@ -16,7 +16,7 @@ use Gcego\Blueprints\Validation\BlueprintErrorCode;
 use Gcego\Blueprints\Validation\BlueprintValidationError;
 use Gcego\Blueprints\Validation\BlueprintValidator;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 it('accepts valid blueprints of any shape', function (Blueprint $blueprint): void {
     expect((new BlueprintValidator)->validate($blueprint)->isValid())->toBeTrue();

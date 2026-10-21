@@ -6,7 +6,7 @@ use Gcego\Actions\Action;
 use Gcego\Actions\ActionPlacement;
 use Gcego\Actions\Create;
 use Gcego\Components\Exceptions\InvalidComponentException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;

@@ -6,11 +6,11 @@ namespace Gcego\Workflows\Support;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Workflows\Exceptions\WorkflowDefinitionException;
 
 /**
- * gcego/components refuses named constructor arguments; workflow
+ * gcego/morfaw refuses named constructor arguments; workflow
  * definitions accept them as a convenience and turn them into the same
  * Property values (one internal representation):
  *

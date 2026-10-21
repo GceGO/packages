@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Media\Collections;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Media\Definitions\Variant;
 use Gcego\Media\Exceptions\InvalidMediaException;
 use Gcego\Media\Media;

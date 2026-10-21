@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Components\Exceptions;
 
 use DomainException;
+use Gcego\Components\Component;
 use Gcego\Components\Validation\ValidationResult;
 
 /**

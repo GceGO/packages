@@ -62,7 +62,7 @@ Put one definition per file in `app/GCEGo/Pages/` (gcego/registry discovers them
 
 <!-- example:minimal -->
 ```php
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Section;
 use Gcego\Pages\Components\Content;
 use Gcego\Pages\Page;
@@ -88,7 +88,7 @@ return new Page(
 <!-- example:index -->
 ```php
 use App\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Pages\Components\PageLink;
 use Gcego\Pages\Types\IndexPage;
@@ -117,7 +117,7 @@ return new IndexPage(
 <!-- example:create -->
 ```php
 use App\Models\Subject;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Fields\Select;
@@ -148,7 +148,7 @@ The page adds the gcego/actions `Create` action its form submits through (valida
 ```php
 use App\Models\Subject;
 use Gcego\Actions\Delete;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;
@@ -177,7 +177,7 @@ return new EditPage(
 ```php
 use App\Models\Subject;
 use Gcego\Actions\Delete;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Infolists\Entries\Badge;
 use Gcego\Infolists\Entries\Text;
@@ -209,7 +209,7 @@ return new ViewPage(
 <!-- example:dashboard -->
 ```php
 use App\GCEGo\Widgets\SubjectCount;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Grid;
 use Gcego\Layouts\Configuration\Columns;
 use Gcego\Pages\Types\DashboardPage;

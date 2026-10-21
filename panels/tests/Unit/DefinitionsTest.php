@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Navigation\Navigation;
 use Gcego\Panels\Branding\Branding;
 use Gcego\Panels\Definitions\ModuleReference;

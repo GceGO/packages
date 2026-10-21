@@ -13,7 +13,7 @@ use Gcego\Actions\Delete;
 use Gcego\Actions\Edit;
 use Gcego\Actions\Execution\ActionContext;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Search\Search;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Source;

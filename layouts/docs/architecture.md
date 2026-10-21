@@ -16,7 +16,7 @@ gcego/runtime ──► LayoutRenderer (every LayoutComponent)
 
 ## Composition
 
-Layout components extend `LayoutComponent`, which is a gcego/components
+Layout components extend `LayoutComponent`, which is a gcego/morfaw
 `Component` and a gcego/blueprints `PartContainer`. That means:
 - **Blueprint parts stay parts.** A `Table`, `Form`, `Infolist` or `Action`
   nested in a layout inside a `Blueprint` still counts as that blueprint's

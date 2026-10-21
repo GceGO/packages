@@ -9,7 +9,7 @@ use Gcego\Components\Building\ComponentBuilder;
 use Gcego\Components\Contracts\Buildable;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Exceptions\InvalidBuilderException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Sorting\SortDirection;
 use Gcego\Data\Source;

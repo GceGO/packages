@@ -79,16 +79,23 @@ final readonly class FormInputResolver implements InputResolver, RendersInput
         $forms = $this->container->make(FormManager::class);
         $schema = $forms->schema($form);
         $model = $record === null ? null : $this->record($action, $record);
-        $frame = new FormRenderFrame($schema, new FormState($state), $forms->access($schema, $model), $prefix, $errors, model: $action->model());
 
-        return $this->container->make(FormRenderContext::class)->run($frame, fn (): string => $this->container->make(Runtime::class)->render($form, RenderMode::Livewire, identity: $action->definition)->toHtml());
+        return $forms->evaluating($model, function () use ($forms, $schema, $state, $model, $prefix, $errors, $action, $form): string {
+            $formState = new FormState($state);
+            $frame = new FormRenderFrame($schema, $formState, $forms->access($schema, $model), $prefix, $errors, model: $action->model(), live: $forms->livePaths($schema, $formState));
+
+            return $this->container->make(FormRenderContext::class)->run($frame, fn (): string => $this->container->make(Runtime::class)->render($form, RenderMode::Livewire, identity: $action->definition)->toHtml());
+        });
     }
 
+    /**
+     * The action's form, with the extensions registered for "{definition}.form".
+     */
     public static function form(ResolvedAction $action): ?Form
     {
         $form = $action->blueprint->part(BlueprintRole::Form);
 
-        return $form instanceof Form ? $form : null;
+        return $form instanceof Form ? app(FormManager::class)->extended($form, $action->blueprint->name() ?? $action->definition) : null;
     }
 
     private function record(ResolvedAction $action, string|int $key): ?Model

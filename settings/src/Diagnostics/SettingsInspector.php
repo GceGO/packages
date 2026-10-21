@@ -77,7 +77,7 @@ final readonly class SettingsInspector
                 }
 
                 foreach ($this->definitions->pages() as $page) {
-                    $pages[] = ['name' => $page->pageName(), 'title' => $page->title(), 'group' => $page->group(), 'scope' => $page->scope()->value, 'panels' => $page->panels()];
+                    $pages[] = ['name' => $page->pageName(), 'title' => $page->title(), 'group' => $page->groupName(), 'scope' => $page->scope()->value, 'panels' => $page->panels()];
                 }
             } catch (Throwable $exception) {
                 $problems[] = $exception->getMessage();

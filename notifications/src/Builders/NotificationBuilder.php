@@ -6,7 +6,7 @@ namespace Gcego\Notifications\Builders;
 
 use BackedEnum;
 use DateTimeInterface;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Luminaries\IconName;
 use Gcego\Notifications\Definitions\NotificationAction;
 use Gcego\Notifications\Definitions\NotificationPriority;

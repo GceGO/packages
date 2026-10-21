@@ -16,7 +16,7 @@
 
 ## Definitions versus execution
 
-- **`Source`:** a `gcego/components` component, and the `source` part of a
+- **`Source`:** a `gcego/morfaw` component, and the `source` part of a
   blueprint. It is immutable and describes data without reading it.
   - Constructing, validating, normalizing, registering or rendering a Source
     never queries.

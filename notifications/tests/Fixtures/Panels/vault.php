@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Panels\Panel;
 
 // No requirement and no access policy: nobody may enter (deny by default).

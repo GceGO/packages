@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Gcego\Vault\Livewire;
 
 use Gcego\Vault\Exceptions\VaultAuthorizationException;
-use Gcego\Vault\Models\AccessRequest;
 use Gcego\Vault\Models\Permission;
+use Gcego\Vault\Support\Holder;
 use Gcego\Vault\VaultConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Date;
@@ -67,7 +67,7 @@ final class AccessRequestsScreen extends VaultComponent
             'requests' => $this->vault()->requests()->of($this->actor())->limit(50)->get(),
             'roleOptions' => $this->roles()->whereNull('archived_at')->where('is_super', false)->orderBy('label')->get(['id', 'label', 'description']),
             'permissionOptions' => Permission::query()->orderBy('name')->get(['name', 'label', 'scope'])->filter(fn (Permission $permission): bool => $permission->appliesIn($this->scope()))->values(),
-            'me' => \Gcego\Vault\Support\Holder::of($this->actor()),
+            'me' => Holder::of($this->actor()),
             'maxDate' => $config->maxTemporaryDays === null ? null : now()->addDays($config->maxTemporaryDays - 1)->toDateString(),
             'approvals' => ['normal' => $config->approvals, 'sensitive' => $config->sensitiveApprovals],
         ]);

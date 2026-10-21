@@ -65,7 +65,7 @@ final class ActionGenerator extends AbstractGenerator
 
             $relative = 'Actions/'.$class.'.php';
             $files[] = $this->file($context, $moduleDirectory.'/'.$relative, 'action-definition', [
-                'imports' => $this->imports(['Gcego\\Actions\\Action', 'Gcego\\Actions\\Configuration\\Handler', 'Gcego\\Components\\Property', $handler]),
+                'imports' => $this->imports(['Gcego\\Actions\\Action', 'Gcego\\Actions\\Configuration\\Handler', 'Gcego\\Components\\Properties\\Property', $handler]),
                 'name' => StubValue::string($name),
                 'title' => StubValue::string($context->string('title') ?? $names->title($context->name)),
                 'ability' => StubValue::string($ability),

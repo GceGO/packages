@@ -70,7 +70,7 @@ it('does not boot when disabled', function (): void {
     expect($gcego->isEnabled())->toBeFalse()
         ->and($gcego->state())->toBe(FrameworkState::Registered)
         ->and($gcego->boot()->status)->toBe(BootStatus::Disabled)
-        ->and($gcego->bootResult())->toBeNull()
+        ->and($gcego->bootResult()?->status)->toBe(BootStatus::Disabled)
         ->and(app(BootLog::class)->entries)->toBe([]);
 });
 
@@ -112,7 +112,7 @@ it('lets explicitly registered packages and extensions join the boot', function 
 
 it('rejects registrations after boot', function (): void {
     app(PackageManager::class)->register(FixturePackage::make('acme/late'));
-})->throws(PackageRegistrationException::class, 'registered after the framework booted');
+})->throws(PackageRegistrationException::class, 'registered after package registration was locked');
 
 it('fails predictably on missing dependencies and reports it in diagnostics', function (): void {
     $this->rebuildApplication(['auto_boot' => false], [BrokenServiceProvider::class]);
@@ -205,4 +205,88 @@ it('blocks boot when environment checks fail and can skip them', function (): vo
 it('exposes the framework version from Composer', function (): void {
     expect(app(Gcego::class)->version()->package)->toBe('gcego/core')
         ->and(app(Gcego::class)->version()->version)->toBe(InstalledVersions::getPrettyVersion('gcego/core'));
+});
+
+it('retains the disabled boot result', function (): void {
+    $this->rebuildApplication(['enabled' => false]);
+    $gcego = app(Gcego::class);
+
+    expect($gcego->bootResult()?->status)->toBe(BootStatus::Disabled)
+        ->and($gcego->isBooted())->toBeFalse();
+});
+
+it('exposes unique capabilities from active packages and extensions', function (): void {
+    $this->rebuildApplication(['auto_boot' => false]);
+    app(PackageManager::class)->register(FixturePackage::make('acme/tables', capabilities: ['tables', 'shared']));
+    app(ExtensionManager::class)->register(FixtureExtension::make('tables.export', capabilities: ['export', 'shared']));
+    $gcego = app(Gcego::class);
+
+    expect($gcego->capabilities())->toBe([]);
+    $gcego->boot();
+
+    expect($gcego->capabilities())->toBe(['export', 'framework', 'shared', 'tables'])
+        ->and($gcego->extension('tables.export')->capabilities)->toBe(['export', 'shared'])
+        ->and($gcego->hasCapability('export'))->toBeTrue();
+});
+
+it('identifies active capability providers and exposes dependency queries', function (): void {
+    $this->rebuildApplication(['auto_boot' => false]);
+    app(PackageManager::class)->register(FixturePackage::make('acme/tables', requires: ['gcego/core'], capabilities: ['shared']));
+    app(ExtensionManager::class)->register(FixtureExtension::make('tables.shared', capabilities: ['shared']));
+    $gcego = app(Gcego::class);
+    expect($gcego->capabilityProviders('shared'))->toBe(['packages' => [], 'extensions' => []]);
+    $gcego->boot();
+    expect($gcego->capabilityProviders('shared'))->toBe(['packages' => ['acme/tables'], 'extensions' => ['tables.shared']])
+        ->and($gcego->packageDependencies('acme/tables'))->toBe(['gcego/core'])
+        ->and($gcego->packageDependants('gcego/core'))->toBe(['acme/tables'])
+        ->and($gcego->capabilityProviders('missing'))->toBe(['packages' => [], 'extensions' => []]);
+});
+
+it('rejects a non-array configuration during manual startup instead of silently using defaults', function (): void {
+    $this->rebuildApplication(['auto_boot' => false]);
+    config()->set('gcego', 'password=secret');
+    expect(fn () => app(Gcego::class)->boot())->toThrow(BootstrapException::class, 'gcego must be an array.');
+    expect(app(Gcego::class)->plan()->problems[0])->not->toContain('password=secret');
+});
+
+it('locks the package set before dependency resolution even when resolution fails', function (): void {
+    $this->rebuildApplication(['auto_boot' => false]);
+    $manager = app(PackageManager::class);
+    $package = FixturePackage::make('acme/reports', requires: ['acme/missing']);
+    $manager->register($package);
+    $gcego = app(Gcego::class);
+
+    expect(fn () => $gcego->boot())->toThrow(BootstrapException::class)
+        ->and($manager->isLocked())->toBeTrue()
+        ->and($manager->booted())->toBe([])
+        ->and(fn () => $manager->register(FixturePackage::make('acme/missing')))
+        ->toThrow(PackageRegistrationException::class, 'package registration was locked');
+
+    // Discovery and existing-instance registration remain idempotent on retry.
+    $manager->register($package);
+    expect(fn () => $gcego->boot())->toThrow(BootstrapException::class)
+        ->and($manager->isLocked())->toBeTrue()
+        ->and($manager->has('acme/missing'))->toBeFalse();
+});
+
+it('runs package hooks against a closed registration set and preserves it on retry', function (): void {
+    $this->rebuildApplication(['auto_boot' => false]);
+    $manager = app(PackageManager::class);
+    $attempts = 0;
+    $lockStates = [];
+    $manager->register(FixturePackage::make('acme/reports', requires: ['gcego/core'], onBoot: function () use ($manager, &$attempts, &$lockStates): void {
+        $lockStates[] = $manager->isLocked();
+        if (++$attempts === 1) {
+            $manager->register(FixturePackage::make('acme/late'));
+        }
+    }));
+    $gcego = app(Gcego::class);
+
+    expect(fn () => $gcego->boot())->toThrow(BootstrapException::class, 'package registration was locked')
+        ->and($manager->has('acme/late'))->toBeFalse()
+        ->and($manager->booted())->toBe(['gcego/core']);
+
+    expect($gcego->boot()->packages)->toBe(['gcego/core', 'acme/reports'])
+        ->and($lockStates)->toBe([true, true])
+        ->and($manager->isLocked())->toBeTrue();
 });

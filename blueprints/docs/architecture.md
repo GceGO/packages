@@ -1,11 +1,11 @@
 # Architecture
 
-## Relationship to `gcego/components`
+## Relationship to `gcego/morfaw`
 
 `Blueprint` **extends** `Gcego\Components\Component`. Everything the component
 engine already does is reused unchanged:
 
-| Concern | Provided by gcego/components |
+| Concern | Provided by gcego/morfaw |
 | --- | --- |
 | Constructor parsing, shorthand, duplicate keys | `Component::__construct`, `shorthand()` |
 | Properties and metadata storage | `Property`, `PropertyCollection` |
@@ -32,10 +32,12 @@ structured form (code, role, path) and removes the plain-message duplicates.
 ## Relationship to `gcego/core`
 
 There is none. A blueprint is a definition, so it is constructed, validated
-and normalized as plain PHP without booting Laravel. The dependency graph is:
+and normalized through the registered component foundation. The component
+provider requires a Laravel application; the GCEGO kernel remains independent.
+The dependency graph is:
 
 ```text
-gcego/blueprints ──▶ gcego/components
+gcego/blueprints ──▶ gcego/morfaw ──▶ illuminate/*
 gcego/core       ──▶ (illuminate/*)          # no dependency between blueprints and core
 ```
 

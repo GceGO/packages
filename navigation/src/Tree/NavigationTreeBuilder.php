@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Navigation\Tree;
 
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Navigation\Components\Group;
 use Gcego\Navigation\Exceptions\DuplicateNavigationItemException;
 use Gcego\Navigation\Exceptions\InvalidNavigationException;
@@ -17,7 +17,7 @@ use Throwable;
  * Builds a NavigationTree from a definition and its contributions.
  *
  * Rejects (InvalidNavigationException): invalid definitions, cycles and
- * runaway nesting (gcego/components traversal), groups nested deeper than
+ * runaway nesting (gcego/morfaw traversal), groups nested deeper than
  * $maxDepth, and duplicate node names (DuplicateNavigationItemException).
  * Orders siblings by Order, then contribution, then declaration order.
  */
@@ -32,7 +32,7 @@ final class NavigationTreeBuilder
     public function build(Navigation $navigation, string $identity, int $maxDepth, array $contributions = []): NavigationTree
     {
         $this->paths = [];
-        $walker = new ComponentWalker;
+        $walker = app(ComponentWalker::class);
 
         try {
             iterator_to_array($walker->preOrder($navigation), false);

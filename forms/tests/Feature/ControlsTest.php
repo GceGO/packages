@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Fields\Checkbox;
 use Gcego\Forms\Fields\CheckboxList;

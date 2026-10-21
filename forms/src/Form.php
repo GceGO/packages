@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Gcego\Forms;
 
-use Gcego\Forms\Building\FormBuilder;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Forms\Building\FormBuilder;
 use Gcego\Forms\Contracts\FormComponent;
 use Gcego\Forms\Schema\SchemaCompiler;
 use Throwable;
@@ -32,6 +33,8 @@ use Throwable;
  */
 final class Form extends Component implements BlueprintPart
 {
+    use Makeable;
+
     public const string SubmitLabel = 'submit_label';
 
     public function blueprintRole(): BlueprintRole

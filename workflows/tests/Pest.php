@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Security\SecurityConfig;
 use Gcego\Security\SecurityManager;
 use Gcego\Workflows\Approvals\Decision;
@@ -14,8 +15,14 @@ use Gcego\Workflows\Tests\Fixtures\Models\User;
 use Gcego\Workflows\Tests\TestCase;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Testing\TestResponse;
 use Livewire\Mechanisms\HandleRequests\HandleRequests;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Illuminate\Foundation\Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security');
 

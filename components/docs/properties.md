@@ -29,7 +29,8 @@ new Property('options', ['nested' => [new stdClass]]);
 // Unsupported value for property "options": value[nested][0] is stdClass. ...
 ```
 
-Closures are rejected. They are never serialized or evaluated by this package.
+Raw closures are rejected as property values. Trusted schema rules, normalizers
+and builder-composition callbacks are separate APIs and are executed as documented.
 If a future package needs a callable, it wraps it explicitly:
 
 ```php
@@ -45,8 +46,8 @@ only the class name.
 ## `PropertyDefinition`
 
 ```php
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 new PropertyDefinition(
     name: 'perPage',
@@ -102,3 +103,24 @@ Class-string checks may autoload the named class but never instantiate it.
 | not declared, no default | fallback (`null`) | `false` | fails if `required` |
 | not declared, default `10` | `10` | `false` | passes |
 | `new Property('perPage', null)` | `null` | `true` | passes only if `nullable` |
+
+## Fluent property definitions
+
+```php
+use Gcego\Components\Schema\Field;
+
+$definition = parent::defineSchema()->withFields([
+    Field::string('name')->mustExist(),
+    Field::boolean('searchable')->defaultsTo(false),
+    Field::string('subtitle')->nullable()->defaultsTo(null),
+]);
+```
+
+`Schema\Field` builds `PropertyDefinition` objects; `Forms\FieldComponent` is
+an abstract UI control, not a property definition. `withFields()` accepts builders
+and existing definitions. Fluent factories and modifiers are listed in the
+[catalog reference](component-catalog.md#fluent-property-schemas).
+
+A control's `required()` property describes UI behavior. `mustExist()` requires
+configuration on the component itself. Builder `get()`/`has()` inspect explicit
+values, while built component access also resolves defaults.

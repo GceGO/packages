@@ -9,7 +9,6 @@ use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Query\QueryInput;
 use Gcego\Data\Source;
 use Gcego\Tables\Schema\TableSchema;
-use Gcego\Tables\Support\ValueResolver;
 use Gcego\Tables\TablesConfig;
 use Generator;
 
@@ -77,7 +76,8 @@ final readonly class TableExport
 
                 foreach ($this->columns as $name) {
                     $column = $this->schema->columns[$name];
-                    $row[] = $column->exportValue(ValueResolver::get($record, $name), $record, $this->config);
+                    $value = $column->value($record);
+                    $row[] = $column->forRow($value, $record)->exportValue($value, $record, $this->config);
                 }
 
                 $emitted++;

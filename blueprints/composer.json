@@ -20,9 +20,10 @@
     ],
     "require": {
         "php": "^8.3",
-        "gcego/components": "^0.1"
+        "gcego/morfaw": "^0.1"
     },
     "require-dev": {
+        "laravel/framework": "^12.0|^13.0",
         "laravel/pint": "^1.14",
         "pestphp/pest": "^4.0",
         "phpstan/phpstan": "^2.1"
@@ -33,7 +34,7 @@
             "url": "../components",
             "options": {
                 "versions": {
-                    "gcego/components": "0.1.0"
+                    "gcego/morfaw": "0.1.0"
                 }
             }
         }

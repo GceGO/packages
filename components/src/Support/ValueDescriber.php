@@ -9,8 +9,8 @@ use UnitEnum;
 /**
  * Produces short, safe descriptions of values for error messages.
  *
- * Strings are truncated and arrays or objects are never dumped, so error
- * messages cannot leak large or sensitive payloads.
+ * Strings are truncated and array contents or object state are never dumped.
+ * Ordinary string values remain visible in developer-facing diagnostics.
  */
 final class ValueDescriber
 {
@@ -35,12 +35,26 @@ final class ValueDescriber
         return get_debug_type($value);
     }
 
+    /**
+     * Anonymous class identifiers include a NUL followed by their source path.
+     * Public metadata keeps only the class label, never that deployment path.
+     */
+    public static function className(string $class): string
+    {
+        return explode("\0", $class, 2)[0];
+    }
+
     private static function truncate(string $value): string
     {
-        if (mb_strlen($value) <= self::MaxStringLength) {
-            return $value;
+        $matched = preg_match('/\A(.{'.self::MaxStringLength.'})./us', $value, $matches);
+
+        if ($matched === 1) {
+            return $matches[1].'...';
         }
 
-        return mb_substr($value, 0, self::MaxStringLength).'...';
+        // Invalid UTF-8 still needs a usable diagnostic, without extensions.
+        return $matched === false && strlen($value) > self::MaxStringLength
+            ? substr($value, 0, self::MaxStringLength).'...'
+            : $value;
     }
 }

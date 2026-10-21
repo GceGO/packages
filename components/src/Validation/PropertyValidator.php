@@ -4,20 +4,28 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Validation;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
 use Gcego\Components\Support\ValueDescriber;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 
 /**
  * Validates the properties of one component occurrence against its definition.
  *
  * Each property reports at most one error: the first failing check out of
- * presence, type, allowed values and custom rule.
+ * presence, type, allowed values and custom rule. Computed values are
+ * checked against the same definition when they are evaluated.
  */
 final class PropertyValidator
 {
     private const int MaxSuggestionDistance = 2;
+
+    public function __construct()
+    {
+        Components::getFacadeRoot();
+    }
 
     /**
      * @return list<ValidationError>
@@ -37,9 +45,11 @@ final class PropertyValidator
 
         foreach ($definition->properties() as $name => $propertyDefinition) {
             $property = $properties->get($name);
-            $error = $property === null
-                ? $this->validateAbsent($node, $propertyDefinition)
-                : $this->validateValue($node, $propertyDefinition, $property->value);
+            $error = match (true) {
+                $property === null => $this->validateAbsent($node, $propertyDefinition),
+                $property->value instanceof Computed => null,
+                default => $this->validateValue($node, $propertyDefinition, $property->value),
+            };
 
             if ($error !== null) {
                 $errors[] = $error;

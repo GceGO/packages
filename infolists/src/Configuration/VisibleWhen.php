@@ -8,6 +8,7 @@ use Closure;
 use Gcego\Components\Contracts\ConfigurationNode;
 use Gcego\Infolists\Entries\Entry;
 use Gcego\Infolists\Exceptions\InvalidEntryException;
+use Gcego\Infolists\Support\RecordEvaluation;
 use Gcego\Tables\Support\Formats;
 use Gcego\Tables\Support\ValueResolver;
 use UnitEnum;
@@ -21,6 +22,7 @@ use UnitEnum;
  *     new Text('notes', VisibleWhen::filled('notes'))
  *     new Text('code', VisibleWhen::not('status', 'draft'))
  *     new Section('Late', ..., VisibleWhen::using(fn (Subject $subject) => $subject->due_on?->isPast()))
+ *     VisibleWhen::computed(fn (Subject $record, ?User $user): bool => $user?->is($record->owner) ?? false)
  *
  * Visibility never grants access: Access rules still apply, and a condition
  * on a path the user may not read evaluates to false.
@@ -64,6 +66,21 @@ final readonly class VisibleWhen implements ConfigurationNode
     public static function using(Closure $callback): self
     {
         return new self(null, operator: 'using', callback: $callback);
+    }
+
+    /**
+     * A Filament-style closure injected with $record (also by model type) and $user:
+     * fn (Subject $record): bool => $record->is_graded.
+     *
+     * @param  bool  $negate  Pass when the closure does not return true (hidden(fn)).
+     */
+    public static function computed(Closure $closure, bool $negate = false): self
+    {
+        return self::using(static function (mixed $record) use ($closure, $negate): bool {
+            $result = RecordEvaluation::call($closure, $record, subject: 'an infolist visibility closure');
+
+            return $negate ? $result !== true : $result === true;
+        });
     }
 
     /**

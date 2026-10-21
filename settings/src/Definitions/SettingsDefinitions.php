@@ -222,7 +222,7 @@ final class SettingsDefinitions
             $pages[$page->pageName()] = $page;
         }
 
-        $shown = array_map(static fn (SettingsPage $page): string => $page->group(), $explicit);
+        $shown = array_map(static fn (SettingsPage $page): string => $page->groupName(), $explicit);
 
         foreach ($groups as $group) {
             if (in_array($group->groupName(), $shown, true) || $group->isHidden() || isset($pages[$group->groupName()])) {

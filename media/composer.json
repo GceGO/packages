@@ -25,7 +25,7 @@
         "ext-fileinfo": "*",
         "gcego/actions": "^0.1",
         "gcego/blueprints": "^0.1",
-        "gcego/components": "^0.1",
+        "gcego/morfaw": "^0.1",
         "gcego/core": "^0.1",
         "gcego/data": "^0.1",
         "gcego/forms": "^0.1",
@@ -68,7 +68,7 @@
             "url": "../components",
             "options": {
                 "versions": {
-                    "gcego/components": "0.1.0"
+                    "gcego/morfaw": "0.1.0"
                 }
             }
         },

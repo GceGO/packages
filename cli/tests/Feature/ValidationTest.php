@@ -22,7 +22,7 @@ it('validates every definition with its package\'s validators', function (): voi
 
 it('reports missing references between definitions', function (): void {
     @mkdir(ws('app/GCEGo/Panels'), 0777, true);
-    file_put_contents(ws('app/GCEGo/Panels/staff.php'), "<?php\nuse Gcego\\Components\\Property;\nuse Gcego\\Panels\\Panel;\nreturn new Panel(new Property(Panel::Name, 'staff'), new Gcego\\Security\\Requirements\\Authenticated, new Gcego\\Panels\\Definitions\\ModuleReference('missing'));\n");
+    file_put_contents(ws('app/GCEGo/Panels/staff.php'), "<?php\nuse Gcego\\Components\\Properties\\Property;\nuse Gcego\\Panels\\Panel;\nreturn new Panel(new Property(Panel::Name, 'staff'), new Gcego\\Security\\Requirements\\Authenticated, new Gcego\\Panels\\Definitions\\ModuleReference('missing'));\n");
 
     $report = gcegoJson('gcego:validate', ['--type' => 'panels']);
 

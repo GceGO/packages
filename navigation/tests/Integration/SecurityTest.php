@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Navigation\Components\ExternalLink;
 use Gcego\Navigation\Components\Item;
 use Gcego\Navigation\Exceptions\InvalidNavigationException;

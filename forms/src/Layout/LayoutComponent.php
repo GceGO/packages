@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Gcego\Forms\Layout;
 
-use Gcego\Forms\Building\LayoutBuilder;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Forms\Building\LayoutBuilder;
 use Gcego\Forms\Contracts\FormComponent;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,8 @@ use Illuminate\Support\Str;
  */
 abstract class LayoutComponent extends Component implements FormComponent
 {
+    use Makeable;
+
     public function heading(): ?string
     {
         $label = $this->get(self::Label);

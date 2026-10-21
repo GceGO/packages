@@ -74,7 +74,7 @@ final readonly class SettingsPageResolver
         $visible = [];
         $editable = [];
 
-        foreach ($this->definitions->inGroup($page->group()) as $definition) {
+        foreach ($this->definitions->inGroup($page->groupName()) as $definition) {
             if ($definition->hidden || ! $definition->allows($context->target) || ! $this->authorizer->canView($user, $definition, $context)) {
                 continue;
             }
@@ -87,7 +87,7 @@ final readonly class SettingsPageResolver
             return null;
         }
 
-        return new SettingsScreen($page, $this->definitions->group($page->group()), $context, $visible, $editable);
+        return new SettingsScreen($page, $this->definitions->group($page->groupName()), $context, $visible, $editable);
     }
 
     /**

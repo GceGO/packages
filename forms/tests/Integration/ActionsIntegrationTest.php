@@ -13,7 +13,7 @@ use Gcego\Actions\Execution\ActionStatus;
 use Gcego\Actions\Handlers\UpdateRecord;
 use Gcego\Actions\Livewire\ActionHost;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\UsesForm;
 use Gcego\Forms\Fields\TextInput;

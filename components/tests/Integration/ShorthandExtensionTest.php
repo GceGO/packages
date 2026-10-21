@@ -6,7 +6,7 @@ use Gcego\Components\Component;
 use Gcego\Components\Exceptions\DuplicatePropertyException;
 use Gcego\Components\Exceptions\InvalidConfigurationException;
 use Gcego\Components\Exceptions\InvalidPropertyException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Tests\Fixtures\ChildComponent;
 use Gcego\Components\Tests\Fixtures\ExampleComponent;
 use Gcego\Components\Tests\Fixtures\FakeModel;

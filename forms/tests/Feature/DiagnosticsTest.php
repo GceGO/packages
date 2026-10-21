@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Core\Gcego;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Configuration\Relationship;

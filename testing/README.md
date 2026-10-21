@@ -83,7 +83,7 @@ Further reading, in `docs/`:
 
 ## Installation
 
-Requirements: PHP 8.3+, Laravel 13, PHPUnit 12 or 13. Livewire 4, Pest 4+ and Orchestra Testbench 11 are optional. The toolkit depends only on `gcego/components`. Every other GCEGO package is optional: an assertion for a package that is not installed throws `MissingPackageException`, which names the package to install.
+Requirements: PHP 8.3+, Laravel 13, PHPUnit 12 or 13. Livewire 4, Pest 4+ and Orchestra Testbench 11 are optional. The toolkit depends only on `gcego/morfaw`. Every other GCEGO package is optional: an assertion for a package that is not installed throws `MissingPackageException`, which names the package to install.
 
 ```bash
 composer require --dev gcego/testing

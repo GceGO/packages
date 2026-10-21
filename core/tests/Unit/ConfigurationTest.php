@@ -14,6 +14,7 @@ it('provides defaults', function (): void {
         'environment_checks' => true,
         'packages' => ['disabled' => []],
         'extensions' => ['disabled' => []],
+        'diagnostics' => ['profiling' => false, 'slow_boot_ms' => 100.0, 'slow_package_ms' => 50.0, 'slow_extension_ms' => 50.0],
     ]);
 });
 
@@ -94,4 +95,16 @@ it('warns about unknown keys instead of failing', function (): void {
             'gcego.debug is not a known option and is ignored.',
             'gcego.packages.auto_boot is not a known option and is ignored.',
         ]);
+});
+
+it('validates profiling settings and finite positive thresholds', function (mixed $value): void {
+    expect(fn () => GcegoConfig::fromArray(['diagnostics' => ['slow_package_ms' => $value]]))->toThrow(ConfigurationException::class, 'positive finite number');
+})->with([[0], [-1], [INF], [NAN], ['secret'], [true], [[]]]);
+
+it('accepts explicit profiling options and thresholds', function (): void {
+    $config = GcegoConfig::fromArray(['diagnostics' => ['profiling' => true, 'slow_boot_ms' => 200, 'slow_package_ms' => 25.5, 'slow_extension_ms' => 10]]);
+    expect($config->profiling())->toBeTrue()
+        ->and($config->slowBootMs())->toBe(200.0)
+        ->and($config->slowPackageMs())->toBe(25.5)
+        ->and($config->slowExtensionMs())->toBe(10.0);
 });

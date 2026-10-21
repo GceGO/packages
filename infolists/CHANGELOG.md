@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Added:** Filament-style authoring on gcego/morfaw. `Infolist::make()`, `Text::make()`, `Section::make()` and every other entry and layout have `make()`.
+- **Added:** per-record closures. Entry properties (`label`, `description`, `tooltip`, `placeholder`, a badge's variants, ...) accept closures injected with `$state`, `$record` (also by model type), `$root` (the infolist's record, also inside repeatable items), `$entry` and `$user`. Each render resolves a copy of the entry (`Entry::forRecord()`), and results are type-checked and escaped. Masked entries only resolve their label, never value-derived properties.
+- **Added:** `state()` and `formatStateUsing()` with named and typed injection (`resolveUsing()` and `formatUsing()` keep their positional signatures), and `visible()`/`hidden()` closures on entries and layouts (`VisibleWhen::computed()`, a new `Building\LayoutBuilder`). Visibility still never grants access.
+- **Added:** infolist extensions. `Components::extend('{blueprint}.infolist', fn (SchemaPatch $patch) => ...)` patches a blueprint's infolist wherever it is resolved (`InfolistManager::extended()`).
+
 - **Added:** icon maps (`Badge::Icons`, `Icon::Icons`) and icon values of `Icon` entries take typed Luminaries icons.
 
 ## 0.1.0 - 2026-10-17

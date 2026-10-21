@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Gcego\Widgets\Support;
 
 use Carbon\CarbonInterval;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Tables\Support\Formats;
 use NumberFormatter;
 

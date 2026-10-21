@@ -9,8 +9,11 @@ use Gcego\Components\Contracts\ConfigurationNode;
 use Gcego\Components\Contracts\RuntimeValue;
 use Gcego\Components\Contracts\ValueObject;
 use Gcego\Components\Exceptions\InvalidConfigurationException;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Support\ValueDescriber;
 use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\TreeNode;
 use UnitEnum;
 
 /**
@@ -20,11 +23,11 @@ use UnitEnum;
  *
  *     [
  *         'type' => string,             // schema type identifier
- *         'class' => class-string,      // concrete PHP class
+ *         'class' => string,            // class label without anonymous source locations
  *         'id' => ?string,              // explicit id, never generated
  *         'path' => string,             // deterministic occurrence path
  *         'properties' => array,        // defaults merged with explicit values, sorted by key
- *         'configurations' => list<array{class: class-string, data: mixed}>,
+ *         'configurations' => list<array{class: string, data: mixed}>,
  *         'children' => list<array>,    // same shape, in declaration order
  *         'schema' => array,            // only when $includeSchema is true
  *     ]
@@ -39,9 +42,11 @@ final readonly class ComponentNormalizer
     private const int MaxValueDepth = 64;
 
     public function __construct(
+        private ComponentWalker $walker,
         private bool $includeSchema = false,
-        private ComponentWalker $walker = new ComponentWalker,
-    ) {}
+    ) {
+        Components::getFacadeRoot();
+    }
 
     /**
      * @return array<string, mixed>
@@ -72,6 +77,32 @@ final readonly class ComponentNormalizer
     }
 
     /**
+     * Apply schema normalizers and normalize supported values in a property map.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    public function normalizeProperties(array $values, ComponentDefinition $definition, string $location = 'component'): array
+    {
+        $properties = [];
+
+        foreach ($values as $key => $value) {
+            $property = $definition->property($key);
+            // Invalid values remain inspectable without invoking a typed callback
+            // with input outside the schema's contract.
+            $normalizer = ! $value instanceof RuntimeValue && $property !== null && $property->acceptsType($value) ? $property->normalizer : null;
+            $properties[$key] = $this->normalizeValue(
+                $normalizer === null ? $value : $normalizer($value),
+                sprintf('%s property "%s"', $location, $key),
+            );
+        }
+
+        ksort($properties);
+
+        return $properties;
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $children
      * @return array<string, mixed>
      */
@@ -80,15 +111,6 @@ final readonly class ComponentNormalizer
         $component = $node->component;
         $definition = $component::definition();
         $path = $node->path->toString();
-        $properties = [];
-
-        foreach ($component->effectiveProperties() as $key => $value) {
-            $normalizer = $definition->property($key)?->normalizer;
-            $properties[$key] = $this->normalizeValue(
-                $normalizer === null ? $value : $normalizer($value),
-                sprintf('%s property "%s"', $path, $key),
-            );
-        }
 
         $configurations = [];
 
@@ -98,28 +120,28 @@ final readonly class ComponentNormalizer
 
         $normalized = [
             'type' => $component->type(),
-            'class' => $component::class,
+            'class' => ValueDescriber::className($component::class),
             'id' => $component->id(),
             'path' => $path,
-            'properties' => $properties,
+            'properties' => $this->normalizeProperties($component->effectiveProperties(), $definition, $path),
             'configurations' => $configurations,
             'children' => $children,
         ];
 
         if ($this->includeSchema) {
-            $normalized['schema'] = $definition->toArray();
+            $normalized['schema'] = $this->normalizeValue($definition->toArray(), $path.' schema');
         }
 
         return $normalized;
     }
 
     /**
-     * @return array{class: class-string, data: mixed}
+     * @return array{class: string, data: mixed}
      */
     private function normalizeConfiguration(ConfigurationNode $configuration, string $location): array
     {
         return [
-            'class' => $configuration::class,
+            'class' => ValueDescriber::className($configuration::class),
             'data' => $this->normalizeValue($configuration->normalize(), $location),
         ];
     }
@@ -134,6 +156,10 @@ final readonly class ComponentNormalizer
             return $value;
         }
 
+        if ($value instanceof RuntimePlaceholder) {
+            return $value;
+        }
+
         if (is_array($value)) {
             $normalized = [];
 
@@ -144,12 +170,12 @@ final readonly class ComponentNormalizer
             return $normalized;
         }
 
-        if ($value instanceof ValueObject) {
-            return $this->normalizeValueAt($value->normalize(), $location, $depth + 1);
-        }
-
         if ($value instanceof RuntimeValue) {
             return new RuntimePlaceholder($value::class);
+        }
+
+        if ($value instanceof ValueObject) {
+            return $this->normalizeValueAt($value->normalize(), $location, $depth + 1);
         }
 
         throw InvalidConfigurationException::notNormalizable($location, $value);

@@ -6,6 +6,8 @@ namespace Gcego\Tables\Configuration;
 
 use Closure;
 use Gcego\Components\Contracts\ConfigurationNode;
+use Gcego\Components\Evaluation\EvaluationContext;
+use Gcego\Components\Facades\Components;
 use Gcego\Tables\Columns\Column;
 use Gcego\Tables\Contracts\ColumnFormatter;
 use Gcego\Tables\Exceptions\InvalidTableException;
@@ -22,8 +24,9 @@ final readonly class Format implements ConfigurationNode
 {
     /**
      * @param  Closure|class-string<ColumnFormatter>  $formatter  fn (mixed $value, mixed $record): string|int|float|null
+     * @param  bool  $injected  Inject closure parameters by name and type ($state, $record, $column, Subject $subject) instead of passing ($value, $record).
      */
-    public function __construct(public Closure|string $formatter)
+    public function __construct(public Closure|string $formatter, public bool $injected = false)
     {
         if (is_string($formatter) && ! is_subclass_of($formatter, ColumnFormatter::class)) {
             throw InvalidTableException::invalid('Format', sprintf('"%s" must implement %s.', mb_substr($formatter, 0, 120), ColumnFormatter::class));
@@ -32,7 +35,10 @@ final readonly class Format implements ConfigurationNode
 
     public function apply(mixed $value, mixed $record, Column $column): ?string
     {
-        if ($this->formatter instanceof Closure) {
+        if ($this->formatter instanceof Closure && $this->injected) {
+            $context = EvaluationContext::make(['state' => $value, 'record' => $record, 'column' => $column])->withTyped(...(is_object($record) ? [$record] : []));
+            $result = Components::evaluator()->evaluate($this->formatter, $context, $column, sprintf('formatStateUsing() of column "%s"', $column->columnName()));
+        } elseif ($this->formatter instanceof Closure) {
             $result = ($this->formatter)($value, $record);
         } else {
             $formatter = app($this->formatter);

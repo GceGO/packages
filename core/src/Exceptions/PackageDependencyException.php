@@ -8,6 +8,11 @@ use LogicException;
 
 class PackageDependencyException extends LogicException implements GcegoException
 {
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, public readonly string $diagnosticCode = 'packages.dependencies')
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
     /**
      * @param  list<string>  $missing
      */
@@ -19,7 +24,7 @@ class PackageDependencyException extends LogicException implements GcegoExceptio
             self::quote($missing),
             count($missing) === 1 ? 'is' : 'are',
             implode(' ', $missing),
-        ));
+        ), diagnosticCode: 'packages.dependencies.missing');
     }
 
     /**
@@ -33,7 +38,7 @@ class PackageDependencyException extends LogicException implements GcegoExceptio
             self::quote($disabled),
             count($disabled) === 1 ? 'is' : 'are',
             $package,
-        ));
+        ), diagnosticCode: 'packages.dependencies.disabled');
     }
 
     /**
@@ -41,7 +46,7 @@ class PackageDependencyException extends LogicException implements GcegoExceptio
      */
     public static function circular(array $cycle): self
     {
-        return new self('Circular GCEGO package dependency: '.implode(' -> ', $cycle).'.');
+        return new self('Circular GCEGO package dependency: '.implode(' -> ', $cycle).'.', diagnosticCode: 'packages.dependencies.circular');
     }
 
     /**

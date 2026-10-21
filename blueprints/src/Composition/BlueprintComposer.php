@@ -17,7 +17,7 @@ use Gcego\Components\Traversal\Visit;
 /**
  * Classifies a blueprint's parts by role and applies the cardinality rules.
  *
- * It adds blueprint semantics on top of gcego/components traversal; it never
+ * It adds blueprint semantics on top of gcego/morfaw traversal; it never
  * builds its own tree. Parts are the blueprint's direct BlueprintPart
  * children, plus the BlueprintPart children of PartContainer parts.
  *
@@ -29,7 +29,7 @@ use Gcego\Components\Traversal\Visit;
 final readonly class BlueprintComposer
 {
     public function __construct(
-        private ComponentWalker $walker = new ComponentWalker,
+        private ?ComponentWalker $walker = null,
     ) {}
 
     public function compose(BlueprintInterface $blueprint): BlueprintComposition
@@ -58,7 +58,7 @@ final readonly class BlueprintComposer
             $byRole[$role] = new BlueprintPartCollection(...$roleEntries);
         }
 
-        $rootPath = $this->walker->rootNode($blueprint)->path->toString();
+        $rootPath = ($this->walker ?? app(ComponentWalker::class))->rootNode($blueprint)->path->toString();
 
         foreach ($policy->requiredRoles as $required) {
             if (! isset($grouped[$required])) {
@@ -84,7 +84,7 @@ final readonly class BlueprintComposer
     {
         $entries = [];
         $issues = [];
-        $generator = $this->walker->preOrder($blueprint);
+        $generator = ($this->walker ?? app(ComponentWalker::class))->preOrder($blueprint);
 
         while ($generator->valid()) {
             $node = $generator->current();

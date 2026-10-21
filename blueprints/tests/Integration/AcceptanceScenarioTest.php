@@ -15,7 +15,7 @@ use Gcego\Blueprints\Tests\Fixtures\ExampleStyle;
 use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
 use Gcego\Blueprints\Tests\Fixtures\FakeModel;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
 
 /**
  * The future developer experience, with fixtures standing in for gcego/data, tables, forms and actions.

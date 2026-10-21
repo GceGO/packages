@@ -6,6 +6,7 @@ use Gcego\Core\Diagnostics\DiagnosticReport;
 use Gcego\Core\Diagnostics\DiagnosticResult;
 use Gcego\Core\Diagnostics\DiagnosticStatus;
 use Gcego\Core\Diagnostics\EnvironmentChecker;
+use Illuminate\Contracts\Foundation\Application;
 
 it('passes on the running environment', function (): void {
     $results = (new EnvironmentChecker(app()))->check();
@@ -46,6 +47,13 @@ it('builds structured reports', function (): void {
         ->and($report->result('b')?->details)->toBe(['count' => 2])
         ->and($report->result('missing'))->toBeNull()
         ->and(iterator_to_array($report))->toBe($report->results())
-        ->and($report->toArray()[1])->toBe(['check' => 'b', 'status' => 'warning', 'message' => 'careful', 'details' => ['count' => 2]])
+        ->and($report->toArray()[1])->toMatchArray(['check' => 'b', 'code' => 'b', 'status' => 'warning', 'severity' => 'warning', 'message' => 'careful', 'details' => ['count' => 2]])
         ->and((new DiagnosticReport(DiagnosticResult::passed('a', 'ok')))->isHealthy())->toBeTrue();
+});
+
+it('rejects PHP and Laravel versions outside their supported major ranges', function (): void {
+    expect((new EnvironmentChecker(app(), phpVersion: '9.0.0'))->failures()[0]->check)->toBe('php.version');
+    $application = Mockery::mock(Application::class);
+    $application->shouldReceive('version')->andReturn('14.0.0');
+    expect((new EnvironmentChecker($application))->failures()[0]->check)->toBe('laravel.version');
 });

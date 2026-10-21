@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Forms\Building;
 
+use Closure;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Building\ComponentBuilder;
 use Gcego\Components\Component;
@@ -77,6 +78,19 @@ class LayoutBuilder extends ComponentBuilder
     public function visibleWhen(string|Condition $field, mixed $value = true): static
     {
         return $this->configure(new VisibleWhen($field, $value));
+    }
+
+    /**
+     * Show the layout (and validate and save its fields) only while the closure returns true.
+     */
+    public function visible(Closure $condition): static
+    {
+        return $this->configure(new VisibleWhen(Condition::computed($condition)));
+    }
+
+    public function hidden(Closure $condition): static
+    {
+        return $this->configure(new VisibleWhen(Condition::computed($condition, negate: true)));
     }
 
     public function build(): Component

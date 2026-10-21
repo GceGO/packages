@@ -6,10 +6,11 @@ namespace Gcego\Components\Traversal;
 
 use Closure;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentPath;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Exceptions\InvalidChildException;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Trees\ComponentPath;
+use Gcego\Components\Trees\TreeNode;
 use Generator;
 use SplQueue;
 
@@ -27,11 +28,13 @@ final readonly class ComponentWalker
 {
     public const int DefaultMaxDepth = 256;
 
-    private const string SimpleSegmentPattern = '/^[A-Za-z0-9_-]+$/';
+    private const string SimpleSegmentPattern = '/\A[A-Za-z0-9_-]+\z/';
 
     public function __construct(
         private int $maxDepth = self::DefaultMaxDepth,
-    ) {}
+    ) {
+        Components::getFacadeRoot();
+    }
 
     /**
      * @return Generator<int, TreeNode, Visit|null, void>

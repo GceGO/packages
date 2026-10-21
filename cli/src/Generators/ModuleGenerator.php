@@ -58,7 +58,7 @@ final class ModuleGenerator extends AbstractGenerator
         $this->next(sprintf('Add resources: php artisan gcego:make-resource Subject --module=%s --model="App\\Models\\Subject"', $name));
 
         return [$this->file($context, $this->kit->paths->directory('module').'/'.$class.'/Module.php', 'module', [
-            'imports' => $this->imports(['Gcego\\Components\\Property', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Modules\\Module', 'Gcego\\Pages\\Components\\Content', 'Gcego\\Pages\\Types\\DashboardPage', 'Gcego\\Security\\Requirements\\Authenticated']),
+            'imports' => $this->imports(['Gcego\\Components\\Properties\\Property', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Modules\\Module', 'Gcego\\Pages\\Components\\Content', 'Gcego\\Pages\\Types\\DashboardPage', 'Gcego\\Security\\Requirements\\Authenticated']),
             'name' => StubValue::string($name),
             'title' => StubValue::string($context->string('title') ?? $names->title($context->name)),
             'properties' => StubValue::code($properties),

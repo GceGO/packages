@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Security\SecurityManager;
 use Gcego\Security\Tests\Fixtures\Models\Institution;
 use Gcego\Security\Tests\Fixtures\Models\Membership;
@@ -9,6 +10,13 @@ use Gcego\Security\Tests\Fixtures\Models\Student;
 use Gcego\Security\Tests\Fixtures\Models\Subject;
 use Gcego\Security\Tests\Fixtures\Models\User;
 use Gcego\Security\Tests\TestCase;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Facade;
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature');
 

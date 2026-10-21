@@ -107,7 +107,7 @@ final readonly class ChromaInspector
         $resolved = [];
 
         try {
-            foreach ((new ComponentWalker)->preOrder($target) as $node) {
+            foreach (app(ComponentWalker::class)->preOrder($target) as $node) {
                 $component = $node->component;
                 $definitions = $this->slots->for($component);
                 $path = $node->path->toString();

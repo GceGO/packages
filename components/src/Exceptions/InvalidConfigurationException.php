@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Exceptions;
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Components\Support\ValueDescriber;
 use InvalidArgumentException;
 
@@ -13,8 +14,28 @@ use InvalidArgumentException;
  */
 class InvalidConfigurationException extends InvalidArgumentException implements ComponentException
 {
+    public static function inactiveManager(): self
+    {
+        return new self('ComponentManager belongs to an inactive application or scope. Resolve it again through the Components facade or service container.');
+    }
+
+    public static function managerNotSerializable(): self
+    {
+        return new self('ComponentManager cannot be serialized. Resolve it through the service provider in each application scope.');
+    }
+
+    public static function providerNotRegistered(): self
+    {
+        return new self(sprintf(
+            'ComponentServiceProvider must be registered before using gcego/morfaw. Enable Laravel package discovery or register %s in bootstrap/providers.php and boot Laravel facades.',
+            ComponentServiceProvider::class,
+        ));
+    }
+
     public static function namedArgument(string $componentClass, string $argumentName): self
     {
+        $componentClass = ValueDescriber::className($componentClass);
+
         return new self(sprintf(
             'Named argument "%s" is not supported by %s. Declare configuration with new Property(%s::Constant, $value) instead.',
             $argumentName,
@@ -28,6 +49,8 @@ class InvalidConfigurationException extends InvalidArgumentException implements 
      */
     public static function unsupportedArgument(string $componentClass, int $position, mixed $value, array $shorthandKeys): self
     {
+        $componentClass = ValueDescriber::className($componentClass);
+
         $accepted = $shorthandKeys === []
             ? sprintf('%s accepts no positional shorthand values', self::basename($componentClass))
             : sprintf(
@@ -48,6 +71,8 @@ class InvalidConfigurationException extends InvalidArgumentException implements 
 
     public static function shorthandAfterItem(string $componentClass, int $position, mixed $value): self
     {
+        $componentClass = ValueDescriber::className($componentClass);
+
         return new self(sprintf(
             "Unsupported constructor argument #%d (%s) for %s.\n\nPositional shorthand values must precede every Property, child component and configuration node.",
             $position + 1,

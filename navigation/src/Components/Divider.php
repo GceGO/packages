@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Navigation\Components;
 
-use Gcego\Components\ComponentDefinition;
+use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Navigation\NavigationNode;
 
 /**

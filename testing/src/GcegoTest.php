@@ -49,9 +49,9 @@ use Gcego\Testing\Testables\WorkflowDefinitionTestable;
 use Gcego\Testing\Testables\WorkflowTestable;
 use Gcego\Workflows\Models\WorkflowInstance;
 use Gcego\Workflows\Workflow;
-use InvalidArgumentException;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 
 /**
  * The entry point of the toolkit:

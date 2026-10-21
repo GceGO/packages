@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Panels\Panel;
 use Gcego\Panels\Shells\PanelShellFactory;
 use Gcego\Security\Requirements\Authenticated;

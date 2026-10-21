@@ -12,6 +12,7 @@ use Gcego\Forms\Configuration\DisabledWhen;
 use Gcego\Forms\Configuration\RequiredWhen;
 use Gcego\Forms\Configuration\Rules;
 use Gcego\Forms\Configuration\VisibleWhen;
+use Gcego\Forms\Fields\Field;
 use Gcego\Security\Contracts\Requirement;
 
 /**
@@ -23,9 +24,61 @@ use Gcego\Security\Contracts\Requirement;
  *
  * Every field property is available by name (placeholder(), default(),
  * helperText(), live(), disabled(), and so on).
+ *
+ * visible(), hidden(), required() and disabled() also take Filament-style
+ * closures; the fields they read become live automatically:
+ *
+ *     TextInput::make('company')->visible(fn (Get $get): bool => $get('type') === 'business')
+ *     TextInput::make('vat')->required(fn (Get $get, ?Model $record): bool => $get('country') === 'CM')
  */
 class FieldBuilder extends ComponentBuilder
 {
+    /**
+     * Show (validate and save) the field only while the closure returns true.
+     */
+    public function visible(bool|Closure $condition = true): static
+    {
+        return $condition instanceof Closure
+            ? $this->configure(new VisibleWhen(Condition::computed($condition)))
+            : $this->set(Field::Hidden, ! $condition);
+    }
+
+    /**
+     * Hide the field (never rendered, validated or saved) while the closure returns true.
+     */
+    public function hidden(bool|Closure $condition = true): static
+    {
+        return $condition instanceof Closure
+            ? $this->configure(new VisibleWhen(Condition::computed($condition, negate: true)))
+            : $this->set(Field::Hidden, $condition);
+    }
+
+    public function required(bool|Closure $condition = true): static
+    {
+        return $condition instanceof Closure
+            ? $this->configure(new RequiredWhen(Condition::computed($condition)))
+            : $this->set(Field::Required, $condition);
+    }
+
+    /**
+     * Disabled fields are rendered but their submitted values are ignored.
+     */
+    public function disabled(bool|Closure $condition = true): static
+    {
+        return $condition instanceof Closure
+            ? $this->configure(new DisabledWhen(Condition::computed($condition)))
+            : $this->set(Field::Disabled, $condition);
+    }
+
+    /**
+     * Run after the user changes the field (Livewire host): fn (Set $set, mixed $state, mixed $old).
+     * Values it sets must be declared fields; they are validated on submit like any input.
+     */
+    public function afterStateUpdated(Closure $callback): static
+    {
+        return $this->set(Field::AfterStateUpdated, $callback);
+    }
+
     /**
      * Add Laravel validation rules: strings, rule objects, or a closure fn (?Model $record): array.
      */

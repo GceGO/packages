@@ -150,3 +150,43 @@ it('rejects registration once locked', function (): void {
     expect($manager->isLocked())->toBeTrue()
         ->and(fn () => $manager->register(FixtureExtension::make('late')))->toThrow(ExtensionException::class, 'registered after the framework booted');
 });
+
+it('cascades package skips before validating remaining requirements in any registration order', function (bool $reverse): void {
+    $extensions = [
+        FixtureExtension::make('a', requires: ['missing', 'b']),
+        FixtureExtension::make('b', requires: ['c']),
+        FixtureExtension::make('c', whenPackages: ['gcego/tables']),
+    ];
+    $manager = new ExtensionManager;
+
+    foreach ($reverse ? array_reverse($extensions) : $extensions as $extension) {
+        $manager->register($extension);
+    }
+
+    expect($manager->plan([], ['gcego/core']))->toBe([
+        'order' => [],
+        'skipped' => [
+            'a' => 'required extension b is inactive',
+            'b' => 'required extension c is inactive',
+            'c' => 'package gcego/tables is not active',
+        ],
+    ]);
+})->with([false, true]);
+
+it('rejects registrations during activation and restores registration after failure', function (): void {
+    $manager = new ExtensionManager;
+    $manager->register(FixtureExtension::make('a', onActivate: fn () => $manager->register(FixtureExtension::make('late'))));
+
+    expect(fn () => $manager->activate(extensionContext()))->toThrow(BootstrapException::class, 'cannot be registered while extensions are initializing')
+        ->and($manager->has('late'))->toBeFalse();
+
+    $manager->register(FixtureExtension::make('recovery'));
+    expect($manager->has('recovery'))->toBeTrue();
+});
+
+it('rejects recursive activation without repeating hooks', function (): void {
+    $manager = new ExtensionManager;
+    $manager->register(FixtureExtension::make('a', onActivate: fn () => $manager->activate(extensionContext())));
+
+    expect(fn () => $manager->activate(extensionContext()))->toThrow(BootstrapException::class, 'Cannot activate GCEGO extensions recursively.');
+});

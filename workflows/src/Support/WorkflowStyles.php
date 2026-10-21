@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Workflows\Support;
 
 use Gcego\Chroma\ChromaManager;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Workflows\Presets\WorkflowPresets;
 use Gcego\Workflows\States\State;
 use Gcego\Workflows\Workflow;

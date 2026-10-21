@@ -17,16 +17,19 @@ packages installed in an application and builds on Laravel's own primitives:
 Gcego\Core
 ├── Gcego                      entry point (FrameworkInterface)
 ├── GcegoServiceProvider       Laravel integration; is itself the "gcego/core" package
-├── Contracts\                 FrameworkInterface, PackageInterface, Bootable, ExtensionInterface
+├── Contracts\                 FrameworkInterface, PackageInterface, Bootable, ExtensionInterface, DiagnosticCheck
 ├── Configuration\             GcegoConfig (typed view), ConfigurationValidator
 ├── Lifecycle\                 FrameworkState, LifecycleManager
-├── Bootstrap\                 FrameworkBootstrapper, BootstrapContext, BootstrapResult, BootStatus
-├── Packages\                  PackageDescriptor, PackageManager, PackageDependencyValidator
+├── Bootstrap\                 FrameworkBootstrapper, BootstrapContext, BootstrapResult, BootstrapPlan, BootStatus,
+│                              StartupPlanner, StartupTelemetry, StartupTiming
+├── Packages\                  PackageDescriptor, PackageManager, PackageDependencyValidator, PackageDiscovery
 ├── Extensions\                ExtensionDescriptor, ExtensionManager
 ├── Diagnostics\               EnvironmentChecker, FrameworkDiagnostics, DiagnosticReport,
-│                              DiagnosticResult, DiagnosticStatus
+│                              DiagnosticResult, DiagnosticStatus, DiagnosticRegistry
+├── Events\                    typed framework, package and extension startup events
+├── Console\                   DiagnoseCommand, PlanCommand
 ├── Support\                   FrameworkVersion, DependencyGraph (internal), Identifier (internal)
-└── Exceptions\                GcegoException (interface) and six concrete exceptions
+└── Exceptions\                GcegoException (interface) and concrete exceptions
 ```
 
 ### Decisions and deviations from the original plan
@@ -38,9 +41,8 @@ Gcego\Core
 - **No `ConfigurationResolver`.** Laravel's `mergeConfigFrom()` merges the
   defaults. `ConfigurationValidator` validates and interprets the values, and
   `GcegoConfig` is the typed result.
-- **No `Configurable` contract and no `LifecycleEvent`.** Neither had a
-  concrete consumer. Packages hook into the boot through `Bootable`, and
-  readiness is queried with `Gcego::state()`. No event bus was added.
+- **No `Configurable` contract or separate event bus.** Packages initialize
+  through `Bootable`. Typed observational startup events use Laravel's dispatcher; readiness remains available through `Gcego::state()`.
 - **No static facade.** `Gcego` is resolved from the container or injected,
   never used as a global service locator.
 - **Added `Bootable`.** Laravel boots providers in registration order. GCEGO
@@ -68,13 +70,15 @@ deferred providers are not loaded at boot time.
 | Service | Lifetime | Notes |
 | --- | --- | --- |
 | `Gcego` (alias `FrameworkInterface`) | singleton | stateless facade |
-| `LifecycleManager` | singleton | resolved in `register()` to mark Registered |
+| `LifecycleManager` | singleton | resolved in `register()` to mark Registered; integration milestones are also recorded |
 | `PackageManager` | singleton | framework-wide metadata |
 | `ExtensionManager` | singleton | framework-wide metadata |
 | `FrameworkBootstrapper` | singleton | caches the boot result |
 | `GcegoConfig` | singleton | built on first use from `config('gcego')` |
+| `StartupTelemetry`, `DiagnosticRegistry`, `InfrastructureIssues`, `IntegrationState` | singleton | framework-wide timing metadata and contributed health checks |
+| `StartupPlanner`, `PackageDiscovery` | singleton | previews and provider discovery without hook execution |
 | `FrameworkVersion` | singleton | read once from Composer's runtime metadata |
-| `EnvironmentChecker`, `FrameworkDiagnostics`, `ConfigurationValidator` | transient | stateless; built on demand |
+| `EnvironmentChecker`, `FrameworkDiagnostics`, `CoreDiagnostics`, `ConfigurationValidator` | transient | stateless; built on demand |
 
 No scoped services exist, because nothing in core is request-specific.
 Singletons hold only framework-wide, boot-time metadata. They never hold the
@@ -82,8 +86,8 @@ request, user, session or tenant, which a test verifies across HTTP requests.
 That makes them safe under Octane and queue workers: the framework boots once
 per worker and is not booted again per request.
 
-`register()` resolves nothing except `LifecycleManager`, which has no
-dependencies. Everything else is resolved lazily.
+`register()` resolves only the small `LifecycleManager` and `IntegrationState`
+trackers. Everything else is resolved lazily.
 
 ## Configuration strategy
 
@@ -104,16 +108,17 @@ All exceptions implement `Gcego\Core\Exceptions\GcegoException`.
 | `BootstrapException` | `RuntimeException` | any boot failure; the cause is preserved as `getPrevious()` |
 | `PackageRegistrationException` | `LogicException` | invalid descriptor, duplicate id, late registration, unknown id |
 | `PackageDependencyException` | `LogicException` | missing, disabled or circular package dependencies |
+| `DiagnosticException` | `LogicException` | invalid or duplicate health checks, registration during checks, recursive custom checks |
 | `ExtensionException` | `LogicException` | the same, for extensions |
 
 ## Dependency boundaries
 
-- Runtime dependencies: `illuminate/support`, `illuminate/contracts` and
-  `composer-runtime-api` only. No Livewire, Blade, Tailwind or Filament.
-- `gcego/components` is a **development** dependency, used to prove that real
+- Runtime dependencies: `illuminate/support`, `illuminate/contracts`,
+  `illuminate/console`, `psr/log`, `composer/semver` and `composer-runtime-api`. No Livewire, Blade, Tailwind or Filament.
+- `gcego/morfaw` is a **development** dependency, used to prove that real
   component definitions work in a GCEGO application. Core has no runtime use
   for it. Packages that build components require it themselves.
-- The dependency direction is one-way: `gcego/components` never imports
+- The dependency direction is one-way: `gcego/morfaw` never imports
   `gcego/core`, and a test enforces this.
 - Core is not a registry. It knows packages and extensions, never components
   or application definitions.

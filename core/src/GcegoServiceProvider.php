@@ -5,13 +5,23 @@ declare(strict_types=1);
 namespace Gcego\Core;
 
 use Gcego\Core\Bootstrap\FrameworkBootstrapper;
+use Gcego\Core\Bootstrap\StartupPlanner;
+use Gcego\Core\Bootstrap\StartupTelemetry;
 use Gcego\Core\Configuration\ConfigurationValidator;
 use Gcego\Core\Configuration\GcegoConfig;
+use Gcego\Core\Console\DiagnoseCommand;
+use Gcego\Core\Console\PlanCommand;
 use Gcego\Core\Contracts\FrameworkInterface;
 use Gcego\Core\Contracts\PackageInterface;
+use Gcego\Core\Diagnostics\CoreDiagnostics;
+use Gcego\Core\Diagnostics\DiagnosticRegistry;
+use Gcego\Core\Diagnostics\InfrastructureIssues;
+use Gcego\Core\Diagnostics\IntegrationState;
+use Gcego\Core\Exceptions\ConfigurationException;
 use Gcego\Core\Extensions\ExtensionManager;
 use Gcego\Core\Lifecycle\LifecycleManager;
 use Gcego\Core\Packages\PackageDescriptor;
+use Gcego\Core\Packages\PackageDiscovery;
 use Gcego\Core\Packages\PackageManager;
 use Gcego\Core\Support\FrameworkVersion;
 use Illuminate\Contracts\Config\Repository;
@@ -37,6 +47,14 @@ final class GcegoServiceProvider extends ServiceProvider implements PackageInter
     {
         $this->mergeConfigFrom(self::configPath(), 'gcego');
 
+        $this->app->bind(CoreDiagnostics::class);
+        $this->app->singletonIf(IntegrationState::class);
+        $this->app->make(IntegrationState::class)->registered = true;
+        $this->app->singleton(InfrastructureIssues::class);
+        $this->app->singleton(StartupTelemetry::class);
+        $this->app->singleton(DiagnosticRegistry::class);
+        $this->app->singleton(PackageDiscovery::class);
+        $this->app->singleton(StartupPlanner::class);
         $this->app->singleton(LifecycleManager::class);
         $this->app->singleton(PackageManager::class);
         $this->app->singleton(ExtensionManager::class);
@@ -45,7 +63,11 @@ final class GcegoServiceProvider extends ServiceProvider implements PackageInter
         $this->app->singleton(GcegoConfig::class, static function (Application $app): GcegoConfig {
             $config = $app->make(Repository::class)->get('gcego', []);
 
-            return GcegoConfig::fromArray(is_array($config) ? $config : []);
+            if (! is_array($config)) {
+                throw ConfigurationException::invalid(['gcego must be an array.']);
+            }
+
+            return GcegoConfig::fromArray($config);
         });
         $this->app->singleton(Gcego::class);
         $this->app->alias(Gcego::class, FrameworkInterface::class);
@@ -56,6 +78,9 @@ final class GcegoServiceProvider extends ServiceProvider implements PackageInter
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([DiagnoseCommand::class, PlanCommand::class]);
+            $this->app->make(IntegrationState::class)->commandsRegistered = true;
+
             $this->publishes([self::configPath() => $this->app->configPath('gcego.php')], self::ConfigTag);
         }
 
@@ -64,6 +89,7 @@ final class GcegoServiceProvider extends ServiceProvider implements PackageInter
                 $app->make(Gcego::class)->boot();
             }
         });
+        $this->app->make(IntegrationState::class)->providerBooted = true;
     }
 
     public function descriptor(): PackageDescriptor

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Runtime\Tests;
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
 use Gcego\Runtime\Contracts\StylingResolver;
@@ -75,6 +76,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class];
     }
 

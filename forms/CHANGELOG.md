@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Added:** Filament-style authoring on gcego/morfaw's live foundation. `Form::make()`, `TextInput::make()`, `Section::make()` and every other field and layout have `make()`. `visible()`, `hidden()`, `required()` and `disabled()` accept closures injected with `$get`, `$record`, `$operation` and typed values, and layouts accept `visible()`/`hidden()` closures. Closures become ordinary server-side conditions, so validation, dehydration and "hidden fields are never saved" apply unchanged.
+- **Added:** automatic live fields. The fields closures read are discovered while conditions are evaluated (`FormManager::livePaths()`, `Reactive\FormEvaluation`) and rendered `wire:model.live` without `dependsOn`, including inside repeaters (`objectives.*.title`).
+- **Added:** `afterStateUpdated(fn (Set $set, $state, $old) => ...)` in the Livewire host. It may only set declared fields, and what it sets is validated on submit. `default()` accepts closures.
+- **Added:** form extensions. `Components::extend('{blueprint}.form', fn (SchemaPatch $patch) => ...)` patches a blueprint's form everywhere it is rendered, hydrated and submitted (`FormManager::extended()`).
+- **Fixed:** `Checkbox` with a closure default no longer counts as checked.
+
 - **Added:** `Section::Icon` puts an icon badge in a section header. Forms are restyled: filled inputs with soft borders and a primary focus ring, rounded section cards and a floating save bar (`FormPresets::ActionBar`).
 - **Changed:** every native control is replaced by a themed, accessible one built on gcego/chroma's shared controls: `<x-gcego-forms::listbox>` for selects (single or multiple, optional search), `<x-gcego-forms::date-picker>` for date, date-time and time fields (calendar with month and year views, hour and minute columns, Today / Now, Clear), themed checkboxes, radios and choice cards, input groups for prefixes and suffixes, number steppers, a password reveal button, a drag-and-drop upload zone, repeater cards, a stepper wizard and an iconed error summary. Each custom control drives a hidden native element that keeps the field's binding, so deferred, live and debounced `wire:model` and plain `name=""` submits behave as before. Styling uses gcego/swatches semantic tokens (`FormPresets`).
 - **Fixed:** the error summary now pluralizes ("There are 4 problems…") instead of printing the raw translation choice string.

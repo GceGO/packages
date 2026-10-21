@@ -31,7 +31,7 @@ final class FieldCode
      */
     public function form(array $fields, int $indent = 2): array
     {
-        $imports = ['Gcego\\Components\\Property', 'Gcego\\Forms\\Form'];
+        $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Forms\\Form'];
         $lines = [];
 
         foreach ($fields as $field) {
@@ -85,7 +85,7 @@ final class FieldCode
      */
     public function table(array $fields, int $indent = 2): array
     {
-        $imports = ['Gcego\\Components\\Property', 'Gcego\\Tables\\Table'];
+        $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Tables\\Table'];
         $lines = [];
         $searchable = false;
 
@@ -127,7 +127,7 @@ final class FieldCode
      */
     public function infolist(array $fields, int $indent = 2): array
     {
-        $imports = ['Gcego\\Components\\Property', 'Gcego\\Infolists\\Infolist'];
+        $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Infolists\\Infolist'];
         $lines = [];
 
         foreach ($fields as $field) {
@@ -163,7 +163,7 @@ final class FieldCode
     public function imports(array $imports, string $code): string
     {
         $imports = array_values(array_unique($imports));
-        $imports = array_values(array_filter($imports, static fn (string $import): bool => $import !== 'Gcego\\Components\\Property' || str_contains($code, 'new Property(')));
+        $imports = array_values(array_filter($imports, static fn (string $import): bool => $import !== 'Gcego\\Components\\Properties\\Property' || str_contains($code, 'new Property(')));
         usort($imports, static fn (string $a, string $b): int => strcasecmp(str_replace(' as ', ' ', $a), str_replace(' as ', ' ', $b)));
 
         return implode("\n", array_map(static fn (string $import): string => 'use '.$import.';', $imports));

@@ -54,7 +54,7 @@ final class PageGenerator extends AbstractGenerator
         }
 
         return [$this->file($context, $this->kit->paths->directory('page').'/'.$name.'.php', 'page', [
-            'imports' => $this->imports(['Gcego\\Components\\Property', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Pages\\Components\\Content', $class[1], $requirement['import']]),
+            'imports' => $this->imports(['Gcego\\Components\\Properties\\Property', 'Gcego\\Layouts\\Components\\Section', 'Gcego\\Pages\\Components\\Content', $class[1], $requirement['import']]),
             'page_class' => StubValue::identifier($class[0]),
             'name' => StubValue::string($name),
             'title' => StubValue::string($context->string('title') ?? $this->kit->names->title($context->name)),

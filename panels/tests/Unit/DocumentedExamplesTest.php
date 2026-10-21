@@ -18,7 +18,7 @@ function readmePanel(string $name): Panel
     $readme = (string) file_get_contents(dirname(__DIR__, 2).'/README.md');
     preg_match('/<!-- example:'.$name.' -->\s*```php\n(.*?)```/s', $readme, $match);
     $imports = <<<'PHP'
-        use Gcego\Components\Property;
+        use Gcego\Components\Properties\Property;
         use Gcego\Panels\Branding\Branding;
         use Gcego\Panels\Definitions\ModuleReference;
         use Gcego\Panels\Definitions\PageReference;

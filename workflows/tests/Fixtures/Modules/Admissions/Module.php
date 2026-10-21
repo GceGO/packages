@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Actions\Action;
 use Gcego\Actions\Configuration\Handler;
 use Gcego\Actions\Configuration\Input;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Infolists\Entries\Text as TextEntry;
 use Gcego\Infolists\Infolist;

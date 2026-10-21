@@ -6,7 +6,7 @@ use Gcego\Chroma\Slot;
 use Gcego\Chroma\Slots\SlotRegistry;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Layouts\Components\Aside;
 use Gcego\Layouts\Components\Divider;
 use Gcego\Layouts\Components\Grid;

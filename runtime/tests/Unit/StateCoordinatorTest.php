@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Runtime\Contracts\StatefulComponent;
 use Gcego\Runtime\Exceptions\InvalidStateException;
 use Gcego\Runtime\State\StateCoordinator;

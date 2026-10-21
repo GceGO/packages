@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Settings\Approvals\ApplySettingRequest;
 use Gcego\Settings\Approvals\DiscardSettingRequest;
 use Gcego\Settings\Approvals\SettingRequest;

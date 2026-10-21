@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Navigation\Tests\Fixtures;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Navigation\Components\Divider;
 use Gcego\Navigation\Components\Dropdown;
 use Gcego\Navigation\Components\ExternalLink;

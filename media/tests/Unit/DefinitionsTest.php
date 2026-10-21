@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Media\Collections\CollectionRules;
 use Gcego\Media\Collections\MediaCollectionRegistry;
 use Gcego\Media\Definitions\Fit;

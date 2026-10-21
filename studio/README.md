@@ -29,7 +29,7 @@ Studio owns no engine. Authentication stays with Laravel (gcego/sentinel or your
 ## Requirements
 
 - PHP 8.3+ (tested on 8.5), Laravel 13, Livewire 4, Tailwind CSS v4 with Vite;
-- the eighteen foundation packages, gcego/components through gcego/panels (Composer installs them);
+- the eighteen foundation packages, gcego/morfaw through gcego/panels (Composer installs them);
 - Laravel authentication: gcego/sentinel or your own `login` route.
 
 Optional packages are detected, not required: gcego/notifications, media, workflows, settings, analytics, testing, cli and sentinel.

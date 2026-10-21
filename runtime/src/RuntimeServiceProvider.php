@@ -6,6 +6,7 @@ namespace Gcego\Runtime;
 
 use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Components\Component;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
 use Gcego\Runtime\Contracts\RenderAuthorizer;
@@ -37,6 +38,8 @@ final class RuntimeServiceProvider extends ServiceProvider implements PackageInt
 
     public function register(): void
     {
+        $this->app->register(ComponentServiceProvider::class);
+
         $this->mergeConfigFrom(self::path('config/gcego-runtime.php'), 'gcego-runtime');
 
         $this->app->singleton(RuntimeConfig::class, static function (Application $app): RuntimeConfig {

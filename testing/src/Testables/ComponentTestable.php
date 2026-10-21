@@ -6,16 +6,16 @@ namespace Gcego\Testing\Testables;
 
 use BackedEnum;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentTree;
 use Gcego\Components\Contracts\ComponentInterface;
+use Gcego\Components\Facades\Components;
 use Gcego\Components\Inspection\ComponentInspection;
-use Gcego\Components\Inspection\ComponentInspector;
-use Gcego\Components\TreeNode;
+use Gcego\Components\Trees\ComponentTree;
+use Gcego\Components\Trees\TreeNode;
 use Gcego\Components\Validation\ValidationError;
 use Gcego\Testing\Assertions\Verifier;
 
 /**
- * Assertions about one gcego/components definition and its subtree.
+ * Assertions about one gcego/morfaw definition and its subtree.
  *
  * Nothing here mutates the component: definitions are immutable and every
  * check reads validate(), normalize() or a ComponentTree.
@@ -34,7 +34,7 @@ final class ComponentTestable extends Testable
 
     public function inspection(): ComponentInspection
     {
-        return (new ComponentInspector)->inspect($this->component);
+        return Components::inspect($this->component);
     }
 
     public function assertValid(): self
@@ -173,14 +173,14 @@ final class ComponentTestable extends Testable
      */
     public function assertContainsType(string $type, ?int $times = null): self
     {
-        $found = count((new ComponentTree($this->component))->findByType($type));
+        $found = count(Components::tree($this->component)->findByType($type));
 
         return $this->check($times === null ? $found > 0 : $found === $times, sprintf('assertContainsType(%s, %s)', $this->export($type), $this->export($times)), sprintf('Expected the subtree to contain [%s]%s.', $type, $times === null ? '' : " $times time(s)"), ['count' => $times ?? '≥ 1'], ['count' => $found]);
     }
 
     public function assertNoDuplicateIds(): self
     {
-        $duplicates = (new ComponentTree($this->component))->duplicateIds();
+        $duplicates = Components::tree($this->component)->duplicateIds();
 
         return $this->check($duplicates === [], 'assertNoDuplicateIds()', 'Expected every explicit id in the subtree to be unique.', ['duplicates' => []], ['duplicates' => $duplicates]);
     }
@@ -225,11 +225,11 @@ final class ComponentTestable extends Testable
     {
         foreach ($this->component->children()->all() as $child) {
             if ($child->get(Component::Name) === $nameOrPath) {
-                return (new ComponentTree($child))->rootNode();
+                return Components::tree($child)->rootNode();
             }
         }
 
-        $tree = new ComponentTree($this->component);
+        $tree = Components::tree($this->component);
         $root = (string) $tree->rootNode()->path;
 
         return $tree->find($root.'.'.$nameOrPath) ?? $tree->find($nameOrPath);
@@ -240,7 +240,7 @@ final class ComponentTestable extends Testable
      */
     private function paths(): array
     {
-        return array_map(static fn (TreeNode $node): string => (string) $node->path, (new ComponentTree($this->component))->depthFirst());
+        return array_map(static fn (TreeNode $node): string => (string) $node->path, Components::tree($this->component)->depthFirst());
     }
 
     private function labelOf(ComponentInterface $component): mixed

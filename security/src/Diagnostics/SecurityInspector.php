@@ -80,7 +80,7 @@ final readonly class SecurityInspector
             ? new SecurityDiagnostic('definitions', SecurityDiagnostic::Error, sprintf('%s declares no authorization requirement: it is denied to everyone. Add a Permission, ResourceAccess, Ability or PublicAccess node.', $identity), ['definition' => $identity])
             : new SecurityDiagnostic('definitions', SecurityDiagnostic::Ok, sprintf('%s is protected by: %s.', $identity, implode('; ', array_map(static fn (Requirement $requirement): string => $requirement->describe(), $requirements))), ['definition' => $identity])];
 
-        foreach ((new ComponentWalker)->preOrder($definition) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($definition) as $node) {
             $source = $node->component;
 
             if (! $source instanceof Source || ! is_string($model = $source->get(Source::Model))) {

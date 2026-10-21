@@ -118,7 +118,7 @@ Assertions about a gcego/blueprints Blueprint: validity (components and composit
 
 ### `Testables\ComponentTestable`
 
-Assertions about one gcego/components definition and its subtree.
+Assertions about one gcego/morfaw definition and its subtree.
 
 - `component(): ComponentInterface`
 - `inspection(): ComponentInspection`

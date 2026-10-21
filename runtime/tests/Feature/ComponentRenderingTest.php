@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Runtime\Contracts\StylingResolver;
 use Gcego\Runtime\Exceptions\RendererNotFoundException;
 use Gcego\Runtime\Exceptions\RenderException;

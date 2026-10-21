@@ -7,9 +7,9 @@ namespace Gcego\Analytics\Reports;
 use Gcego\Analytics\Definitions\AnalyticsNode;
 use Gcego\Analytics\Measures\Aggregate;
 use Gcego\Analytics\Support\Format;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 /**
  * A report column: a dimension to group by, or an aggregate of a field.

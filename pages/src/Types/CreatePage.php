@@ -7,7 +7,7 @@ namespace Gcego\Pages\Types;
 use Gcego\Actions\Action;
 use Gcego\Actions\ActionPlacement;
 use Gcego\Actions\Create;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
  * A page with a gcego/forms Form that creates a record through the

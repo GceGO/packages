@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Exceptions;
 
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Support\ValueDescriber;
 use Throwable;
 
 /**
@@ -17,7 +19,7 @@ class DuplicatePropertyException extends InvalidPropertyException
         return new self(
             $componentClass === null
                 ? sprintf('Property "%s" is declared more than once.', $key)
-                : sprintf('Property "%s" is declared more than once on %s. Each property may only be declared once per component.', $key, $componentClass),
+                : sprintf('Property "%s" is declared more than once on %s. Each property may only be declared once per component.', $key, ValueDescriber::className($componentClass)),
             0,
             $previous,
         );

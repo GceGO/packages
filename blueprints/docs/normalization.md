@@ -38,11 +38,11 @@ $withSchemas = (new BlueprintNormalizer(includeSchema: true))->normalize($bluepr
 - **Deterministic.** Equal declarations normalize identically, whether written
   with shorthand or `Property` syntax and in any property order.
 - **No duplicate work.** Parts and roles point into the component tree by path;
-  the tree is normalized once, by `gcego/components`.
+  the tree is normalized once, by `gcego/morfaw`.
 - **Definition-level only.** No callbacks are run, no model is resolved, and
   nothing touches a database or renders HTML. Unsupported values (closures,
   service objects) are rejected when the `Property` is created. `RuntimeValue`s
-  become `RuntimePlaceholder`s, exactly as in `gcego/components`.
+  become `RuntimePlaceholder`s, exactly as in `gcego/morfaw`.
 - **Effective metadata.** Derived titles and slugs are included and flagged.
 - **Styling configuration nodes** appear under `component.configurations`,
   never under `parts`.

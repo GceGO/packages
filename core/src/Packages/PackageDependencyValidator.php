@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Core\Packages;
 
+use Composer\Semver\Semver;
 use Gcego\Core\Exceptions\PackageDependencyException;
 use Gcego\Core\Support\DependencyGraph;
 
@@ -48,7 +49,7 @@ final class PackageDependencyValidator
         $registered = [];
 
         foreach ($descriptors as $descriptor) {
-            $registered[$descriptor->id] = true;
+            $registered[$descriptor->id] = $descriptor;
         }
 
         foreach ($descriptors as $descriptor) {
@@ -63,6 +64,25 @@ final class PackageDependencyValidator
 
             if ($disabledRequirements !== []) {
                 $problems[] = PackageDependencyException::disabled($descriptor->id, $disabledRequirements);
+            }
+        }
+
+        foreach ($descriptors as $descriptor) {
+            if (in_array($descriptor->id, $disabled, true)) {
+                continue;
+            }
+            foreach ($descriptor->versionConstraints as $dependency => $constraint) {
+                $version = $registered[$dependency]->version ?? null;
+                if ($version === null || in_array($dependency, $disabled, true)) {
+                    continue;
+                }
+                try {
+                    if (! Semver::satisfies($version, $constraint)) {
+                        $problems[] = new PackageDependencyException(sprintf('GCEGO package "%s" has an unsupported version of dependency "%s".', $descriptor->id, $dependency), diagnosticCode: 'packages.dependencies.unsupported_version');
+                    }
+                } catch (\UnexpectedValueException) {
+                    $problems[] = new PackageDependencyException(sprintf('GCEGO package "%s" cannot verify the declared version of dependency "%s".', $descriptor->id, $dependency), diagnosticCode: 'packages.dependencies.unsupported_version');
+                }
             }
         }
 

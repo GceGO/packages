@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Contracts;
 
-use Gcego\Components\PropertyCollection;
+use Gcego\Components\Collections\PropertyCollection;
 
 interface PropertyAware
 {

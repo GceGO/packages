@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Testing\Testables;
 
-use Gcego\Components\ComponentTree;
+use Gcego\Components\Facades\Components;
 use Gcego\Layouts\Components\Tab;
 use Gcego\Layouts\Layout;
 use Gcego\Layouts\LayoutComponent;
@@ -76,7 +76,7 @@ final class LayoutTestable extends Testable
     {
         $tabs = [];
 
-        foreach ((new ComponentTree($this->component()))->findByType(Tab::class) as $node) {
+        foreach (Components::tree($this->component())->findByType(Tab::class) as $node) {
             if ($node->component instanceof Tab) {
                 $tabs[] = $node->component->tabName();
             }

@@ -15,7 +15,7 @@
     "require": {
         "php": "^8.3",
         "gcego/blueprints": "^0.1",
-        "gcego/components": "^0.1",
+        "gcego/morfaw": "^0.1",
         "gcego/core": "^0.1",
         "gcego/registry": "^0.1",
         "illuminate/auth": "^13.0",
@@ -31,7 +31,7 @@
         "pestphp/pest": "^4.0"
     },
     "repositories": [
-        {"type": "path", "url": "../components", "options": {"versions": {"gcego/components": "0.1.0"}}},
+        {"type": "path", "url": "../components", "options": {"versions": {"gcego/morfaw": "0.1.0"}}},
         {"type": "path", "url": "../core", "options": {"versions": {"gcego/core": "0.1.0"}}},
         {"type": "path", "url": "../blueprints", "options": {"versions": {"gcego/blueprints": "0.1.0"}}},
         {"type": "path", "url": "../registry", "options": {"versions": {"gcego/registry": "0.1.0"}}}

@@ -22,7 +22,7 @@ use Gcego\Actions\Tests\Fixtures\Blueprints;
 use Gcego\Actions\Tests\Fixtures\Models\Subject;
 use Gcego\Blueprints\Blueprint;
 use Gcego\Chroma\ChromaManager;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Core\Gcego;
 use Gcego\Data\Source;
 use Gcego\Luminaries\Facades\Luminaries;

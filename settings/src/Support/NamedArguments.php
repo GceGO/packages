@@ -6,11 +6,11 @@ namespace Gcego\Settings\Support;
 
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Settings\Exceptions\InvalidSettingException;
 
 /**
- * gcego/components refuses named constructor arguments; settings
+ * gcego/morfaw refuses named constructor arguments; settings
  * definitions accept them as a convenience and turn them into the same
  * Property values (one internal representation):
  *

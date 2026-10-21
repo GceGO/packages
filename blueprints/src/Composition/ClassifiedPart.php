@@ -6,7 +6,7 @@ namespace Gcego\Blueprints\Composition;
 
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintPart;
-use Gcego\Components\ComponentPath;
+use Gcego\Components\Trees\ComponentPath;
 
 /**
  * A part together with the role it declared and where it sits in the blueprint tree.

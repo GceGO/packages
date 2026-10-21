@@ -11,7 +11,7 @@ use Gcego\Blueprints\Tests\Fixtures\ExampleStyle;
 use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
 use Gcego\Blueprints\Tests\Fixtures\FakeModel;
 use Gcego\Components\Exceptions\InvalidPropertyException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 function normalizedBlueprint(): Blueprint
 {

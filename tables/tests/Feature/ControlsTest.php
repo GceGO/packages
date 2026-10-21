@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Validation\ComponentValidator;
 use Gcego\Tables\Columns\Text;
 use Gcego\Tables\Filters\DateFilter;

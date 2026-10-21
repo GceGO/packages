@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Gcego\Tables\Filters;
 
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Filters\ValueType;

@@ -38,6 +38,6 @@ class Checkbox extends Field
 
     public function emptyState(): mixed
     {
-        return (bool) $this->get(self::Default);
+        return (bool) parent::emptyState();
     }
 }

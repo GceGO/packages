@@ -13,6 +13,7 @@ use Gcego\Actions\Tests\Fixtures\Policies\PermissivePolicy;
 use Gcego\Actions\Tests\Fixtures\Policies\SubjectPolicy;
 use Gcego\Actions\Tests\Fixtures\TenantResolver;
 use Gcego\Chroma\ChromaServiceProvider;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Luminaries\LuminariesServiceProvider;
@@ -56,6 +57,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, LuminariesServiceProvider::class, ActionsServiceProvider::class];
     }
 

@@ -3,7 +3,7 @@
 gcego/settings keeps every concern in a small class. `SettingsManager` is a thin entry point.
 
 ```
-Setting / SettingsSection / SettingsGroup / SettingsPage   immutable gcego/components definitions
+Setting / SettingsSection / SettingsGroup / SettingsPage   immutable gcego/morfaw definitions
         │  discovered by gcego/registry (kinds "settings" and "settings-page")
         ▼
 SettingsDefinitions ── SettingsDefinitionValidator         one SettingDefinition per key (the internal form)
@@ -27,7 +27,7 @@ UI:  PanelSettingsExtension ─► SettingsPanel (Livewire) ─► SettingsForm 
 
 | Concern | Owned by | Used here through |
 | --- | --- | --- |
-| Definitions, validation of definitions | gcego/components | `SettingsNode extends Component` |
+| Definitions, validation of definitions | gcego/morfaw | `SettingsNode extends Component` |
 | Discovery, caching of definitions | gcego/registry | `SettingsKind`, `SettingsPageKind`, `DefinitionProvider` classes |
 | Tenancy, requirements, Gate | gcego/security | `TenantContext`, `TenantAuthorizer`, `SecurityManager::check()` |
 | Fields, rendering, normalization | gcego/forms | `FormSettingsAdapter`, `FormManager::process()`, `FormRenderFrame` |

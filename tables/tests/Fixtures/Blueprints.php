@@ -14,7 +14,7 @@ use Gcego\Actions\Handlers\UpdateRecord;
 use Gcego\Actions\Restore;
 use Gcego\Actions\View;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Source;
 use Gcego\Forms\Fields\TextInput;

@@ -3,7 +3,7 @@
 ## Two entry points
 
 ```php
-$blueprint->validate();      // gcego/components ValidationResult (memoized)
+$blueprint->validate();      // gcego/morfaw ValidationResult (memoized)
 $blueprint->assertValid();   // throws Gcego\Components\Exceptions\InvalidComponentException
 
 $result = (new BlueprintValidator)->validate($blueprint);   // BlueprintValidationResult
@@ -16,7 +16,7 @@ there is one.
 
 ## Error codes
 
-Component schema errors keep their `gcego/components` code with a
+Component schema errors keep their `gcego/morfaw` code with a
 `component.` prefix (`component.missing_property`, `component.invalid_value`,
 `component.unknown_property`, `component.invalid_child`, ...). Blueprint
 composition errors use:

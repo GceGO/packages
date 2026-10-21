@@ -13,7 +13,7 @@ use Gcego\Vault\Permissions\VaultPermissions;
 use Gcego\Vault\Support\Holder;
 use Gcego\Vault\VaultConfig;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 use Livewire\Attributes\Locked;
 
@@ -144,7 +144,7 @@ final class PersonAccess extends VaultComponent
         ]);
     }
 
-    private function untilDate(): ?\Illuminate\Support\Carbon
+    private function untilDate(): ?Carbon
     {
         return $this->until === '' ? null : Date::parse($this->until)->endOfDay();
     }

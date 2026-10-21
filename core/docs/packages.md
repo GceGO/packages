@@ -75,7 +75,7 @@ and packages listed as both required and optional throw
 `PackageRegistrationException`.
 
 `requires` describes **framework-level** relationships between GCEGO packages.
-Library dependencies such as `gcego/components` belong in `composer.json`;
+Library dependencies such as `gcego/morfaw` belong in `composer.json`;
 Composer remains responsible for installation and version constraints.
 
 ## Dependency rules
@@ -105,3 +105,40 @@ never silently replaced.
 
 `GcegoServiceProvider` is the package `gcego/core`, with capability
 `framework`. Every other package can declare `requires: ['gcego/core']`.
+
+## Registration during initialization
+
+Register packages before Core resolves dependencies. After discovering loaded
+providers, Core locks package registration before dependency resolution and
+boot hooks begin. New package registrations
+inside `bootPackage()` are rejected because dependency resolution has already
+finished. Direct recursive calls to `PackageManager::boot()` are rejected too.
+The execution guard clears after failure, but Core's package-registration lock
+remains in place. Retries retain the same registered package set. To add a missing
+package after resolution has started, correct the registrations and create a
+fresh application.
+A package may still register extensions during its boot hook, before extension
+activation starts.
+
+## Declared version compatibility
+
+```php
+new PackageDescriptor(
+    id: 'gcego/reports',
+    requires: ['gcego/core'],
+    versionConstraints: ['gcego/core' => '^1.0'],
+);
+```
+
+Constraints use Composer semver syntax and may target only declared required or
+optional GCEGO packages. Invalid declarations are rejected. Known incompatible
+versions fail dependency resolution before hooks run. Constraints whose installed
+package has no version metadata are reported as unverifiable warnings; Core does
+not invent a version. Optional dependencies remain optional when absent. Composer
+continues to manage library installation and its own version constraints.
+
+`exclusiveCapabilities` may name a subset of a package's declared `capabilities`.
+Multiple active providers are informational by default. If any active provider
+declares a capability exclusive, diagnostics report a conflict when multiple
+providers are active. Exclusivity is an integrity diagnostic, not an automatic
+provider-selection or rollback mechanism.

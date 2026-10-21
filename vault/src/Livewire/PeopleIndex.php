@@ -8,7 +8,6 @@ use Gcego\Vault\Livewire\Concerns\FindsPeople;
 use Gcego\Vault\Models\Assignment;
 use Gcego\Vault\Models\Grant;
 use Gcego\Vault\Permissions\VaultPermissions;
-use Gcego\Vault\Support\Holder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;

@@ -5,6 +5,9 @@ declare(strict_types=1);
 use Gcego\Vault\Enums\RequestStatus;
 use Gcego\Vault\Exceptions\VaultAuthorizationException;
 use Gcego\Vault\Exceptions\VaultValidationException;
+use Gcego\Vault\Models\AccessRequest;
+use Gcego\Vault\Models\Approval;
+use Gcego\Vault\Tests\Fixtures\Models\User;
 use Illuminate\Support\Facades\Date;
 
 beforeEach(function (): void {
@@ -12,7 +15,7 @@ beforeEach(function (): void {
     role('editor', ['books.viewAny', 'books.view', 'books.update']);
 });
 
-function reviewer(string $name): Gcego\Vault\Tests\Fixtures\Models\User
+function reviewer(string $name): User
 {
     return administrator($name, ['books.viewAny', 'books.view', 'books.update', 'reports.export']);
 }
@@ -89,7 +92,7 @@ it('refuses duplicate pending requests and requests for access already held', fu
 it('only finalizes a request that is still pending in the database', function (): void {
     $user = person('Asker');
     $request = vault()->requests()->submit($user, ['role' => 'editor', 'reason' => 'Cataloguing the new collection']);
-    $stale = Gcego\Vault\Models\AccessRequest::query()->findOrFail($request->id);
+    $stale = AccessRequest::query()->findOrFail($request->id);
     vault()->requests()->approve(reviewer('First'), $request);
 
     // The stale in-memory copy still says "pending"; the database says "approved".
@@ -97,5 +100,5 @@ it('only finalizes a request that is still pending in the database', function ()
     vault()->requests()->approve(reviewer('Second'), $stale);
 
     expect($user->vaultAssignments()->count())->toBe(1)
-        ->and(Gcego\Vault\Models\Approval::query()->count())->toBe(2);
+        ->and(Approval::query()->count())->toBe(2);
 });

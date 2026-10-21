@@ -54,7 +54,7 @@ final readonly class PageActionResolver
     public function headerPaths(Page $page, bool $record): array
     {
         $paths = [];
-        $walker = new ComponentWalker;
+        $walker = app(ComponentWalker::class);
 
         foreach ($walker->childNodes($walker->rootNode($page)) as $node) {
             $component = $node->component;

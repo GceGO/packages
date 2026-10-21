@@ -10,7 +10,7 @@ new Blueprint(new Property(Blueprint::Name, 'subjects'), ...);  // advanced synt
 new Blueprint(...$items);                                       // no name: invalid until you add one
 ```
 
-The rules come from `gcego/components`:
+The rules come from `gcego/morfaw`:
 
 - **Only one positional value is accepted: the name.** A second string throws
   `InvalidConfigurationException` ("Blueprint accepts 1 positional shorthand

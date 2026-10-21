@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Support;
 
-use Gcego\Components\ComponentPath;
+use Gcego\Components\Trees\ComponentPath;
 
 /**
  * The three distinct identities of a component occurrence:
@@ -31,10 +31,11 @@ final readonly class ComponentIdentity
 
     /**
      * The explicit id when declared, otherwise the occurrence key.
+     * Prefixes keep explicit ids distinct from occurrence paths.
      */
     public function stableKey(): string
     {
-        return $this->explicitId ?? $this->occurrenceKey();
+        return $this->explicitId !== null ? 'id:'.$this->explicitId : 'path:'.$this->occurrenceKey();
     }
 
     public function hasExplicitId(): bool

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Validation;
 
-use Gcego\Components\TreeNode;
+use Gcego\Components\Support\ValueDescriber;
+use Gcego\Components\Trees\TreeNode;
 use Stringable;
 
 /**
@@ -48,7 +49,7 @@ final readonly class ValidationError implements Stringable
             $message,
             $path ?? $node->path->toString(),
             $node->component->type(),
-            $node->component::class,
+            ValueDescriber::className($node->component::class),
             $subject,
             $expected,
             $received,

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Forms\Configuration\Access;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Configuration\VisibleWhen;

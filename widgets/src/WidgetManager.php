@@ -110,7 +110,7 @@ final readonly class WidgetManager
             throw new NotFoundHttpException('Widget not found.');
         }
 
-        foreach ((new ComponentWalker)->preOrder($definition) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($definition) as $node) {
             if ($node->path->toString() === $path) {
                 return $node->component instanceof Widget ? [$definition, $node->component] : throw new NotFoundHttpException('Widget not found.');
             }

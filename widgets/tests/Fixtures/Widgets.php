@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Widgets\Tests\Fixtures;
 
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Source;
 use Gcego\Infolists\Entries\Text as InfolistText;

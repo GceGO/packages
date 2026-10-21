@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Tests\Fixtures;
 
+use Gcego\Components\Collections\ComponentCollection;
+use Gcego\Components\Collections\ConfigurationCollection;
+use Gcego\Components\Collections\PropertyCollection;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentCollection;
-use Gcego\Components\ComponentDefinition;
-use Gcego\Components\ConfigurationCollection;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Normalization\ComponentNormalizer;
-use Gcego\Components\PropertyCollection;
+use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Components\Validation\ComponentValidator;
 use Gcego\Components\Validation\ValidationResult;
+use Illuminate\Container\Container;
 
 /**
  * A hostile third-party implementation whose children include itself.
@@ -79,7 +80,7 @@ final class CyclicComponent implements ComponentInterface
 
     public function validate(): ValidationResult
     {
-        return (new ComponentValidator)->validate($this);
+        return Container::getInstance()->make(ComponentValidator::class)->validate($this);
     }
 
     public function assertValid(): static
@@ -91,6 +92,6 @@ final class CyclicComponent implements ComponentInterface
 
     public function normalize(): array
     {
-        return (new ComponentNormalizer)->normalize($this);
+        return Container::getInstance()->make(ComponentNormalizer::class)->normalize($this);
     }
 }

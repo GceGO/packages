@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Sentinel\Tests\Fixtures\Models\Membership;
 use Gcego\Sentinel\Tests\Fixtures\Models\User;
 use Gcego\Sentinel\Tests\TestCase;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Facade;
 use Livewire\Features\SupportTesting\Testable;
 
 uses(TestCase::class)->in('Unit', 'Integration', 'Feature', 'Security');
@@ -112,3 +115,8 @@ function submit(Testable $component, string $method, array $updates, array $para
 {
     return $component->update(calls: [['method' => $method, 'params' => $params, 'path' => '']], updates: $updates);
 }
+
+// Dataset declarations can construct components before the test application starts.
+$componentApp = new Application(dirname(__DIR__));
+Facade::setFacadeApplication($componentApp);
+$componentApp->register(ComponentServiceProvider::class);

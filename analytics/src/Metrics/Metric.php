@@ -11,11 +11,11 @@ use Gcego\Analytics\Definitions\AnalyticsNode;
 use Gcego\Analytics\Support\Format;
 use Gcego\Analytics\TimeSeries\FillStrategy;
 use Gcego\Analytics\TimeSeries\TimeInterval;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;
 

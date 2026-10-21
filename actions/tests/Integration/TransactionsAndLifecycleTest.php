@@ -16,7 +16,7 @@ use Gcego\Actions\Resolution\ResolvedAction;
 use Gcego\Actions\Tests\Fixtures\Models\Subject;
 use Gcego\Actions\Tests\Fixtures\Recorder;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Registry\Registry;
 use Gcego\Security\Requirements\Ability;

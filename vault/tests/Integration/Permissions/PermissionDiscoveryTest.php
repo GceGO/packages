@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Gcego\Vault\Exceptions\VaultValidationException;
+use Gcego\Vault\Models\Assignment;
 use Gcego\Vault\Models\Grant;
 use Gcego\Vault\Models\Permission;
 
@@ -12,7 +14,7 @@ it('registers panel, module, resource, field and configured permissions without 
         'panels.desk.access', 'modules.library.access', 'books.viewAny', 'books.forceDelete', 'books.isbn.view', 'books.isbn.update', 'reports.export', 'vault.roles.assign',
     )->and($result['permissions']['created'])->not->toBeEmpty()
         ->and(Grant::query()->count())->toBe(0)
-        ->and(Gcego\Vault\Models\Assignment::query()->count())->toBe(0);
+        ->and(Assignment::query()->count())->toBe(0);
 });
 
 it('records ability dependencies and keeps names unique regardless of case', function (): void {
@@ -21,7 +23,7 @@ it('records ability dependencies and keeps names unique regardless of case', fun
     expect(vault()->permissions()->require('books.update')->dependencies())->toBe(['books.view'])
         ->and(vault()->permissions()->find('BOOKS.UPDATE')?->name)->toBe('books.update');
 
-    expect(fn () => vault()->permissions()->create(administrator(), ['name' => 'Books.Update']))->toThrow(Gcego\Vault\Exceptions\VaultValidationException::class);
+    expect(fn () => vault()->permissions()->create(administrator(), ['name' => 'Books.Update']))->toThrow(VaultValidationException::class);
 });
 
 it('marks permissions that are no longer declared as stale, and prunes only unused ones', function (): void {

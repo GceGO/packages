@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Tests;
 
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Data\Tests\Fixtures\Models\Subject;
@@ -52,6 +53,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, DataServiceProvider::class];
     }
 

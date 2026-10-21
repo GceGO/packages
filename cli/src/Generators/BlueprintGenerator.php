@@ -47,7 +47,7 @@ final class BlueprintGenerator extends AbstractGenerator
             $this->warn(sprintf('%s is not a blueprint discovery folder (gcego-registry.discovery.roots): register the blueprint yourself.', $this->kit->files->relative(dirname($path))));
         }
 
-        $imports = ['Gcego\\Blueprints\\Blueprint', 'Gcego\\Components\\Property'];
+        $imports = ['Gcego\\Blueprints\\Blueprint', 'Gcego\\Components\\Properties\\Property'];
         $parts = '';
         $model = $this->model($context, false, '');
 

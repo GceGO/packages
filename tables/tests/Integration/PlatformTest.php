@@ -6,7 +6,7 @@ use Gcego\Blueprints\Blueprint;
 use Gcego\Chroma\ChromaManager;
 use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Data\Support\Callback;
 use Gcego\Registry\Registry;

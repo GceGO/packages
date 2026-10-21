@@ -17,12 +17,12 @@ use Gcego\Blueprints\Exceptions\MissingBlueprintPartException;
 use Gcego\Blueprints\Metadata\BlueprintMetadata;
 use Gcego\Blueprints\Support\BlueprintIdentity;
 use Gcego\Blueprints\Support\Naming;
+use Gcego\Components\Collections\ComponentCollection;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentCollection;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 
 /**
  * A composed feature definition: metadata plus role-classified parts.
@@ -35,7 +35,7 @@ use Gcego\Components\Type;
  *         new SubjectsTable,
  *     );
  *
- * Blueprint is a gcego/components Component: construction, properties,
+ * Blueprint is a gcego/morfaw Component: construction, properties,
  * copying, traversal, validation and normalization are the component
  * engine's. Blueprint adds the schema (metadata properties, BlueprintPart
  * children), role classification and part lookup.

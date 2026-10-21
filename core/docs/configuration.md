@@ -68,3 +68,14 @@ GCEGO boots. Later changes to `config('gcego')` are not picked up.
 
 `env()` is only called inside `config/gcego.php`, so `php artisan config:cache`
 works as usual. Runtime services read only Laravel's config repository.
+
+## Diagnostics profiling
+
+`diagnostics.profiling` defaults to false and accepts the same boolean forms as
+other Core switches. The package configuration reads `GCEGO_STUDIO_PROFILING`.
+`diagnostics.slow_boot_ms` defaults to 100.0; `slow_package_ms` and
+`slow_extension_ms` default to 50.0. Thresholds must be positive finite numbers.
+Profiling enables per-step timing history. Basic statuses, failure classes,
+attempt counts and phase totals are collected without it. Unknown diagnostic
+options warn; dynamic check class references are not supported. Register check
+objects through `DiagnosticRegistry` instead. See [diagnostics](diagnostics.md).

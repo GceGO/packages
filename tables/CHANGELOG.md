@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Added:** Filament-style authoring on gcego/morfaw. `Table::make()`, `Text::make()` and every other column and filter have `make()`.
+- **Added:** per-row closures. Presentation properties (`tooltip`, `placeholder`, `limit`, a badge's variants, a link's URL, ...) accept closures injected with `$state`, `$record` (also by model type) and `$column`. Each row gets a resolved copy of the column (`Column::forRow()`), and results are type-checked against the property and escaped as before.
+- **Added:** `state(fn (Subject $record) => ...)` for computed columns, and `formatStateUsing(fn ($state, Subject $record) => ...)` with named and typed injection (`formatUsing()` keeps its positional `($value, $record)` signature). Exports use the same values.
+- **Added:** `visible(fn (?User $user): bool => ...)` and `hidden(...)` decide once per request whether a column exists. A removed column is neither readable nor masked, so it is not queried, sorted, searched, shown or exported. `visible(false)` keeps its meaning: hidden until the user shows it.
+- **Added:** table extensions. `Components::extend('{blueprint}.table', fn (SchemaPatch $patch) => ...)` patches a blueprint's table wherever it is resolved (`TableManager::extended()`).
+- **Changed:** properties that shape the query (`searchable`, `sortable`, `sort_column`, `hideable`, `visible`, `visible_from`, `exportable`) refuse closures. Computed columns must be searched through `searchable([...fields])` and sorted through `sortColumn()`.
+
 - **Changed:** the listbox and date picker now run on gcego/chroma's shared controls script (`table-ui.js` is removed); the date picker gains month and year views.
 
 - **Added:** `Table::Poll` (5–3600 seconds) makes a table live: it refreshes while visible and shows a "Live" indicator.

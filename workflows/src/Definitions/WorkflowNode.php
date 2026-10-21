@@ -7,12 +7,12 @@ namespace Gcego\Workflows\Definitions;
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Workflows\Support\NamedArguments;
 
 /**
- * The base of workflow definition parts: gcego/components definitions that
+ * The base of workflow definition parts: gcego/morfaw definitions that
  * also accept named arguments (see NamedArguments). Immutable; constructing
  * one never queries or executes anything.
  */

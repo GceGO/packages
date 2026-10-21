@@ -8,6 +8,7 @@ use Closure;
 use Gcego\Actions\Resolution\ActionResolver;
 use Gcego\Blueprints\BlueprintRole;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
+use Gcego\Components\Facades\Components;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Data\DataManager;
 use Gcego\Data\Query\Query;
@@ -66,10 +67,42 @@ final class InfolistManager
      */
     private WeakMap $sources;
 
+    /**
+     * @var WeakMap<Infolist, array<string, Infolist>>
+     */
+    private WeakMap $extended;
+
     public function __construct(private readonly Container $container, private readonly InfolistsConfig $config)
     {
         $this->schemas = new WeakMap;
         $this->sources = new WeakMap;
+        $this->extended = new WeakMap;
+    }
+
+    /**
+     * The blueprint's infolist with every Components::extend() registered for
+     * "{blueprint name}.infolist" applied, so modules can add, change or
+     * remove entries and layouts of another module's infolist. Cached per
+     * infolist instance; the patched infolist is validated like any other.
+     */
+    public function extended(Infolist $infolist, string $blueprint): Infolist
+    {
+        if (isset($this->extended[$infolist][$blueprint])) {
+            return $this->extended[$infolist][$blueprint];
+        }
+
+        $patched = Components::extended($blueprint.'.infolist', $infolist);
+
+        if (! $patched instanceof Infolist) {
+            throw InvalidEntryException::invalid('Infolist', sprintf('extensions of "%s.infolist" must keep the infolist as the root.', $blueprint));
+        }
+
+        $patched->assertValid();
+        $cache = $this->extended[$infolist] ?? [];
+        $cache[$blueprint] = $patched;
+        $this->extended[$infolist] = $cache;
+
+        return $patched;
     }
 
     public function schema(Infolist $infolist): InfolistSchema
@@ -87,7 +120,10 @@ final class InfolistManager
             throw new NotFoundHttpException('This definition has no infolist.');
         }
 
-        return new ResolvedInfolist($key, $blueprint, $infolist, $this->pathOf($blueprint, $infolist), $source, $this->schema($infolist));
+        $path = $this->pathOf($blueprint, $infolist);
+        $infolist = $this->extended($infolist, $blueprint->name() ?? $key);
+
+        return new ResolvedInfolist($key, $blueprint, $infolist, $path, $source, $this->schema($infolist));
     }
 
     public function authorize(ResolvedInfolist $infolist): void
@@ -248,7 +284,7 @@ final class InfolistManager
 
     private function pathOf(BlueprintInterface $blueprint, Infolist $infolist): string
     {
-        foreach ((new ComponentWalker)->preOrder($blueprint) as $node) {
+        foreach (app(ComponentWalker::class)->preOrder($blueprint) as $node) {
             if ($node->component === $infolist) {
                 return $node->path->toString();
             }

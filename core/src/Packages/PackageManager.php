@@ -6,11 +6,15 @@ namespace Gcego\Core\Packages;
 
 use Composer\InstalledVersions;
 use Gcego\Core\Bootstrap\BootstrapContext;
+use Gcego\Core\Bootstrap\StartupTelemetry;
 use Gcego\Core\Contracts\Bootable;
 use Gcego\Core\Contracts\PackageInterface;
+use Gcego\Core\Diagnostics\DiagnosticRedactor;
+use Gcego\Core\Diagnostics\InfrastructureIssues;
 use Gcego\Core\Exceptions\BootstrapException;
 use Gcego\Core\Exceptions\PackageDependencyException;
 use Gcego\Core\Exceptions\PackageRegistrationException;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use OutOfBoundsException;
 use Throwable;
 
@@ -38,8 +42,12 @@ final class PackageManager
 
     private bool $locked = false;
 
+    private bool $initializing = false;
+
     public function __construct(
         private readonly PackageDependencyValidator $validator = new PackageDependencyValidator,
+        private readonly StartupTelemetry $telemetry = new StartupTelemetry,
+        private readonly InfrastructureIssues $issues = new InfrastructureIssues,
     ) {}
 
     /**
@@ -50,25 +58,55 @@ final class PackageManager
      */
     public function register(PackageInterface $package): void
     {
-        $descriptor = $package->descriptor();
+        if (in_array($package, $this->packages, true)) {
+            return;
+        }
+
+        if ($this->locked) {
+            $this->issues->record('packages.registration.late', DiagnosticRedactor::className($package::class));
+            throw PackageRegistrationException::afterBoot('unregistered package');
+        }
+        if ($this->initializing) {
+            $this->issues->record('packages.registration.mutation', DiagnosticRedactor::className($package::class));
+            throw PackageRegistrationException::duringInitialization('unregistered package');
+        }
+
+        try {
+            $descriptor = $package->descriptor();
+        } catch (Throwable $exception) {
+            $this->issues->record('packages.descriptor.invalid', exception: $exception);
+            throw $exception;
+        }
         $id = $descriptor->id;
+        if ($package instanceof DeferrableProvider) {
+            $this->issues->record('packages.provider.deferred', $id);
+            throw PackageRegistrationException::invalidMetadata($id, 'GCEGO package providers must not be deferred.');
+        }
 
         if (isset($this->packages[$id])) {
             if ($this->packages[$id] === $package) {
                 return;
             }
 
+            $this->issues->record('packages.registration.duplicate', $id);
             throw PackageRegistrationException::duplicate($id, $this->packages[$id]::class, $package::class);
-        }
-
-        if ($this->locked) {
-            throw PackageRegistrationException::afterBoot($id);
         }
 
         $this->packages[$id] = $package;
         $this->descriptors[$id] = $descriptor->version === null
             ? $descriptor->withVersion(self::installedVersion($id))
             : $descriptor;
+    }
+
+    /** Copy cached registration metadata without boot state, optionally preserving the registration lock. */
+    public function snapshot(bool $preserveLock = false): self
+    {
+        $snapshot = new self($this->validator);
+        $snapshot->packages = $this->packages;
+        $snapshot->descriptors = $this->descriptors;
+        $snapshot->locked = $preserveLock && $this->locked;
+
+        return $snapshot;
     }
 
     public function has(string $id): bool
@@ -98,6 +136,59 @@ final class PackageManager
     public function descriptors(): array
     {
         return array_values($this->descriptors);
+    }
+
+    /**
+     * @return list<string> Sorted dependency identifiers; missing requirements are included.
+     */
+    public function dependencies(string $id, bool $transitive = false, bool $includeOptional = false): array
+    {
+        $this->descriptor($id);
+        $seen = [];
+        $pending = [$id];
+
+        while ($pending !== []) {
+            $current = array_pop($pending);
+            $descriptor = $this->descriptors[$current] ?? null;
+
+            if ($descriptor === null) {
+                continue;
+            }
+
+            foreach ([...$descriptor->requires, ...($includeOptional ? $descriptor->optional : [])] as $dependency) {
+                if ($dependency === $id || isset($seen[$dependency])) {
+                    continue;
+                }
+
+                $seen[$dependency] = true;
+
+                if ($transitive) {
+                    $pending[] = $dependency;
+                }
+            }
+        }
+
+        $dependencies = array_keys($seen);
+        sort($dependencies);
+
+        return $dependencies;
+    }
+
+    /** @return list<string> Sorted registered dependants. */
+    public function dependants(string $id, bool $transitive = false, bool $includeOptional = false): array
+    {
+        $this->descriptor($id);
+        $dependants = [];
+
+        foreach (array_keys($this->descriptors) as $candidate) {
+            if ($candidate !== $id && in_array($id, $this->dependencies($candidate, $transitive, $includeOptional), true)) {
+                $dependants[] = $candidate;
+            }
+        }
+
+        sort($dependants);
+
+        return $dependants;
     }
 
     public function isBooted(string $id): bool
@@ -149,27 +240,40 @@ final class PackageManager
      */
     public function boot(array $order, BootstrapContext $context): void
     {
-        foreach ($order as $id) {
-            if (isset($this->booted[$id])) {
-                continue;
-            }
+        if ($this->initializing) {
+            $this->issues->record('packages.recursive_boot');
+            throw new BootstrapException('Cannot boot GCEGO packages recursively.');
+        }
 
-            $package = $this->get($id);
+        $this->initializing = true;
 
-            if ($package instanceof Bootable) {
+        try {
+            foreach ($order as $id) {
+                if (isset($this->booted[$id])) {
+                    continue;
+                }
+
+                $package = $this->get($id);
+
                 try {
-                    $package->bootPackage($context);
+                    $this->telemetry->measure('package', $id, function () use ($package, $context, $id): void {
+                        if ($package instanceof Bootable) {
+                            $package->bootPackage($context);
+                        }
+
+                        $this->booted[$id] = true;
+                    });
                 } catch (Throwable $exception) {
                     throw BootstrapException::packageFailed($id, $exception);
                 }
             }
-
-            $this->booted[$id] = true;
+        } finally {
+            $this->initializing = false;
         }
     }
 
     /**
-     * Reject further registrations (called once the framework has booted).
+     * Reject further registrations before Core resolves dependencies and runs boot hooks.
      */
     public function lock(): void
     {

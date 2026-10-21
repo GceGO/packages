@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use {{ model }};
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Infolists\Entries\Text as TextEntry;
 use Gcego\Infolists\Infolist;

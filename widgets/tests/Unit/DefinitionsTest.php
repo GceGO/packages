@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Exceptions\ComponentException;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Support\Callback;
 use Gcego\Luminaries\Icons\Heroicon;
 use Gcego\Widgets\Activity\ActivitySource;

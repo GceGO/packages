@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Notifications\Rendering;
 
 use Gcego\Chroma\ChromaManager;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Notifications\Notification;
 use Gcego\Tables\Support\Icons;
 use Illuminate\Support\HtmlString;

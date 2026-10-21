@@ -36,10 +36,18 @@ class PackageRegistrationException extends LogicException implements GcegoExcept
         return new self(sprintf('GCEGO package "%s" is not registered.', $id));
     }
 
+    public static function duringInitialization(string $id): self
+    {
+        return new self(sprintf(
+            'GCEGO package "%s" cannot be registered while packages are initializing. Register it before initialization starts.',
+            $id,
+        ));
+    }
+
     public static function afterBoot(string $id): self
     {
         return new self(sprintf(
-            'GCEGO package "%s" was registered after the framework booted. Register packages from a service provider\'s register() or boot() method.',
+            'GCEGO package "%s" was registered after package registration was locked. Register packages from a service provider\'s register() or boot() method.',
             $id,
         ));
     }

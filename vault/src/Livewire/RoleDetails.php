@@ -9,6 +9,7 @@ use Gcego\Vault\Models\Assignment;
 use Gcego\Vault\Models\AuditEntry;
 use Gcego\Vault\Models\Role;
 use Gcego\Vault\Permissions\VaultPermissions;
+use Gcego\Vault\VaultConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Date;
 use Livewire\Attributes\Locked;
@@ -135,7 +136,7 @@ final class RoleDetails extends VaultComponent
             ],
             'tabs' => self::Tabs,
             'revokingAssignment' => $this->revoking === null ? null : Assignment::query()->with('holder')->find($this->revoking),
-            'maxDate' => app(\Gcego\Vault\VaultConfig::class)->maxTemporaryDays === null ? null : now()->addDays(app(\Gcego\Vault\VaultConfig::class)->maxTemporaryDays - 1)->toDateString(),
+            'maxDate' => app(VaultConfig::class)->maxTemporaryDays === null ? null : now()->addDays(app(VaultConfig::class)->maxTemporaryDays - 1)->toDateString(),
         ]);
     }
 

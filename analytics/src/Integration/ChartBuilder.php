@@ -9,7 +9,7 @@ use Gcego\Analytics\Dashboards\ChartView;
 use Gcego\Analytics\Metrics\Metric;
 use Gcego\Analytics\Metrics\MetricResult;
 use Gcego\Analytics\Support\Format;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Widgets\Charts\AreaChart;
 use Gcego\Widgets\Charts\BarChart;
 use Gcego\Widgets\Charts\Chart as WidgetChart;

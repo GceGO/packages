@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Components\Exceptions;
 
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use InvalidArgumentException;
 
 /**

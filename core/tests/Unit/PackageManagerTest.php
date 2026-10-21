@@ -65,11 +65,11 @@ it('reports unknown packages', function (): void {
 
 it('fills missing versions from Composer metadata', function (): void {
     $manager = new PackageManager;
-    $manager->register(new PlainPackage(new PackageDescriptor('gcego/components')));
+    $manager->register(new PlainPackage(new PackageDescriptor('pestphp/pest')));
     $manager->register(new PlainPackage(new PackageDescriptor('gcego/not-installed')));
     $manager->register(new PlainPackage(new PackageDescriptor('gcego/tagged', '3.1.0')));
 
-    expect($manager->descriptor('gcego/components')->version)->toBe(InstalledVersions::getPrettyVersion('gcego/components'))
+    expect($manager->descriptor('pestphp/pest')->version)->toBe(InstalledVersions::getPrettyVersion('pestphp/pest'))
         ->and($manager->descriptor('gcego/not-installed')->version)->toBeNull()
         ->and($manager->descriptor('gcego/tagged')->version)->toBe('3.1.0');
 });
@@ -178,5 +178,48 @@ it('rejects new registrations once locked', function (): void {
 
     expect($manager->isLocked())->toBeTrue()
         ->and(fn () => $manager->register(FixturePackage::make('gcego/late')))
-        ->toThrow(PackageRegistrationException::class, 'registered after the framework booted');
+        ->toThrow(PackageRegistrationException::class, 'registered after package registration was locked');
+});
+
+it('rejects registrations during package boot and restores registration after failure', function (): void {
+    $manager = new PackageManager;
+    $manager->register(FixturePackage::make('acme/first', onBoot: fn () => $manager->register(FixturePackage::make('acme/late'))));
+
+    expect(fn () => $manager->boot(['acme/first'], packageContext()))->toThrow(BootstrapException::class, 'cannot be registered while packages are initializing')
+        ->and($manager->has('acme/late'))->toBeFalse();
+
+    $manager->register(FixturePackage::make('acme/recovery'));
+    expect($manager->has('acme/recovery'))->toBeTrue();
+});
+
+it('rejects recursive package boot without repeating hooks', function (): void {
+    $manager = new PackageManager;
+    $manager->register(FixturePackage::make('acme/first', onBoot: fn () => $manager->boot(['acme/first'], packageContext())));
+
+    expect(fn () => $manager->boot(['acme/first'], packageContext()))->toThrow(BootstrapException::class, 'Cannot boot GCEGO packages recursively.');
+});
+
+it('inspects direct and transitive dependencies and dependants including optional edges on demand', function (): void {
+    $manager = new PackageManager;
+    $manager->register(FixturePackage::make('acme/base'));
+    $manager->register(FixturePackage::make('acme/middle', requires: ['acme/base']));
+    $manager->register(FixturePackage::make('acme/top', requires: ['acme/middle'], optional: ['acme/optional']));
+    $manager->register(FixturePackage::make('acme/optional'));
+
+    expect($manager->dependencies('acme/top'))->toBe(['acme/middle'])
+        ->and($manager->dependencies('acme/top', true))->toBe(['acme/base', 'acme/middle'])
+        ->and($manager->dependencies('acme/top', true, true))->toBe(['acme/base', 'acme/middle', 'acme/optional'])
+        ->and($manager->dependants('acme/base'))->toBe(['acme/middle'])
+        ->and($manager->dependants('acme/base', true))->toBe(['acme/middle', 'acme/top'])
+        ->and($manager->dependants('acme/optional', true, true))->toBe(['acme/top'])
+        ->and(fn () => $manager->dependencies('acme/unknown'))->toThrow(PackageRegistrationException::class);
+});
+
+it('inspects invalid dependency graphs without looping or dropping missing requirements', function (): void {
+    $manager = new PackageManager;
+    $manager->register(FixturePackage::make('acme/a', requires: ['acme/b']));
+    $manager->register(FixturePackage::make('acme/b', requires: ['acme/a', 'acme/missing']));
+
+    expect($manager->dependencies('acme/a', true))->toBe(['acme/b', 'acme/missing'])
+        ->and($manager->dependants('acme/a', true))->toBe(['acme/b']);
 });

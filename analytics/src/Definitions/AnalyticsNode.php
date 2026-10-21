@@ -8,11 +8,11 @@ use Gcego\Analytics\Support\NamedArguments;
 use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Security\Contracts\Requirement;
 
 /**
- * The base of analytics definitions: immutable gcego/components that also
+ * The base of analytics definitions: immutable gcego/morfaw that also
  * accept named arguments. Constructing one never queries anything.
  */
 abstract class AnalyticsNode extends Component

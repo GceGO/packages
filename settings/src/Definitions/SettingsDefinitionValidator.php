@@ -15,7 +15,7 @@ use Gcego\Settings\Types\SettingType;
 /**
  * Structural checks with actionable messages.
  *
- * problemsOf() runs as the group's gcego/components constraint (so the
+ * problemsOf() runs as the group's gcego/morfaw constraint (so the
  * registry refuses an invalid group with its path): duplicate keys and
  * sections, enum and type mismatches, defaults that do not fit their type,
  * options and fields that do not fit the type, precedence that is not the
@@ -94,16 +94,16 @@ final class SettingsDefinitionValidator
         $groupNames = array_map(static fn (SettingsGroup $group): string => $group->groupName(), $groups);
 
         foreach ($pages as $page) {
-            if (! in_array($page->group(), $groupNames, true)) {
-                $problems[] = sprintf('The settings page "%s" shows the unknown group "%s".', $page->pageName(), $page->group());
+            if (! in_array($page->groupName(), $groupNames, true)) {
+                $problems[] = sprintf('The settings page "%s" shows the unknown group "%s".', $page->pageName(), $page->groupName());
 
                 continue;
             }
 
-            $allowed = array_filter($definitions, static fn (SettingDefinition $definition): bool => $definition->group === $page->group() && $definition->allows($page->scope()));
+            $allowed = array_filter($definitions, static fn (SettingDefinition $definition): bool => $definition->group === $page->groupName() && $definition->allows($page->scope()));
 
             if ($allowed === []) {
-                $problems[] = sprintf('The settings page "%s" edits the %s scope, which no setting of "%s" allows.', $page->pageName(), $page->scope()->value, $page->group());
+                $problems[] = sprintf('The settings page "%s" edits the %s scope, which no setting of "%s" allows.', $page->pageName(), $page->scope()->value, $page->groupName());
             }
         }
 

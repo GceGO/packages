@@ -6,7 +6,7 @@
 
 <!-- example:component -->
 ```php
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Components\Validation\ErrorCode;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Testing\GcegoTest;
@@ -41,7 +41,7 @@ Children are found by their `name` property or by a path relative to the compone
 <!-- example:tree -->
 ```php
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Testing\GcegoTest;
 
 $dashboard = new Component(new Property(Component::Name, 'dashboard'), new Component(new Property(Component::Name, 'stats'), new Component(new Property(Component::Name, 'students'))));
@@ -60,7 +60,7 @@ GcegoTest::component($dashboard)
 <!-- example:runtime -->
 ```php
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Runtime\Rendering\ContainerRenderer;
 use Gcego\Testing\GcegoTest;
 

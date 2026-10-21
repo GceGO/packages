@@ -12,7 +12,7 @@ use Gcego\Components\Validation\ValidationError;
 final readonly class ComponentInspection
 {
     /**
-     * @param  class-string  $class
+     * @param  string  $class  Class label; anonymous source locations are omitted.
      * @param  list<string>  $supportedProperties
      * @param  list<string>  $requiredProperties
      * @param  array<string, mixed>  $explicitProperties  Normalized explicit values.

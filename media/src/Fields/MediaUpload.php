@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Gcego\Media\Fields;
 
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Property;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Forms\Contracts\PersistsWithRecord;
 use Gcego\Forms\Fields\FileUpload;
 use Gcego\Forms\FormsConfig;

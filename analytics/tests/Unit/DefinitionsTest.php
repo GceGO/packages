@@ -28,7 +28,7 @@ use Gcego\Analytics\Tests\Fixtures\Models\Subject;
 use Gcego\Analytics\TimeSeries\FillStrategy;
 use Gcego\Analytics\TimeSeries\TimeInterval;
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
  * @return list<string>

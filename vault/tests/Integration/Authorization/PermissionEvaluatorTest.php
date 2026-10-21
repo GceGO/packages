@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Gcego\Vault\Authorization\Explanation;
+use Gcego\Vault\Caching\Invalidation;
+use Gcego\Vault\Models\Role;
 use Illuminate\Support\Facades\Date;
 
 beforeEach(fn () => synced());
@@ -38,8 +40,8 @@ it('follows inheritance through several levels and survives a cycle that reached
     role('editor', ['books.view'], inherits: ['viewer']);
     $manager = role('manager', ['books.update'], inherits: ['editor']);
     // A cycle written behind RoleManager's back: viewer -> manager.
-    $manager->getConnection()->table('gcego_vault_role_inheritance')->insert(['role_id' => Gcego\Vault\Models\Role::query()->where('name', 'viewer')->value('id'), 'inherits_id' => $manager->id]);
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    $manager->getConnection()->table('gcego_vault_role_inheritance')->insert(['role_id' => Role::query()->where('name', 'viewer')->value('id'), 'inherits_id' => $manager->id]);
+    app(Invalidation::class)->definitions();
     $user = person('Mo');
     $user->assignRole('viewer');
 
@@ -89,7 +91,7 @@ it('ignores archived roles and the roles reached only through them', function ()
     $user = person('Arch');
     $user->assignRole('editor');
     $editor->forceFill(['archived_at' => Date::now()])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
 
     expect(vault()->effective($user)->names())->toBe([]);
 });
@@ -97,7 +99,7 @@ it('ignores archived roles and the roles reached only through them', function ()
 it('applies a panel-limited role only inside its panel', function (): void {
     $role = role('desk-clerk', ['books.viewAny']);
     $role->forceFill(['panel' => 'desk'])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
     $user = person('Clerk');
     $user->assignRole('desk-clerk');
 
@@ -111,7 +113,7 @@ it('gives super administrators every registered global permission except the exc
     synced();
     $root = role('root');
     $root->forceFill(['is_super' => true])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
     $user = person('Root', [1]);
     $user->assignRole('root');
 
@@ -126,7 +128,7 @@ it('gives super administrators every registered global permission except the exc
 it('does not treat super roles as super while super administrators are disabled', function (): void {
     $root = role('root');
     $root->forceFill(['is_super' => true])->save();
-    app(Gcego\Vault\Caching\Invalidation::class)->definitions();
+    app(Invalidation::class)->definitions();
     $user = person('Root');
     $user->assignRole('root');
 

@@ -1,10 +1,30 @@
 # Components
 
-## Declaring a component
+## Fluent declarations
 
 ```php
 use Gcego\Components\Component;
-use Gcego\Components\Property;
+use Gcego\Components\Facades\Components;
+
+$schema = Components::schema([
+    Component::section('dashboard')->label('Dashboard')->components([
+        Component::group('metrics')->child([
+            Component::stat('users')->label('Users')->value('128'),
+        ]),
+    ]),
+])->assertValid();
+```
+
+The required provider resolves all factories and runtime services. Catalog factories
+return builders; `schema()` builds the layout. See the [complete usage guide](usage.md)
+and [catalog](component-catalog.md). `Foundation\NamedComponent` owns required names
+and positional name shorthand across catalog categories.
+
+## Constructor declarations
+
+```php
+use Gcego\Components\Component;
+use Gcego\Components\Properties\Property;
 
 $component = new Component(
     new Property(Component::Name, 'example'),
@@ -73,10 +93,14 @@ See [composition](composition.md).
 ## Validation and normalization
 
 ```php
-$component->validate();     // ValidationResult, never throws, memoized
+$component->validate();     // ValidationResult, memoized in the active scope
 $component->assertValid();  // returns $component or throws InvalidComponentException
 $component->normalize();    // canonical array
 ```
+
+Schema errors are collected. Invalid graph structure, depth violations and
+failures in application callbacks can still throw. Builder equivalents include
+`validate()`, `buildValidated()`, `normalize()`, `tree()` and `inspect()`.
 
 ## Copies
 

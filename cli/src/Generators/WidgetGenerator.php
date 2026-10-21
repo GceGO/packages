@@ -64,7 +64,7 @@ final class WidgetGenerator extends AbstractGenerator
             $model = $this->model($context, false, '');
             $titleColumn = $model === null ? 'name' : ($this->kit->models->inspect($model)['title'] ?? (new $model)->getKeyName());
             $requirement = $this->requirement($context);
-            $imports = ['Gcego\\Components\\Property', 'Gcego\\Widgets\\Records\\RecentRecords', $requirement['import']];
+            $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Widgets\\Records\\RecentRecords', $requirement['import']];
             $widget = sprintf("new RecentRecords(\n    '%s',\n    new Property(RecentRecords::Name, '%s'),\n    new Property(RecentRecords::Blueprint, '%s'),\n    new Property(RecentRecords::TitleColumn, '%s'),\n    %s,\n)", $label, $name, $blueprint, $titleColumn, $requirement['code']);
             $this->next(sprintf('Records come through blueprint "%s": its requirements, policies and tenant scope apply.', $blueprint));
         } elseif ($type === 'custom') {
@@ -76,7 +76,7 @@ final class WidgetGenerator extends AbstractGenerator
             $provider = $class.'Data';
             $namespace = $this->kit->namespaces->forDirectory($directory);
             $requirement = $this->requirement($context);
-            $imports = ['Gcego\\Components\\Property', 'Gcego\\Widgets\\Data\\DataProvider', 'Gcego\\Widgets\\Statistics\\Stat', $requirement['import'], $namespace.'\\'.$provider];
+            $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Widgets\\Data\\DataProvider', 'Gcego\\Widgets\\Statistics\\Stat', $requirement['import'], $namespace.'\\'.$provider];
             $widget = sprintf("new Stat(\n    '%s',\n    new Property(Stat::Name, '%s'),\n    new DataProvider(%s::class),\n    %s,\n)", $label, $name, $provider, $requirement['code']);
             $files[] = $this->file($context, $directory.'/'.$provider.'.php', 'widget-data', ['namespace' => StubValue::identifier($namespace), 'class' => StubValue::identifier($provider), 'name' => StubValue::string($name)], 'Data provider of widget "'.$name.'"', $namespace, $namespace.'\\'.$provider);
             $this->next(sprintf('Compute the value in %s::resolve().', $provider));
@@ -92,7 +92,7 @@ final class WidgetGenerator extends AbstractGenerator
                 throw GenerationException::invalid(sprintf('A %s widget needs a date column: %s does not use timestamps (created_at).', $type, $short));
             }
 
-            $imports = ['Gcego\\Components\\Property', 'Gcego\\Widgets\\Data\\Aggregate', $requirement['import'], $model];
+            $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Widgets\\Data\\Aggregate', $requirement['import'], $model];
             [$widget, $more] = match ($type) {
                 'stat' => [sprintf("new Stat(\n    '%s',\n    new Property(Stat::Name, '%s'),\n    new Aggregate(%s::class),\n    %s,\n)", $label, $name, $short, $requirement['code']), ['Gcego\\Widgets\\Statistics\\Stat']],
                 'trend' => [sprintf("new Stat(\n    '%s',\n    new Property(Stat::Name, '%s'),\n    new Aggregate(%s::class, date: 'created_at', compare: true),\n    new Trend,\n    new DateRange('last_30_days'),\n    %s,\n)", $label, $name, $short, $requirement['code']), ['Gcego\\Widgets\\Statistics\\Stat', 'Gcego\\Widgets\\Configuration\\Trend', 'Gcego\\Widgets\\Data\\DateRange']],

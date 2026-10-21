@@ -8,6 +8,11 @@ use LogicException;
 
 class ExtensionException extends LogicException implements GcegoException
 {
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, public readonly string $diagnosticCode = 'extensions.dependencies')
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
     public static function invalidIdentifier(string $id): self
     {
         return new self(sprintf(
@@ -36,6 +41,14 @@ class ExtensionException extends LogicException implements GcegoException
         return new self(sprintf('GCEGO extension "%s" is not registered.', $id));
     }
 
+    public static function duringInitialization(string $id): self
+    {
+        return new self(sprintf(
+            'GCEGO extension "%s" cannot be registered while extensions are initializing. Register it before initialization starts.',
+            $id,
+        ));
+    }
+
     public static function afterBoot(string $id): self
     {
         return new self(sprintf(
@@ -53,7 +66,7 @@ class ExtensionException extends LogicException implements GcegoException
             'GCEGO extension "%s" requires the extension(s) %s, which are not registered.',
             $extension,
             implode(', ', $missing),
-        ));
+        ), diagnosticCode: 'extensions.dependencies.missing');
     }
 
     public static function requiresDisabled(string $extension, string $dependency): self
@@ -64,7 +77,7 @@ class ExtensionException extends LogicException implements GcegoException
             $dependency,
             $extension,
             $dependency,
-        ));
+        ), diagnosticCode: 'extensions.dependencies.disabled');
     }
 
     /**
@@ -72,6 +85,6 @@ class ExtensionException extends LogicException implements GcegoException
      */
     public static function circular(array $cycle): self
     {
-        return new self('Circular GCEGO extension dependency: '.implode(' -> ', $cycle).'.');
+        return new self('Circular GCEGO extension dependency: '.implode(' -> ', $cycle).'.', diagnosticCode: 'extensions.dependencies.circular');
     }
 }

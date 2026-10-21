@@ -5,19 +5,118 @@ declare(strict_types=1);
 namespace Gcego\Components;
 
 use BackedEnum;
+use Closure;
 use Gcego\Components\Building\ComponentBuilder;
+use Gcego\Components\Collections\ComponentCollection;
+use Gcego\Components\Collections\ConfigurationCollection;
+use Gcego\Components\Collections\PropertyCollection;
+use Gcego\Components\Contracts\Buildable;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
+use Gcego\Components\Evaluation\Computed;
+use Gcego\Components\Evaluation\EvaluationContext;
 use Gcego\Components\Exceptions\DuplicatePropertyException;
+use Gcego\Components\Exceptions\EvaluationException;
+use Gcego\Components\Exceptions\InvalidBuilderException;
 use Gcego\Components\Exceptions\InvalidComponentException;
 use Gcego\Components\Exceptions\MissingPropertyException;
-use Gcego\Components\Normalization\ComponentNormalizer;
+use Gcego\Components\Facades\Components;
+use Gcego\Components\Layout\Item;
+use Gcego\Components\Properties\Property;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
+use Gcego\Components\Schema\TypeKind;
 use Gcego\Components\Support\ConstructorArguments;
-use Gcego\Components\Validation\ComponentValidator;
+use Gcego\Components\Support\Presentation;
+use Gcego\Components\Trees\ComponentTree;
 use Gcego\Components\Validation\ValidationResult;
 use UnitEnum;
+use WeakReference;
 
 /**
+ * @method static ComponentBuilder container(string $name)
+ * @method static ComponentBuilder grid(string $name)
+ * @method static ComponentBuilder stack(string $name)
+ * @method static ComponentBuilder row(string $name)
+ * @method static ComponentBuilder column(string $name)
+ * @method static ComponentBuilder card(string $name)
+ * @method static ComponentBuilder panel(string $name)
+ * @method static ComponentBuilder tabs(string $name)
+ * @method static ComponentBuilder tab(string $name)
+ * @method static ComponentBuilder accordion(string $name)
+ * @method static ComponentBuilder accordionItem(string $name)
+ * @method static ComponentBuilder fieldset(string $name)
+ * @method static ComponentBuilder modal(string $name)
+ * @method static ComponentBuilder drawer(string $name)
+ * @method static ComponentBuilder splitter(string $name)
+ * @method static ComponentBuilder wizard(string $name)
+ * @method static ComponentBuilder wizardStep(string $name)
+ * @method static ComponentBuilder form(string $name)
+ * @method static ComponentBuilder textInput(string $name)
+ * @method static ComponentBuilder textarea(string $name)
+ * @method static ComponentBuilder numberInput(string $name)
+ * @method static ComponentBuilder emailInput(string $name)
+ * @method static ComponentBuilder passwordInput(string $name)
+ * @method static ComponentBuilder searchInput(string $name)
+ * @method static ComponentBuilder urlInput(string $name)
+ * @method static ComponentBuilder telInput(string $name)
+ * @method static ComponentBuilder select(string $name)
+ * @method static ComponentBuilder multiSelect(string $name)
+ * @method static ComponentBuilder checkbox(string $name)
+ * @method static ComponentBuilder radio(string $name)
+ * @method static ComponentBuilder toggle(string $name)
+ * @method static ComponentBuilder datePicker(string $name)
+ * @method static ComponentBuilder dateTimePicker(string $name)
+ * @method static ComponentBuilder timePicker(string $name)
+ * @method static ComponentBuilder fileUpload(string $name)
+ * @method static ComponentBuilder hiddenInput(string $name)
+ * @method static ComponentBuilder colorPicker(string $name)
+ * @method static ComponentBuilder rangeInput(string $name)
+ * @method static ComponentBuilder richEditor(string $name)
+ * @method static ComponentBuilder codeEditor(string $name)
+ * @method static ComponentBuilder table(string $name)
+ * @method static ComponentBuilder tableColumn(string $name)
+ * @method static ComponentBuilder text(string $name)
+ * @method static ComponentBuilder heading(string $name)
+ * @method static ComponentBuilder badge(string $name)
+ * @method static ComponentBuilder avatar(string $name)
+ * @method static ComponentBuilder icon(string $name)
+ * @method static ComponentBuilder stat(string $name)
+ * @method static ComponentBuilder keyValueList(string $name)
+ * @method static ComponentBuilder descriptionList(string $name)
+ * @method static ComponentBuilder listView(string $name)
+ * @method static ComponentBuilder listItem(string $name)
+ * @method static ComponentBuilder progress(string $name)
+ * @method static ComponentBuilder timeline(string $name)
+ * @method static ComponentBuilder timelineItem(string $name)
+ * @method static ComponentBuilder codeBlock(string $name)
+ * @method static ComponentBuilder menu(string $name)
+ * @method static ComponentBuilder menuItem(string $name)
+ * @method static ComponentBuilder breadcrumbs(string $name)
+ * @method static ComponentBuilder breadcrumb(string $name)
+ * @method static ComponentBuilder pagination(string $name)
+ * @method static ComponentBuilder link(string $name)
+ * @method static ComponentBuilder alert(string $name)
+ * @method static ComponentBuilder toast(string $name)
+ * @method static ComponentBuilder banner(string $name)
+ * @method static ComponentBuilder emptyState(string $name)
+ * @method static ComponentBuilder skeleton(string $name)
+ * @method static ComponentBuilder spinner(string $name)
+ * @method static ComponentBuilder tooltip(string $name)
+ * @method static ComponentBuilder popover(string $name)
+ * @method static ComponentBuilder button(string $name)
+ * @method static ComponentBuilder buttonGroup(string $name)
+ * @method static ComponentBuilder dropdown(string $name)
+ * @method static ComponentBuilder dropdownItem(string $name)
+ * @method static ComponentBuilder image(string $name)
+ * @method static ComponentBuilder video(string $name)
+ * @method static ComponentBuilder audio(string $name)
+ * @method static ComponentBuilder embed(string $name)
+ * @method static ComponentBuilder map(string $name)
+ * @method static ComponentBuilder chart(string $name)
+ * @method static ComponentBuilder calendar(string $name)
+ *
  * The base of every GCEGO component.
  *
  * A component is declared fluently through its builder:
@@ -54,12 +153,7 @@ class Component implements ComponentInterface
     /**
      * Explicit ids must start with a letter and contain only letters, digits, "_", "-", "." or ":".
      */
-    public const string IdPattern = '/^[A-Za-z][A-Za-z0-9_.:\-]*$/';
-
-    /**
-     * @var array<class-string, ComponentDefinition>
-     */
-    private static array $definitions = [];
+    public const string IdPattern = '/\A[A-Za-z][A-Za-z0-9_.:\-]*\z/';
 
     private PropertyCollection $properties;
 
@@ -70,11 +164,18 @@ class Component implements ComponentInterface
     private ?ValidationResult $validationResult = null;
 
     /**
+     * @var WeakReference<ComponentManager>|null
+     */
+    private ?WeakReference $validationManager = null;
+
+    /**
      * @param  Property|ComponentInterface|ConfigurationNode|scalar|UnitEnum|array<mixed>|null  ...$items
      *                                                                                                     Leading non-item values are mapped to the keys returned by shorthand().
      */
     public function __construct(mixed ...$items)
     {
+        Components::getFacadeRoot();
+
         $parsed = ConstructorArguments::parse(static::class, static::shorthand(), $items);
 
         try {
@@ -97,9 +198,72 @@ class Component implements ComponentInterface
      */
     public static function define(mixed ...$items): ComponentBuilder
     {
-        $builder = static::builderClass();
+        return Components::define(static::class, $items);
+    }
 
-        return new $builder(static::class, $items);
+    /** @param array<int|string, mixed> $arguments */
+    public static function __callStatic(string $method, array $arguments): ComponentBuilder
+    {
+        if (count($arguments) !== 1 || ! is_string(reset($arguments)) || (array_keys($arguments) !== [0] && array_keys($arguments) !== ['name'])) {
+            throw InvalidBuilderException::invalidValue(static::class, $method, 'Expected exactly one string name.');
+        }
+
+        return Components::component($method, reset($arguments));
+    }
+
+    public static function section(string $name): ComponentBuilder
+    {
+        return Components::component('section', $name);
+    }
+
+    public static function group(string $name): ComponentBuilder
+    {
+        return Components::component('group', $name);
+    }
+
+    public static function item(string $name): ComponentBuilder
+    {
+        return Components::component('item', $name);
+    }
+
+    /**
+     * @param  iterable<ComponentInterface|Buildable|iterable<mixed>|null>  $components
+     */
+    public static function collect(iterable $components): ComponentCollection
+    {
+        return Components::collect($components);
+    }
+
+    /**
+     * Configure every builder of this class (and its subclasses) created
+     * through make(), typically from a service provider's boot():
+     *
+     *     TextInput::configureUsing(fn (ComponentBuilder $input) => $input->maxLength(255));
+     *
+     * With $during, the modifier applies only while that callback runs.
+     * Important modifiers run after the others.
+     *
+     * @param  Closure(ComponentBuilder): ComponentBuilder  $modifier
+     */
+    public static function configureUsing(Closure $modifier, ?Closure $during = null, bool $isImportant = false): mixed
+    {
+        return Components::configurator()->configureUsing(static::class, $modifier, $during, $isImportant);
+    }
+
+    /**
+     * Add a fluent method to the builders of this class and its subclasses.
+     * The macro is bound to the builder and returns the changed copy:
+     *
+     *     TextInput::macro('slug', fn () => $this->maxLength(64)->helpText('Lowercase, dashes only.'));
+     */
+    public static function macro(string $name, Closure $macro): void
+    {
+        Components::configurator()->macro(static::class, $name, $macro);
+    }
+
+    public static function hasMacro(string $name): bool
+    {
+        return Components::configurator()->macroFor(static::class, $name) !== null;
     }
 
     /**
@@ -123,11 +287,11 @@ class Component implements ComponentInterface
     }
 
     /**
-     * The schema of this class, built once and cached for the process lifetime.
+     * The schema of this class, cached within the active provider scope.
      */
     final public static function definition(): ComponentDefinition
     {
-        return self::$definitions[static::class] ??= static::defineSchema();
+        return Components::getFacadeRoot()->rememberDefinition(static::class, static::defineSchema(...));
     }
 
     /**
@@ -168,6 +332,19 @@ class Component implements ComponentInterface
             ],
             allowsUnknownProperties: static::class === self::class,
         );
+    }
+
+    /**
+     * Preconfigure builders created through make(), before configureUsing() modifiers run:
+     *
+     *     protected static function setUp(ComponentBuilder $builder): ComponentBuilder
+     *     {
+     *         return $builder->maxLength(255);
+     *     }
+     */
+    protected static function setUp(ComponentBuilder $builder): ComponentBuilder
+    {
+        return $builder;
     }
 
     /**
@@ -280,11 +457,128 @@ class Component implements ComponentInterface
     }
 
     /**
-     * Validate this component and all of its descendants. The result is memoized.
+     * Whether a property holds a closure that is only resolved by evaluateProperty().
+     */
+    final public function isComputed(string $key): bool
+    {
+        return $this->get($key) instanceof Computed;
+    }
+
+    /**
+     * The value of a property, calling it when it is computed.
+     *
+     * Closure parameters are injected by name and type from the context, plus
+     * $component and, when the context carries state, $get, $set and $state.
+     * A null result falls back to the property's default. Any other result is
+     * checked against the property definition, like a declared value.
+     * Callback properties (such as afterStateUpdated) are returned uncalled.
+     *
+     * @param  EvaluationContext|array<string, mixed>  $context
+     *
+     * @throws EvaluationException
+     */
+    final public function evaluateProperty(string $key, EvaluationContext|array $context = []): mixed
+    {
+        $value = $this->get($key);
+
+        if (! $value instanceof Computed) {
+            return $value;
+        }
+
+        $definition = static::definition()->property($key);
+
+        if ($definition?->isCallback() === true) {
+            return $value;
+        }
+
+        $subject = sprintf('property "%s" on component "%s"%s', $key, $this->type(), $this->name() === null ? '' : ' ('.$this->name().')');
+        $result = Components::evaluator()->evaluate($value, EvaluationContext::from($context), $this, $subject);
+
+        if ($result === null || $definition === null) {
+            return $result ?? ($definition?->hasDefault === true ? $definition->default : null);
+        }
+
+        $expected = match (true) {
+            ! $definition->acceptsType($result) => $definition->expectedType(),
+            ! $definition->allowsValue($result) => $definition->expectedValues(),
+            ! $definition->satisfiesRule($result) => $definition->expectedRule(),
+            default => null,
+        };
+
+        if ($expected !== null) {
+            throw EvaluationException::invalidResult($subject, $expected, $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Every effective property (explicit values over defaults), evaluated.
+     *
+     * @param  EvaluationContext|array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    final public function evaluatedProperties(EvaluationContext|array $context = []): array
+    {
+        $context = EvaluationContext::from($context);
+        $evaluated = [];
+
+        foreach (array_keys($this->effectiveProperties()) as $key) {
+            $evaluated[$key] = $this->evaluateProperty($key, $context);
+        }
+
+        return $evaluated;
+    }
+
+    /**
+     * Hidden by hidden(), visible(false), hiddenOn() for the context's
+     * operation, or visibleOn() for any other operation.
+     *
+     * @param  EvaluationContext|array<string, mixed>  $context
+     */
+    final public function isHiddenIn(EvaluationContext|array $context = []): bool
+    {
+        $context = EvaluationContext::from($context);
+        $properties = [];
+
+        foreach (['hidden', 'visible', 'hiddenOn', 'visibleOn'] as $key) {
+            $properties[$key] = $this->evaluateProperty($key, $context);
+        }
+
+        return Presentation::isHidden($properties, $context->operation());
+    }
+
+    /**
+     * @param  EvaluationContext|array<string, mixed>  $context
+     */
+    final public function isVisibleIn(EvaluationContext|array $context = []): bool
+    {
+        return ! $this->isHiddenIn($context);
+    }
+
+    /**
+     * The evaluated label, or one derived from the name: "billing.first_name" reads "First name".
+     *
+     * @param  EvaluationContext|array<string, mixed>  $context
+     */
+    final public function displayLabel(EvaluationContext|array $context = []): ?string
+    {
+        return Presentation::label($this->evaluateProperty(self::Label, $context), $this->name());
+    }
+
+    /**
+     * Validate this component and all descendants, memoized within the active scope.
      */
     final public function validate(): ValidationResult
     {
-        return $this->validationResult ??= (new ComponentValidator)->validate($this);
+        $manager = Components::getFacadeRoot();
+
+        if ($this->validationResult === null || $this->validationManager?->get() !== $manager) {
+            $this->validationResult = $manager->validate($this);
+            $this->validationManager = WeakReference::create($manager);
+        }
+
+        return $this->validationResult;
     }
 
     /**
@@ -299,12 +593,12 @@ class Component implements ComponentInterface
 
     final public function normalize(): array
     {
-        return (new ComponentNormalizer)->normalize($this);
+        return Components::normalize($this);
     }
 
     final public function tree(): ComponentTree
     {
-        return new ComponentTree($this);
+        return Components::tree($this);
     }
 
     /**
@@ -362,6 +656,7 @@ class Component implements ComponentInterface
     final public function __clone()
     {
         $this->validationResult = null;
+        $this->validationManager = null;
     }
 
     /**

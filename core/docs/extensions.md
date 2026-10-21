@@ -55,16 +55,39 @@ is installed and enabled.
 | A dependency cycle exists | `ExtensionException` |
 | `activate()` throws | `BootstrapException` naming the extension; a retry activates only what has not succeeded yet |
 
+Eligibility and transitive package-based skips are resolved before validating
+requirements, so registration order does not cause an ineligible extension to
+fail startup. Missing and disabled requirements are errors for eligible extensions.
+
 Activation order follows dependencies, with ties broken alphabetically.
 Duplicate ids from different objects throw `ExtensionException`. Registering
-the same object twice is a no-op, and registering after boot throws.
+the same object twice is a no-op, and registering after boot throws. New
+registrations during activation are rejected because they would miss the
+activation plan. Recursive activation is also rejected. After a failure, the
+activation guard is cleared so registration and retry remain possible.
 
 ## Inspecting extensions
 
 ```php
 $gcego->extensions();                        // list<ExtensionDescriptor>
+$gcego->extension('tables.export');          // descriptor, throws when unknown
+$gcego->capabilities();                     // all active capabilities, sorted
 $gcego->hasExtension('tables.export');       // registered
 $gcego->isExtensionActive('tables.export');  // activated
 $gcego->bootResult()?->skippedExtensions;    // id => reason
 $gcego->hasCapability('tables.export');      // from active packages and extensions
 ```
+
+## Required and exclusive capabilities
+
+`ExtensionDescriptor::requiresCapabilities` lists capabilities that must be
+available before activation. Package capabilities are available first. To consume
+a capability from another extension, declare that extension in `requires` so its
+activation precedes the consumer. A capability provided only by the consuming
+extension itself cannot satisfy its own prerequisite. Missing prerequisites fail
+planning and activation before any extension hooks execute.
+
+`exclusiveCapabilities` is an optional subset of provided capabilities. Diagnostic
+checks report multiple active providers of an exclusive capability as an error;
+ordinary duplicate providers remain informational. Core does not select a winning
+provider or undo side effects automatically.

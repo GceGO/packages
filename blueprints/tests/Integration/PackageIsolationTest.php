@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Component;
+use Gcego\Components\ComponentServiceProvider;
 
 $packageRoot = dirname(__DIR__, 2);
 
@@ -25,14 +26,14 @@ function blueprintSourceFiles(string $packageRoot): array
     return $files;
 }
 
-it('depends only on PHP and gcego/components', function () use ($packageRoot): void {
+it('depends only on PHP and gcego/morfaw', function () use ($packageRoot): void {
     $manifest = json_decode((string) file_get_contents($packageRoot.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 
-    expect(is_array($manifest) ? $manifest['require'] : null)->toBe(['php' => '^8.3', 'gcego/components' => '^0.1']);
+    expect(is_array($manifest) ? $manifest['require'] : null)->toBe(['php' => '^8.3', 'gcego/morfaw' => '^0.1']);
 });
 
-it('works without Laravel', function (): void {
-    expect(class_exists('Illuminate\\Foundation\\Application'))->toBeFalse()
+it('uses the registered Laravel foundation without the GCEGO kernel', function (): void {
+    expect(app()->getProvider(ComponentServiceProvider::class))->not->toBeNull()
         ->and(class_exists('Gcego\\Core\\Gcego'))->toBeFalse()
         ->and((new Blueprint('subjects'))->assertValid())->toBeInstanceOf(Component::class);
 });

@@ -39,9 +39,15 @@ final readonly class TableRows
 
             foreach ($columns as $name) {
                 $column = $schema->columns[$name];
-                $cells[$name] = $access->isMasked($name)
-                    ? ['masked' => true]
-                    : [...$column->cellData(ValueResolver::get($record, $name), $record, $this->config), 'masked' => false];
+
+                if ($access->isMasked($name)) {
+                    $cells[$name] = ['masked' => true];
+
+                    continue;
+                }
+
+                $value = $column->value($record);
+                $cells[$name] = [...$column->forRow($value, $record)->cellData($value, $record, $this->config), 'masked' => false];
             }
 
             $rows[] = [

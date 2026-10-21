@@ -6,10 +6,10 @@ namespace Gcego\Navigation;
 
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Security\Permissions\Permission;
 use Gcego\Security\Permissions\PermissionName;
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 
 /**
  * The base of every navigation node (items, groups, dropdowns, headings,
- * dividers, external links): an immutable gcego/components definition.
+ * dividers, external links): an immutable gcego/morfaw definition.
  *
  * Visibility is decided per request from gcego/security requirements: the
  * node's own (Requirement nodes and the Permission property) and those of

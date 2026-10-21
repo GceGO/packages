@@ -7,7 +7,10 @@ provider that:
 - tracks GCEGO's lifecycle inside Laravel (`Uninitialized → Registered → Booting → Booted`, or `Failed`);
 - discovers installed GCEGO packages from their Laravel service providers and boots them **in dependency order**;
 - activates switchable **extensions**, including optional cross-package integrations;
-- reports structured **diagnostics**;
+- previews startup without executing hooks, publishes typed startup events and records per-step timings;
+- inspects lifecycle, discovery, dependencies, extensions, Laravel bindings, capabilities and operational configuration;
+- accepts package-contributed health checks and emits redacted structured reports;
+- reports structured **diagnostics**, including extension dependency checks, through PHP and `php artisan gcego:diagnose`;
 - exposes everything through one injectable entry point, `Gcego\Core\Gcego`.
 
 Core renders nothing. It registers no routes, views, Livewire components or
@@ -55,7 +58,10 @@ $gcego->state();                     // FrameworkState::Booted
 $gcego->isBooted();                  // true once Laravel has booted
 $gcego->packages();                  // list<PackageDescriptor>
 $gcego->isPackageActive('gcego/tables');
+$gcego->capabilities();              // sorted capabilities from active packages and extensions
 $gcego->hasCapability('tables');
+$gcego->plan()->toArray();           // preview discovered packages and eligible extensions
+$gcego->timings();                   // step timings, including failed attempts
 $gcego->diagnose()->toArray();       // structured health report
 ```
 
@@ -99,6 +105,8 @@ maintain. See [packages](docs/packages.md) and [extensions](docs/extensions.md).
 | [Architecture](docs/architecture.md) | Design decisions, container bindings, boundaries |
 | [Installation](docs/installation.md) | Composer, discovery, publishing |
 | [Configuration](docs/configuration.md) | Every option and how it is validated |
+| [Startup planning](docs/startup-planning.md) | Read-only previews, dependency and capability-provider queries |
+| [Startup events](docs/startup-events.md) | Typed events, timing and observer failure semantics |
 | [Lifecycle](docs/lifecycle.md) | States, boot sequence, failure and retry |
 | [Packages](docs/packages.md) | Package contract, dependencies, ordering |
 | [Extensions](docs/extensions.md) | Switchable capabilities and optional integrations |
@@ -108,6 +116,7 @@ maintain. See [packages](docs/packages.md) and [extensions](docs/extensions.md).
 ## Development
 
 ```bash
+composer check       # manifest validation, formatting, static analysis and tests
 composer test        # Pest + Orchestra Testbench
 composer analyse     # PHPStan (Larastan), level max
 composer format      # Laravel Pint

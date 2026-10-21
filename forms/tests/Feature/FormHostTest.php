@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Actions\Create;
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Forms\Configuration\Options;
 use Gcego\Forms\Exceptions\InvalidStateException;

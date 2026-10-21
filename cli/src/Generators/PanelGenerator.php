@@ -92,7 +92,7 @@ final class PanelGenerator extends AbstractGenerator
 
         $ability = $context->string('ability') ?? 'access-'.$name;
         $requirement = $this->requirement(new GenerationContext($context->name, ['ability' => $ability]));
-        $imports = ['Gcego\\Components\\Property', 'Gcego\\Panels\\Branding\\Branding', 'Gcego\\Panels\\Panel', $requirement['import']];
+        $imports = ['Gcego\\Components\\Properties\\Property', 'Gcego\\Panels\\Branding\\Branding', 'Gcego\\Panels\\Panel', $requirement['import']];
         $references = '';
 
         foreach ($context->list('module') as $module) {

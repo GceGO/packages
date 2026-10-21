@@ -10,6 +10,7 @@ use Gcego\Chroma\Slots\SlotDefinition;
 use Gcego\Chroma\Tailwind;
 use Gcego\Chroma\Tests\Fixtures\CardRenderer;
 use Gcego\Chroma\Tests\Fixtures\ExampleCard;
+use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
 use Gcego\Runtime\Rendering\RendererRegistry;
@@ -47,6 +48,8 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
+        $app->register(ComponentServiceProvider::class);
+
         return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class];
     }
 

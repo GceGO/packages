@@ -24,7 +24,7 @@ use Gcego\Actions\View;
 use Gcego\Blueprints\Blueprint;
 use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Security\Fields\FieldRule;
 use Gcego\Security\Permissions\Permission;

@@ -20,6 +20,7 @@ final readonly class FormRenderFrame
      * @param  array<string, list<string>>  $errors  Concrete state path => messages.
      * @param  list<string>  $keys  Current repeater item keys.
      * @param  class-string<Model>|null  $model
+     * @param  list<string>  $live  Field paths rendered live for this state (see FormManager::livePaths()).
      */
     public function __construct(
         public FormSchema $schema,
@@ -31,7 +32,16 @@ final readonly class FormRenderFrame
         public ?int $step = null,
         public ?string $model = null,
         public ?string $idPrefix = null,
+        public array $live = [],
     ) {}
+
+    /**
+     * Whether a field path (template) is rendered with a live binding.
+     */
+    public function isLivePath(string $path): bool
+    {
+        return $this->schema->isLive($path) || in_array($path, $this->live, true);
+    }
 
     /**
      * The DOM id of a field at a concrete path, stable for the host (error summaries link to it).
@@ -43,7 +53,7 @@ final readonly class FormRenderFrame
 
     public function withKey(string $key): self
     {
-        return new self($this->schema, $this->state, $this->access, $this->prefix, $this->errors, [...$this->keys, $key], $this->step, $this->model, $this->idPrefix);
+        return new self($this->schema, $this->state, $this->access, $this->prefix, $this->errors, [...$this->keys, $key], $this->step, $this->model, $this->idPrefix, $this->live);
     }
 
     public function binding(string $path): string

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Gcego\Tables\Filters;
 
-use Gcego\Tables\Building\FilterBuilder;
 use Gcego\Chroma\Tailwind;
 use Gcego\Components\Component;
-use Gcego\Components\ComponentDefinition;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\PropertyDefinition;
-use Gcego\Components\Type;
+use Gcego\Components\Foundation\Makeable;
+use Gcego\Components\Schema\ComponentDefinition;
+use Gcego\Components\Schema\PropertyDefinition;
+use Gcego\Components\Schema\Type;
 use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Support\FieldName;
+use Gcego\Tables\Building\FilterBuilder;
 use Gcego\Tables\Contracts\TableComponent;
 use Gcego\Tables\Exceptions\InvalidTableStateException;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,8 @@ use Illuminate\Support\Str;
  */
 abstract class TableFilter extends Component implements TableComponent
 {
+    use Makeable;
+
     public const string NamePattern = '/^[a-z][a-z0-9_]{0,63}$/';
 
     /** The source field to filter (default: the filter name). Relation paths filter through whereHas. */

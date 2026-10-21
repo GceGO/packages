@@ -7,10 +7,10 @@ namespace Gcego\Analytics\Support;
 use Gcego\Analytics\Exceptions\InvalidDefinitionException;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Property;
+use Gcego\Components\Properties\Property;
 
 /**
- * gcego/components refuses named constructor arguments; analytics
+ * gcego/morfaw refuses named constructor arguments; analytics
  * definitions accept them and turn them into the same Property values:
  *
  *     new Metric(name: 'total_students', aggregate: 'count')

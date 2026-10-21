@@ -89,7 +89,7 @@ final class FieldRenderer extends BladeRenderer
             $component->get(Field::Hint) !== null ? $id.'-hint' : null,
             $errors !== [] ? $id.'-error' : null,
         ]));
-        $live = $component->isLive() || $frame->schema->isLive($entry->path);
+        $live = $component->isLive() || $frame->isLivePath($entry->path);
         $immediate = $component instanceof ChoiceField || $component instanceof Checkbox || $component instanceof DatePicker;
         $binding = $frame->isLive()
             ? 'wire:model'.($live ? ($immediate ? '.live' : '.live.debounce.'.$this->forms->config()->liveDebounce) : '').'="'.e($frame->binding($instance->path)).'"'
