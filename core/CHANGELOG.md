@@ -3,6 +3,38 @@
 All notable changes to `gcego/core` are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-21
+
+### Added
+
+- `Gcego\Core\Facades\Gcego` facade, auto-aliased as `\Gcego` through package discovery, covering every `FrameworkInterface` method with typed `@method` annotations. It resolves the contract, so container rebinding, `Gcego::swap()` and `Gcego::shouldReceive()` work although the framework class is final.
+
+## [1.1.0] - 2026-10-21
+
+See [releasing](docs/releasing.md#migrating-from-10-to-11) for upgrade steps.
+
+### Changed
+
+- Exclusive capabilities are now enforced before any hook runs. Two enabled packages providing a capability that either declares exclusive fail dependency resolution (`packages.capabilities.exclusive`); an extension that would give an exclusive capability a second provider fails startup before any extension activates (`extensions.capabilities.exclusive`). `gcego:plan` and diagnostics report the same conflicts. Previously, startup succeeded and only post-boot diagnostics flagged the conflict.
+- The official framework name is **GCEGO Studio**: the default `gcego.name`, the `gcego/core` descriptor, the `framework.identity` diagnostic and package metadata use it.
+- Dependency ordering builds and sorts the graph once per resolution using a min-heap: the same order, but 1,000 packages resolve in 1.8 ms instead of 35.6 ms.
+
+### Fixed
+
+- `extensions.dependencies` reports a warning that points at `packages.dependencies` when package dependencies are broken, instead of a failed "check could not run" result.
+
+### Removed
+
+- The `packages.components` diagnostic. Core no longer inspects whether `gcego/components` is installed; packages contribute their own checks through `DiagnosticRegistry`.
+
+- `FrameworkDiagnostics::ComponentsPackageClass`, which no GCEGO package used.
+- The `gcego/components` development dependency, its path repository and the test that used it. Core depends on no GCEGO package; `gcego/components` depends on Core.
+
+### Added
+
+- `PackageDependencyException::exclusiveCapability()` and `ExtensionException::exclusiveCapability()`.
+- Documentation: package development guide with domain-neutral examples, security model, performance measurements, release and compatibility policy, and recovering from a failed automatic boot.
+
 ## [1.0.0] - 2026-10-20
 
 ### Fixed

@@ -22,8 +22,6 @@ use Throwable;
  */
 final readonly class FrameworkDiagnostics
 {
-    public const string ComponentsPackageClass = 'Gcego\\Components\\Component';
-
     public function __construct(
         private EnvironmentChecker $environment,
         private ConfigurationValidator $configurationValidator,
@@ -62,7 +60,6 @@ final readonly class FrameworkDiagnostics
             'framework.registration' => fn (): array => [$this->registration()],
             'framework.boot' => fn (): array => [$this->boot()],
             'packages.dependencies' => fn (): array => [$this->dependencies()],
-            'packages.components' => fn (): array => [$this->components()],
             'extensions.dependencies' => fn (): array => [$this->extensionDependencies()],
             'framework.infrastructure' => fn (): array => $this->infrastructure?->run() ?? [],
             'diagnostics.custom' => $this->registry->run(...),
@@ -145,10 +142,15 @@ final readonly class FrameworkDiagnostics
         $values = $this->configurationValidator->validate(is_array($raw) ? $raw : [])['values'];
 
         // Before boot, use the prospective package order without running hooks.
-        $packages = ($this->discovery?->snapshot() ?? $this->packages)->resolve($values['disabled_packages']);
+        $snapshot = $this->discovery?->snapshot() ?? $this->packages;
 
         try {
-            $snapshot = $this->discovery?->snapshot() ?? $this->packages;
+            $packages = $snapshot->resolve($values['disabled_packages']);
+        } catch (PackageDependencyException) {
+            return DiagnosticResult::warning('extensions.dependencies', 'Package dependency problems prevent extension planning; see packages.dependencies.');
+        }
+
+        try {
             $capabilities = [];
             foreach ($packages as $id) {
                 array_push($capabilities, ...$snapshot->descriptor($id)->capabilities);
@@ -163,13 +165,6 @@ final readonly class FrameworkDiagnostics
             sprintf('%d extension(s) eligible; %d skipped.', count($plan['order']), count($plan['skipped'])),
             ['extensions' => $plan['order'], 'skipped' => array_keys($plan['skipped'])],
         );
-    }
-
-    private function components(): DiagnosticResult
-    {
-        return class_exists(self::ComponentsPackageClass)
-            ? DiagnosticResult::passed('packages.components', 'gcego/morfaw is available.')
-            : DiagnosticResult::warning('packages.components', 'gcego/morfaw is not installed. Core does not need it, but GCEGO component packages do.');
     }
 
     private function failureClass(): string

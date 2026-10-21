@@ -15,7 +15,7 @@ use Gcego\Settings\Types\SettingType;
 /**
  * Structural checks with actionable messages.
  *
- * problemsOf() runs as the group's gcego/morfaw constraint (so the
+ * problemsOf() runs as the group's gcego/components constraint (so the
  * registry refuses an invalid group with its path): duplicate keys and
  * sections, enum and type mismatches, defaults that do not fit their type,
  * options and fields that do not fit the type, precedence that is not the

@@ -2,93 +2,92 @@
 
 All classes live under `Gcego\Blueprints`.
 
-## `Blueprint` (extends `Gcego\Components\Component`, implements `BlueprintInterface`)
+## `Blueprint` (`final readonly`, implements `Contracts\BlueprintInterface`, registry `DerivesDefinitions`)
 
-| Member | Description |
+| Member | Returns |
 | --- | --- |
-| `const Name`, `Title`, `Description`, `Icon`, `Slug` | property keys (`Name` and `Description` are inherited) |
-| `__construct(mixed ...$items)` | optional leading name, then `Property`, `BlueprintPart` and `ConfigurationNode` items |
-| `static compositionPolicy(): CompositionPolicy` | final; cached per class |
-| `protected static definePolicy(): CompositionPolicy` | override to tighten rules |
-| `metadata(): BlueprintMetadata`, `title(): ?string`, `slug(): ?string` | |
-| `identity(): BlueprintIdentity` | throws `InvalidBlueprintException` without a valid name |
-| `composition(): BlueprintComposition` | cached per instance |
-| `part(string $role): ?BlueprintPart` | see [lookup](composition.md#lookup) |
-| `requirePart(string $role): BlueprintPart` | |
-| `parts(?string $role = null): BlueprintPartCollection` | |
-| `hasPart(string $role): bool`, `roles(): list<string>` | |
-| `withPart(BlueprintPart $part): static`, `withoutRole(string ...$roles): static` | immutable |
+| `static define(BlueprintDefinition ...$definitions)` | `Blueprint`; throws `InvalidBlueprintException` |
+| `with(BlueprintDefinition ...$definitions)`, `without(string ...$keys)` | validated copy |
+| `name()`, `title()`, `slug()` | `string` |
+| `description()` | `?string` |
+| `model()`, `table()`, `form()`, `infolist()` | `?class-string` |
+| `pages()`, `actions()`, `relations()`, `widgets()`, `derivers()` | `list<class-string>` |
+| `has(string $key)` | `bool` |
+| `definition(string $key)` | `?BlueprintDefinition` |
+| `find(class-string<T> $class)` | `?T` |
+| `get(string $key)` | normalized value, or `null` |
+| `keys()`, `definitions()` | declaration order |
+| `references()` | `array<string, list<class-string>>` |
+| `identity()` | `Support\BlueprintIdentity` (`name`, `slug`, `class`, `type = "blueprint"`) |
+| `metadata()` | `Metadata\BlueprintMetadata` (`name`, `title`, `slug`, `description`, `titleDerived`) |
+| `toArray()` | `{name, title, slug, definitions: {key: value}}` |
+| `derivedDefinitions()` | `iterable<object>` from the requested derivers |
 
-All `Component` methods (`get()`, `validate()`, `assertValid()`,
-`normalize()`, `tree()`, `withProperty()`, `withChildren()`, ...) are
-available unchanged.
+## Definitions (`Definitions\*`)
 
-## `BlueprintRole` (final readonly)
+Usage, examples and guidance: [definitions guide](definitions.md).
 
-`__construct(string $name, bool $multiple = false)`, `static single(string)`,
-`static multiple(string)`, `static isValidName(mixed)`, `toArray()`. Public
-`name` and `multiple`. Constants `Source`, `Table`, `Form`, `Infolist`,
-`Action`, `Widget`, `Layout`, `Navigation` and `NamePattern`.
-
-## `BlueprintCollection` (final readonly, implements `BlueprintResolver`, `Countable`, `IteratorAggregate`)
-
-`__construct(BlueprintInterface ...)`, `has()`, `get(): ?BlueprintInterface`,
-`resolve(): BlueprintInterface` (throws `UnknownBlueprintException`), `names()`,
-`all()`, `with(...)`, `without(...$names)`, `filter(Closure)`, `toArray()`,
-`isEmpty()`, `count()`. Iterates `name => blueprint`.
-
-## Contracts
-
-| Interface | Members |
-| --- | --- |
-| `BlueprintPart` (extends `ComponentInterface`) | `blueprintRole(): BlueprintRole` |
-| `PartContainer` (extends `BlueprintPart`) | marker: its `BlueprintPart` children are parts too |
-| `BlueprintInterface` (extends `ComponentInterface`) | `compositionPolicy()`, `name()`, `metadata()`, `identity()`, `composition()`, `part()`, `requirePart()`, `parts()`, `hasPart()`, `roles()` |
-| `BlueprintResolver` | `has(string)`, `resolve(string)`, `names()` |
-
-## Composition
-
-| Class | Members |
-| --- | --- |
-| `BlueprintComposer` | `compose(BlueprintInterface): BlueprintComposition` |
-| `BlueprintComposition` | `parts()`, `ofRole()`, `has()`, `roles()`, `role(): ?BlueprintRole` (effective cardinality), `issues()`, `hasIssues()`, `messages()` |
-| `BlueprintPartCollection` | `all()`, `entries()`, `first()`, `get()`, `paths()`, `ofRole()`, `isEmpty()`, `count()`, iteration over parts |
-| `ClassifiedPart` | public `part`, `role`, `path`; `toArray()` |
-| `CompositionPolicy` | `__construct(list<string> $requiredRoles = [], ?list<string> $allowedRoles = null, list<string> $singleRoles = [])`, `withRequiredRoles()`, `withAllowedRoles()`, `withSingleRoles()`, `isRequired()`, `isAllowed()`, `forcesSingle()`, `toArray()` |
-
-## Metadata and identity
-
-| Class | Members |
-| --- | --- |
-| `Metadata\BlueprintMetadata` | public `name`, `title`, `slug`, `description`, `icon`, `titleDerived`, `slugDerived`; `static of(ComponentInterface)`, `toArray()` |
-| `Support\BlueprintIdentity` | public `name`, `slug`, `class`, `type`; `key()`, `equals()`, `toArray()` |
-| `Support\Naming` | `isName()`, `isSlug()`, `isIcon()`, `isTitle()`, `slugify()`, `humanize()`; pattern and length constants |
-
-## Validation
-
-| Class | Members |
-| --- | --- |
-| `BlueprintValidator` | `validate(BlueprintInterface): BlueprintValidationResult`, `assertValid(BlueprintInterface): void` |
-| `BlueprintValidationResult` | public `blueprint`; `isValid()`, `errors()`, `first()`, `errorsWithCode(BlueprintErrorCode\|string)`, `errorsForRole()`, `throwIfInvalid()`, `format()`, `toArray()`, `count()`, iteration |
-| `BlueprintValidationError` | public `code`, `message`, `blueprint`, `path`, `role`, `expected`, `received`, `hint`, `componentError`; `static fromComponentError()`, `isBlueprintError()`, `format()`, `toArray()` |
-| `BlueprintErrorCode` | `InvalidRole`, `DuplicateSingleton`, `RoleConflict`, `RoleNotAllowed`, `MissingRequiredRole` |
-
-## Normalization and inspection
-
-| Class | Members |
-| --- | --- |
-| `Normalization\BlueprintNormalizer(bool $includeSchema = false)` | `normalize(BlueprintInterface): array` |
-| `Inspection\BlueprintInspector` | `inspect(BlueprintInterface): BlueprintInspection` |
-| `Inspection\BlueprintInspection` | public `name`, `title`, `slug`, `class`, `type`, `componentCount`, `parts`, `missingRequiredRoles`, `missingOptionalRoles`, `conflicts`, `errors`, `normalized`; `isValid()`, `toArray()` |
-
-## Exceptions (all implement `Exceptions\BlueprintException`)
-
-| Exception | Base | Thrown by |
+| Class | Base | `make()` |
 | --- | --- | --- |
-| `InvalidBlueprintException` | `DomainException` | strict validation; `identity()` / `BlueprintCollection` without a valid name |
-| `InvalidBlueprintPartException` | `InvalidArgumentException` | invalid role identifiers |
-| `DuplicateBlueprintPartException` | `LogicException` | `part()` when several parts claim a single role |
-| `MissingBlueprintPartException` | `OutOfBoundsException` | `requirePart()` |
-| `BlueprintCompositionException` | `LogicException` | `part()` on a multiple role; invalid policies |
-| `DuplicateBlueprintException` | `InvalidArgumentException` | `BlueprintCollection` duplicate names |
-| `UnknownBlueprintException` | `OutOfBoundsException` | `BlueprintCollection::resolve()` |
+| `Name`, `Title`, `Description`, `Icon` | `TextDefinition` | `make(string $value)` |
+| `Model`, `Policy`, `Table`, `Form`, `Infolist` | `ReferenceDefinition` | `make(class-string $class)` |
+| `Pages`, `Actions`, `BulkActions`, `Relations`, `Widgets`, `Derive` | `ReferenceCollectionDefinition` (`Countable`, `contains()`) | `make(list<class-string> $classes)` |
+
+Base classes for extension packages:
+
+| Class | Value | API |
+| --- | --- | --- |
+| `OptionsDefinition` | `array<string, string\|int\|bool\|list<string>\|null>` in schema order | `abstract static schema(): array<string, Option>`, `protected static fromOptions(array)`, `option($name)`, `classes()` |
+| `Option` | one typed option | `text()`, `identifier()`, `identifiers()`, `icon()`, `integer(min:, max:)`, `boolean()`, `className()`; `required`, `default` |
+| `IdentifierListDefinition` | `list<string>` | `make(list<string>)`, `contains()`, `count()` |
+
+Every definition exposes `const Key`, `static definitionKey()`, `key()` and `value()`.
+
+`DefinitionCatalog`: `register(class, required)`, `has(key)`, `find(key)`,
+`all()`, `required()`, `BuiltIn`. `DefinitionType`: `key`, `class`, `required`.
+
+## Contracts (`Contracts\*`)
+
+| Interface | Purpose |
+| --- | --- |
+| `BlueprintDefinition` | `static definitionKey()`, `key()`, `value()` |
+| `ReferencesClasses` | `classes(): list<class-string>` |
+| `BlueprintInterface` | the read-only blueprint API above |
+| `BlueprintDeriver` | `derive(BlueprintInterface): iterable<object>` |
+| `BlueprintResolver` | `has()`, `resolve()`, `names()` |
+
+## Registry (`Registry\*`)
+
+| Class | Purpose |
+| --- | --- |
+| `BlueprintKind` | registry `DefinitionKind` with id `BlueprintKind::Id` (`blueprint`) |
+| `BlueprintProvider` | registry `DefinitionProvider` with `blueprint()` |
+| `ProvidesBlueprint` | trait implementing `definitions()` |
+
+## Validation (`Validation\*`)
+
+`BlueprintValidator` (`validate()`, `withDefaults()`), `ReferenceRule`,
+`ReferenceRules` (`defaults()`, `add()`, `all()`), `Rules\ClassExists`,
+`Rules\ImplementsContract`, `BlueprintValidationResult` (`isValid()`,
+`errors()`, `first()`, `errorsWithCode()`, `errorsForKey()`, `messages()`,
+`throwIfInvalid()`, `format()`, `toArray()`), `BlueprintValidationError`,
+`BlueprintErrorCode`.
+
+## Resolution (`Resolution\*`)
+
+`ReferenceResolver`: `all($blueprint, $key, ?$contract)` and
+`one($blueprint, $key, ?$contract)` return references that pass every rule
+(and the contract), or throw `InvalidReferenceException`.
+
+`ReferenceRules::lock()` and `isLocked()`; `DefinitionCatalog::markInUse()`
+(internal, called by `define()`).
+
+## Other
+
+`BlueprintCollection` (an in-memory `BlueprintResolver`),
+`BlueprintsServiceProvider`, `Support\Naming`, `Support\ClassReferences`.
+
+Exceptions under `Exceptions\*` all implement `BlueprintException`:
+`InvalidDefinitionException`, `InvalidBlueprintException`, `InvalidReferenceException`,
+`DefinitionRegistrationException`, `DuplicateBlueprintException`,
+`UnknownBlueprintException`.

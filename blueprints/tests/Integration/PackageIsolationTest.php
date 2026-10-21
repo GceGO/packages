@@ -3,58 +3,60 @@
 declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
-use Gcego\Components\Component;
-use Gcego\Components\ComponentServiceProvider;
-
-$packageRoot = dirname(__DIR__, 2);
+use Gcego\Blueprints\Definitions\Actions;
+use Gcego\Blueprints\Definitions\Form;
+use Gcego\Blueprints\Definitions\Infolist;
+use Gcego\Blueprints\Definitions\Name;
+use Gcego\Blueprints\Definitions\Pages;
+use Gcego\Blueprints\Definitions\Table;
+use Gcego\Blueprints\Definitions\Widgets;
+use Gcego\Registry\Registry;
 
 /**
  * @return list<string>
  */
-function blueprintSourceFiles(string $packageRoot): array
+function blueprintSourceFiles(): array
 {
     $files = [];
 
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($packageRoot.'/src', FilesystemIterator::SKIP_DOTS)) as $file) {
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2).'/src', FilesystemIterator::SKIP_DOTS)) as $file) {
         if ($file instanceof SplFileInfo && $file->getExtension() === 'php') {
             $files[] = $file->getPathname();
         }
     }
 
-    sort($files);
-
     return $files;
 }
 
-it('depends only on PHP and gcego/morfaw', function () use ($packageRoot): void {
-    $manifest = json_decode((string) file_get_contents($packageRoot.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+it('requires only PHP, gcego/core, gcego/registry and the Laravel contracts', function (): void {
+    $manifest = json_decode((string) file_get_contents(dirname(__DIR__, 2).'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 
-    expect(is_array($manifest) ? $manifest['require'] : null)->toBe(['php' => '^8.3', 'gcego/morfaw' => '^0.1']);
+    expect(is_array($manifest) && is_array($manifest['require']) ? array_keys($manifest['require']) : null)
+        ->toBe(['php', 'gcego/core', 'gcego/registry', 'illuminate/contracts', 'illuminate/support']);
 });
 
-it('uses the registered Laravel foundation without the GCEGO kernel', function (): void {
-    expect(app()->getProvider(ComponentServiceProvider::class))->not->toBeNull()
-        ->and(class_exists('Gcego\\Core\\Gcego'))->toBeFalse()
-        ->and((new Blueprint('subjects'))->assertValid())->toBeInstanceOf(Component::class);
+it('never references an optional feature engine in its code', function (string $file): void {
+    $code = implode('', array_map(
+        static fn (PhpToken $token): string => $token->is([T_COMMENT, T_DOC_COMMENT]) ? '' : $token->text,
+        PhpToken::tokenize((string) file_get_contents($file)),
+    ));
+
+    expect($code)->not->toMatch('/Gcego\\\\(Components|Tables|Forms|Infolists|Actions|Pages|Widgets|Runtime|Modules)\\\\/');
+})->with(blueprintSourceFiles(...));
+
+it('registers references to feature packages that are not installed when references are unchecked', function (): void {
+    config()->set('gcego-blueprints.validate_references', false);
+    $blueprint = Blueprint::define(
+        Name::make('subjects'),
+        Table::make('Gcego\\Tables\\Table'),
+        Form::make('Gcego\\Forms\\Form'),
+        Infolist::make('Gcego\\Infolists\\Infolist'),
+        Pages::make(['Gcego\\Pages\\Page']),
+        Actions::make(['Gcego\\Actions\\Action']),
+        Widgets::make(['Gcego\\Widgets\\Widget']),
+    );
+
+    expect(array_filter(['Gcego\\Components\\Component', 'Gcego\\Tables\\Table', 'Gcego\\Pages\\Page', 'Gcego\\Runtime\\Runtime'], class_exists(...)))->toBe([])
+        ->and($blueprint->table())->toBe('Gcego\\Tables\\Table')
+        ->and(app(Registry::class)->register($blueprint)->key())->toBe('blueprint:subjects');
 });
-
-it('autoloads every source file from its PSR-4 path', function () use ($packageRoot): void {
-    foreach (blueprintSourceFiles($packageRoot) as $file) {
-        $symbol = 'Gcego\\Blueprints\\'.str_replace('/', '\\', substr($file, strlen($packageRoot.'/src/'), -4));
-
-        expect(class_exists($symbol) || interface_exists($symbol) || enum_exists($symbol))->toBeTrue($symbol);
-    }
-});
-
-it('declares strict types and references no UI framework', function () use ($packageRoot): void {
-    foreach (blueprintSourceFiles($packageRoot) as $file) {
-        $source = (string) file_get_contents($file);
-
-        expect($source)->toContain('declare(strict_types=1);')
-            ->and($source)->not->toMatch('/\b(Illuminate|Livewire|Filament|Eloquent)\\\\/');
-    }
-});
-
-arch('it does not use debugging functions')
-    ->expect('Gcego\Blueprints')
-    ->not->toUse(['dd', 'dump', 'var_dump', 'print_r', 'ray']);

@@ -1,0 +1,43 @@
+name: Sync package repositories
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-package-repositories
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check publishing credentials
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGE_SYNC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo '::error::Add PACKAGE_SYNC_TOKEN to the packages repository Actions secrets. See docs/package-sync.md.'
+            exit 1
+          fi
+      - name: Publish packages
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGE_SYNC_TOKEN }}
+          SYNC_MODE: ${{ vars.PACKAGE_SYNC_MODE }}
+        run: |
+          git config user.name 'Package sync'
+          git config user.email 'package-sync@users.noreply.github.com'
+          case "$SYNC_MODE" in
+            direct) python3 scripts/sync-packages.py --push ;;
+            ''|pull-request) python3 scripts/sync-packages.py --pull-request ;;
+            *) echo '::error::PACKAGE_SYNC_MODE must be direct or pull-request'; exit 1 ;;
+          esac

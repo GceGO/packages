@@ -1,7 +1,7 @@
 # Extension guide
 
 This guide is for authors of GCEGO packages (`gcego/tables`, `gcego/forms`,
-`gcego/chroma`, ...) that build on `gcego/morfaw`.
+`gcego/chroma`, ...) that build on `gcego/components`.
 
 ## 1. Extend `Component`
 

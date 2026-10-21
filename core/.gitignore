@@ -8,3 +8,9 @@ phpunit.xml
 phpstan.neon
 /.idea
 /.vscode
+
+# Local documentation and GitHub configuration
+/doc/
+/docs/
+/.github/
+*.[mM][dD]

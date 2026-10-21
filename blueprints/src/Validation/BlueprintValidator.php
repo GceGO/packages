@@ -5,52 +5,57 @@ declare(strict_types=1);
 namespace Gcego\Blueprints\Validation;
 
 use Gcego\Blueprints\Contracts\BlueprintInterface;
-use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
-use Gcego\Components\Traversal\ComponentWalker;
-use Gcego\Components\Validation\ComponentValidator;
-use Gcego\Components\Validation\ErrorCode;
 
 /**
- * Validates a blueprint with full structure: component schema errors from
- * gcego/morfaw (metadata, children, nested parts) plus role-aware
- * composition errors.
+ * Integration validation: checks a blueprint's class references against the
+ * installed ReferenceRule adapters.
  *
- * Blueprint::validate() and assertValid() already reject the same
- * blueprints (composition rules are part of the component schema as a
- * constraint); this validator adds codes, roles and paths to those errors.
+ * Structural validation already happened in Blueprint::define(), so this runs
+ * where references may be autoloaded: when gcego/registry registers or
+ * resolves the blueprint. For each reference the rules run in order and the
+ * first failure is reported; a reference that does not exist is not checked further.
+ * A ReferenceRules set is locked on first use.
  */
 final readonly class BlueprintValidator
 {
+    /**
+     * @param  iterable<ReferenceRule>  $rules  Iterated on every validation, so a live ReferenceRules sees later additions.
+     */
     public function __construct(
-        private ?ComponentValidator $components = null,
-        private ?ComponentWalker $walker = null,
+        private iterable $rules = new ReferenceRules,
     ) {}
+
+    public static function withDefaults(): self
+    {
+        return new self(ReferenceRules::defaults());
+    }
 
     public function validate(BlueprintInterface $blueprint): BlueprintValidationResult
     {
-        $name = $blueprint->name() ?? $blueprint::class;
-        $composition = $blueprint->composition();
-        $compositionMessages = array_flip($composition->messages());
-        $rootPath = ($this->walker ?? app(ComponentWalker::class))->rootNode($blueprint)->path->toString();
-        $errors = [];
-
-        foreach (($this->components ?? app(ComponentValidator::class))->validate($blueprint) as $error) {
-            // The composition constraint reports the same issues as plain messages; keep only the structured form.
-            if ($error->code === ErrorCode::ConstraintFailed && $error->path === $rootPath && isset($compositionMessages[$error->message])) {
-                continue;
-            }
-
-            $errors[] = BlueprintValidationError::fromComponentError($name, $error);
+        if ($this->rules instanceof ReferenceRules) {
+            $this->rules->lock();
         }
 
-        return new BlueprintValidationResult($name, ...$errors, ...$composition->issues());
-    }
+        $errors = [];
 
-    /**
-     * @throws InvalidBlueprintException
-     */
-    public function assertValid(BlueprintInterface $blueprint): void
-    {
-        $this->validate($blueprint)->throwIfInvalid();
+        foreach ($blueprint->references() as $key => $classes) {
+            foreach ($classes as $class) {
+                foreach ($this->rules as $rule) {
+                    if (! $rule->appliesTo($key)) {
+                        continue;
+                    }
+
+                    $message = $rule->check($key, $class);
+
+                    if ($message !== null) {
+                        $errors[] = new BlueprintValidationError($rule->code(), $message, $blueprint->name(), $key, received: $class);
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new BlueprintValidationResult($blueprint->name(), ...$errors);
     }
 }

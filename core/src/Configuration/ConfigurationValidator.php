@@ -111,7 +111,7 @@ final class ConfigurationValidator
      */
     private function name(array $config, array &$errors): string
     {
-        $default = 'GCEGO Admin Studio';
+        $default = 'GCEGO Studio';
         $value = $config['name'] ?? null;
 
         if ($value === null) {

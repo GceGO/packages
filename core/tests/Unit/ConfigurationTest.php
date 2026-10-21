@@ -9,7 +9,7 @@ use Gcego\Core\Exceptions\ConfigurationException;
 it('provides defaults', function (): void {
     expect(GcegoConfig::defaults()->toArray())->toBe([
         'enabled' => true,
-        'name' => 'GCEGO Admin Studio',
+        'name' => 'GCEGO Studio',
         'auto_boot' => true,
         'environment_checks' => true,
         'packages' => ['disabled' => []],
@@ -21,7 +21,7 @@ it('provides defaults', function (): void {
 it('reads overrides', function (): void {
     $config = GcegoConfig::fromArray([
         'enabled' => false,
-        'name' => '  School Admin ',
+        'name' => '  Operations Console ',
         'auto_boot' => false,
         'environment_checks' => false,
         'packages' => ['disabled' => ['gcego/analytics']],
@@ -29,7 +29,7 @@ it('reads overrides', function (): void {
     ]);
 
     expect($config->enabled())->toBeFalse()
-        ->and($config->name())->toBe('School Admin')
+        ->and($config->name())->toBe('Operations Console')
         ->and($config->autoBoot())->toBeFalse()
         ->and($config->environmentChecks())->toBeFalse()
         ->and($config->disabledPackages())->toBe(['gcego/analytics'])
@@ -52,7 +52,7 @@ it('treats null and empty strings as the default', function (mixed $value): void
 
     expect($config->enabled())->toBeTrue()
         ->and($config->autoBoot())->toBeTrue()
-        ->and($config->name())->toBe('GCEGO Admin Studio')
+        ->and($config->name())->toBe('GCEGO Studio')
         ->and($config->disabledPackages())->toBe([]);
 })->with([null, '']);
 

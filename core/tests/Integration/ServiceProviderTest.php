@@ -54,16 +54,16 @@ it('aliases the framework contract to the entry point', function (): void {
 });
 
 it('merges the package configuration', function (): void {
-    expect(config('gcego.name'))->toBe('GCEGO Admin Studio')
+    expect(config('gcego.name'))->toBe('GCEGO Studio')
         ->and(config('gcego.enabled'))->toBeTrue()
         ->and(config('gcego.packages.disabled'))->toBe([]);
 });
 
 it('applies application overrides', function (): void {
-    $this->rebuildApplication(['name' => 'School Console', 'extensions' => ['disabled' => ['tables.export']]]);
+    $this->rebuildApplication(['name' => 'Operations Console', 'extensions' => ['disabled' => ['tables.export']]]);
 
-    expect(app(GcegoConfig::class)->name())->toBe('School Console')
-        ->and(app(Gcego::class)->name())->toBe('School Console')
+    expect(app(GcegoConfig::class)->name())->toBe('Operations Console')
+        ->and(app(Gcego::class)->name())->toBe('Operations Console')
         ->and(app(GcegoConfig::class)->disabledExtensions())->toBe(['tables.export'])
         ->and(config('gcego.packages.disabled'))->toBe([]);
 });

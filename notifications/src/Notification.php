@@ -37,7 +37,7 @@ use Illuminate\Database\Eloquent\Model;
  *         new Property(Notification::Type, 'success'),
  *     )
  *
- * An immutable gcego/morfaw definition: constructing one never
+ * An immutable gcego/components definition: constructing one never
  * queries, renders or delivers. Text is plain (always escaped); links are
  * NotificationAction children with checked URLs; metadata holds scalars
  * only. Delivery goes through NotificationManager and Laravel Notifications.

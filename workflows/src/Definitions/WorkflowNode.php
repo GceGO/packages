@@ -12,7 +12,7 @@ use Gcego\Security\Contracts\Requirement;
 use Gcego\Workflows\Support\NamedArguments;
 
 /**
- * The base of workflow definition parts: gcego/morfaw definitions that
+ * The base of workflow definition parts: gcego/components definitions that
  * also accept named arguments (see NamedArguments). Immutable; constructing
  * one never queries or executes anything.
  */

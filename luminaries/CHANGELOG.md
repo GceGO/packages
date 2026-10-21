@@ -6,7 +6,7 @@
 - `Contracts\IconReference` for application enums of icon names. `IconName::of()` turns a name or a string-backed enum into an identifier.
 - `Luminaries::exists|resolve|tryResolve|render|html|svg`, `<x-gcego-icon :name>` and `<x-gcego-icon-button :icon>` accept enums. Int-backed enums are refused as invalid names.
 - `gcego:icons:enums` regenerates the enums deterministically from the installed sets. `--check` fails when they are out of date, and the test suite runs it.
-- gcego/morfaw stores a string-backed enum given to a string property as its value, so icon properties of every package take these enums.
+- gcego/components stores a string-backed enum given to a string property as its value, so icon properties of every package take these enums.
 
 ## 0.1.0 - 2026-10-18
 

@@ -1,0 +1,11 @@
+{
+  "actions": "gcego/action",
+  "analytics": "gcego/analytics",
+  "blueprints": "gcego/blueprints",
+  "chroma": "gcego/chroma",
+  "cli": "gcego/cli",
+  "components": "gcego/components",
+  "core": "gcego/core",
+  "registry": "gcego/registry",
+  "sentinel": "gcego/sentinel"
+}

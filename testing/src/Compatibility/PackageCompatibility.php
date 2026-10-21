@@ -24,7 +24,7 @@ final readonly class PackageCompatibility
      * installed is reported too, as an unknown optional package.
      */
     public const array Packages = [
-        'gcego/morfaw' => null,
+        'gcego/components' => null,
         'gcego/core' => 'Gcego\Core\GcegoServiceProvider',
         'gcego/blueprints' => null,
         'gcego/registry' => 'Gcego\Registry\RegistryServiceProvider',

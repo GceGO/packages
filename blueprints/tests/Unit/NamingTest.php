@@ -28,3 +28,20 @@ it('validates identifiers', function (): void {
         ->and(Naming::isIcon('lucide:book'))->toBeTrue()
         ->and(Naming::isTitle(str_repeat('x', 201)))->toBeFalse();
 });
+
+it('validates class names by spelling only', function (): void {
+    expect(Naming::isClassName('App\\Models\\Subject'))->toBeTrue()
+        ->and(Naming::isClassName('Subject'))->toBeTrue()
+        ->and(Naming::isClassName('\\App\\Models\\Subject'))->toBeFalse()
+        ->and(Naming::isClassName('App\\\\Models'))->toBeFalse()
+        ->and(Naming::isClassName('App\\1Models'))->toBeFalse()
+        ->and(Naming::isClassName(42))->toBeFalse();
+});
+
+it('validates descriptions', function (): void {
+    expect(Naming::isDescription("Manage subjects.\n\tIncluding syllabi."))->toBeTrue()
+        ->and(Naming::isDescription(' '))->toBeFalse()
+        ->and(Naming::isDescription("Bell\x07"))->toBeFalse()
+        ->and(Naming::isDescription(str_repeat('é', 1000)))->toBeTrue()
+        ->and(Naming::isDescription(str_repeat('é', 1001)))->toBeFalse();
+});

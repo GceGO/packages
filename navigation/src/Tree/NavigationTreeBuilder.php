@@ -17,7 +17,7 @@ use Throwable;
  * Builds a NavigationTree from a definition and its contributions.
  *
  * Rejects (InvalidNavigationException): invalid definitions, cycles and
- * runaway nesting (gcego/morfaw traversal), groups nested deeper than
+ * runaway nesting (gcego/components traversal), groups nested deeper than
  * $maxDepth, and duplicate node names (DuplicateNavigationItemException).
  * Orders siblings by Order, then contribution, then declaration order.
  */

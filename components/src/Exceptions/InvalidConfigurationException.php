@@ -27,7 +27,7 @@ class InvalidConfigurationException extends InvalidArgumentException implements 
     public static function providerNotRegistered(): self
     {
         return new self(sprintf(
-            'ComponentServiceProvider must be registered before using gcego/morfaw. Enable Laravel package discovery or register %s in bootstrap/providers.php and boot Laravel facades.',
+            'ComponentServiceProvider must be registered before using gcego/components. Enable Laravel package discovery or register %s in bootstrap/providers.php and boot Laravel facades.',
             ComponentServiceProvider::class,
         ));
     }

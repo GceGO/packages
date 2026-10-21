@@ -8,7 +8,8 @@ use DomainException;
 use Gcego\Blueprints\Validation\BlueprintValidationResult;
 
 /**
- * Thrown by strict blueprint validation, or when a blueprint without a valid name is used where identity is required.
+ * Thrown by Blueprint::define() for an invalid set of definitions, and by
+ * strict reference validation.
  */
 class InvalidBlueprintException extends DomainException implements BlueprintException
 {
@@ -33,14 +34,6 @@ class InvalidBlueprintException extends DomainException implements BlueprintExce
         $exception->result = $result;
 
         return $exception;
-    }
-
-    public static function unnamed(string $class): self
-    {
-        return new self(sprintf(
-            '%s has no valid name. Declare one with new Property(Blueprint::Name, \'subjects\') or the shorthand new Blueprint(\'subjects\', ...).',
-            $class,
-        ));
     }
 
     public function result(): ?BlueprintValidationResult

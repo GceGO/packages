@@ -35,7 +35,7 @@ it('reports identity, environment, integration and structured health metadata', 
         expect($report->result($code))->not->toBeNull();
     }
     expect($report->health())->toBe('healthy')
-        ->and($report->result('framework.identity')?->details['name'])->toBe('GCEGO Admin Studio')
+        ->and($report->result('framework.identity')?->details['name'])->toBe('GCEGO Studio')
         ->and($report->result('runtime.platform')?->details['sapi'])->toBe(PHP_SAPI)
         ->and($report->result('laravel.bindings')?->isFailure())->toBeFalse()
         ->and($report->toStructuredArray()['generatedAt'])->toBe($report->generatedAt)

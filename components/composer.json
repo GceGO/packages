@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "gcego/morfaw",
+    "name": "gcego/components",
     "description": "Laravel component foundation for GCEGO Admin Studio, registered through ComponentServiceProvider: schemas, composition, validation, traversal and normalization.",
     "type": "library",
     "keywords": [
@@ -10,7 +10,7 @@
         "schema",
         "admin"
     ],
-    "homepage": "https://github.com/gcego/morfaw",
+    "homepage": "https://github.com/gcego/components",
     "license": "MIT",
     "authors": [
         {

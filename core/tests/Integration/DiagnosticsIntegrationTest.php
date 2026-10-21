@@ -17,12 +17,12 @@ it('reports a healthy booted framework', function (): void {
     $report = app(Gcego::class)->diagnose();
 
     expect($report->isHealthy())->toBeTrue()
-        ->and(array_slice(array_map(fn ($result): string => $result->check, $report->results()), 0, 9))->toBe([
+        ->and(array_slice(array_map(fn ($result): string => $result->check, $report->results()), 0, 8))->toBe([
             'php.version', 'php.extensions', 'laravel.version', 'configuration',
-            'framework.registration', 'framework.boot', 'packages.dependencies', 'packages.components', 'extensions.dependencies',
+            'framework.registration', 'framework.boot', 'packages.dependencies', 'extensions.dependencies',
         ])
         ->and($report->result('framework.boot')?->details['state'])->toBe('booted')
-        ->and($report->result('packages.components')?->status)->toBe(DiagnosticStatus::Passed);
+        ->and($report->result('packages.components'))->toBeNull();
 });
 
 it('warns when the framework has not booted yet', function (): void {

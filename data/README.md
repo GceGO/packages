@@ -66,7 +66,7 @@ out-of-scope record with **404**, and an unauthorized read with **403**
 ## Requirements
 
 - PHP 8.3+, Laravel 13 (`illuminate/database`, `pagination`, `auth`, `http`).
-- `gcego/morfaw`, `gcego/blueprints` and `gcego/core` ^0.1.
+- `gcego/components`, `gcego/blueprints` and `gcego/core` ^0.1.
 - Optional: `gcego/runtime`. A `Source` inside a blueprint then renders as nothing.
 
 ## Installation

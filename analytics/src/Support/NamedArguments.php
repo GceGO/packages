@@ -10,7 +10,7 @@ use Gcego\Components\Contracts\ConfigurationNode;
 use Gcego\Components\Properties\Property;
 
 /**
- * gcego/morfaw refuses named constructor arguments; analytics
+ * gcego/components refuses named constructor arguments; analytics
  * definitions accept them and turn them into the same Property values:
  *
  *     new Metric(name: 'total_students', aggregate: 'count')

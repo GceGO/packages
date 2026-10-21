@@ -15,7 +15,7 @@ use Gcego\Components\Validation\ValidationError;
 use Gcego\Testing\Assertions\Verifier;
 
 /**
- * Assertions about one gcego/morfaw definition and its subtree.
+ * Assertions about one gcego/components definition and its subtree.
  *
  * Nothing here mutates the component: definitions are immutable and every
  * check reads validate(), normalize() or a ComponentTree.

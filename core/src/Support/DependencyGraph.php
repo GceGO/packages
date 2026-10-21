@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Gcego\Core\Support;
 
+use SplMinHeap;
+
 /**
  * A small, iterative dependency graph shared by package and extension ordering.
  *
  * Nodes list hard ("requires") and soft ("optional") dependencies. Optional
  * dependencies only affect ordering when the dependency is present. Ordering
  * is Kahn's algorithm with ties broken by identifier, so the result does not
- * depend on registration order.
+ * depend on registration order. The order is computed once, on construction,
+ * in O((V + E) log V).
  *
  * @internal
  */
@@ -20,6 +23,16 @@ final readonly class DependencyGraph
      * @var array<string, list<string>> node => dependencies present in the graph
      */
     private array $edges;
+
+    /**
+     * @var list<string>
+     */
+    private array $order;
+
+    /**
+     * @var array<string, true> nodes left in cycles
+     */
+    private array $remaining;
 
     /**
      * @param  array<string, array{requires: list<string>, optional: list<string>}>  $nodes
@@ -36,6 +49,7 @@ final readonly class DependencyGraph
         }
 
         $this->edges = $edges;
+        [$this->order, $this->remaining] = $this->sort();
     }
 
     /**
@@ -70,7 +84,7 @@ final readonly class DependencyGraph
      */
     public function order(): array
     {
-        return $this->sort()[0];
+        return $this->order;
     }
 
     /**
@@ -88,7 +102,7 @@ final readonly class DependencyGraph
             }
         }
 
-        $remaining = $this->sort()[1];
+        $remaining = $this->remaining;
 
         if ($remaining === []) {
             return null;
@@ -129,22 +143,27 @@ final readonly class DependencyGraph
             }
         }
 
-        $ready = array_keys(array_filter($pending, static fn (int $count): bool => $count === 0));
-        sort($ready);
+        /** @var SplMinHeap<string> $ready */
+        $ready = new SplMinHeap;
+
+        foreach ($pending as $id => $count) {
+            if ($count === 0) {
+                $ready->insert($id);
+            }
+        }
+
         $order = [];
 
-        while ($ready !== []) {
-            $id = array_shift($ready);
+        while (! $ready->isEmpty()) {
+            $id = $ready->extract();
             $order[] = $id;
             unset($pending[$id]);
 
             foreach ($dependents[$id] ?? [] as $dependent) {
                 if (--$pending[$dependent] === 0) {
-                    $ready[] = $dependent;
+                    $ready->insert($dependent);
                 }
             }
-
-            sort($ready);
         }
 
         return [$order, array_fill_keys(array_keys($pending), true)];

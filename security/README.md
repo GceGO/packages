@@ -49,7 +49,7 @@ $subject = $security->record(new Source(Subject::class), $id, 'update');   // sc
 ## Requirements
 
 - PHP 8.3+ and Laravel 13.
-- GCEGO packages, all ^0.1: `gcego/morfaw`, `core`, `blueprints`,
+- GCEGO packages, all ^0.1: `gcego/components`, `core`, `blueprints`,
   `registry`, `runtime` and `data`.
 - Optional: `spatie/laravel-permission`, adapted, never required. gcego/sentinel
   (or the application) keeps handling authentication.

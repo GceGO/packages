@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Added:** Filament-style authoring on gcego/morfaw's live foundation. `Form::make()`, `TextInput::make()`, `Section::make()` and every other field and layout have `make()`. `visible()`, `hidden()`, `required()` and `disabled()` accept closures injected with `$get`, `$record`, `$operation` and typed values, and layouts accept `visible()`/`hidden()` closures. Closures become ordinary server-side conditions, so validation, dehydration and "hidden fields are never saved" apply unchanged.
+- **Added:** Filament-style authoring on gcego/components's live foundation. `Form::make()`, `TextInput::make()`, `Section::make()` and every other field and layout have `make()`. `visible()`, `hidden()`, `required()` and `disabled()` accept closures injected with `$get`, `$record`, `$operation` and typed values, and layouts accept `visible()`/`hidden()` closures. Closures become ordinary server-side conditions, so validation, dehydration and "hidden fields are never saved" apply unchanged.
 - **Added:** automatic live fields. The fields closures read are discovered while conditions are evaluated (`FormManager::livePaths()`, `Reactive\FormEvaluation`) and rendered `wire:model.live` without `dependsOn`, including inside repeaters (`objectives.*.title`).
 - **Added:** `afterStateUpdated(fn (Set $set, $state, $old) => ...)` in the Livewire host. It may only set declared fields, and what it sets is validated on submit. `default()` accepts closures.
 - **Added:** form extensions. `Components::extend('{blueprint}.form', fn (SchemaPatch $patch) => ...)` patches a blueprint's form everywhere it is rendered, hydrated and submitted (`FormManager::extended()`).

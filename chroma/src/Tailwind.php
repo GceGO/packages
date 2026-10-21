@@ -19,7 +19,7 @@ use Gcego\Components\Contracts\ConfigurationNode;
  *         new Slot(Tailwind::Header, ['px-6', 'py-4']),
  *     )
  *
- * A configuration node (gcego/morfaw ConfigurationNode): pass it to a
+ * A configuration node (gcego/components ConfigurationNode): pass it to a
  * component's constructor; it is never a child and never rendered.
  *
  * Rules: strings and lists of strings are shorthand for one Wrapper slot,

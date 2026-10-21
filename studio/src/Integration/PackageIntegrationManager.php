@@ -20,7 +20,7 @@ final readonly class PackageIntegrationManager
 {
     /** The eighteen foundation packages: id => [provider (null: a plain library), purpose]. */
     public const array Required = [
-        'gcego/morfaw' => [null, 'Component tree, properties and validation'],
+        'gcego/components' => [null, 'Component tree, properties and validation'],
         'gcego/core' => ['Gcego\Core\GcegoServiceProvider', 'Framework kernel: packages, extensions, boot'],
         'gcego/blueprints' => [null, 'Blueprint composition'],
         'gcego/registry' => ['Gcego\Registry\RegistryServiceProvider', 'Definition discovery and cache'],

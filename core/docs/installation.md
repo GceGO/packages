@@ -14,7 +14,6 @@ repositories in the consuming application's `composer.json`:
 ```json
 {
     "repositories": [
-        { "type": "path", "url": "packages/components" },
         { "type": "path", "url": "packages/core" }
     ],
     "require": {

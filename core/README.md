@@ -1,7 +1,9 @@
 # gcego/core
 
-The Laravel integration kernel of **GCEGO Admin Studio**. It adds one service
-provider that:
+The Laravel integration kernel of **GCEGO Studio**, a universal, modular
+Laravel administration framework. Core is domain-agnostic: it coordinates
+packages and never assumes what kind of application they build. It adds one
+service provider that:
 
 - merges and validates `config/gcego.php`;
 - tracks GCEGO's lifecycle inside Laravel (`Uninitialized → Registered → Booting → Booted`, or `Failed`);
@@ -11,7 +13,7 @@ provider that:
 - inspects lifecycle, discovery, dependencies, extensions, Laravel bindings, capabilities and operational configuration;
 - accepts package-contributed health checks and emits redacted structured reports;
 - reports structured **diagnostics**, including extension dependency checks, through PHP and `php artisan gcego:diagnose`;
-- exposes everything through one injectable entry point, `Gcego\Core\Gcego`.
+- exposes everything through one entry point: inject `Gcego\Core\Gcego` or use the `Gcego` facade.
 
 Core renders nothing. It registers no routes, views, Livewire components or
 styles, and it has no component registry. Those belong to later GCEGO packages.
@@ -33,7 +35,6 @@ needed. Inside the GCEGO monorepo, add a path repository first:
 ```json
 {
     "repositories": [
-        { "type": "path", "url": "packages/components" },
         { "type": "path", "url": "packages/core" }
     ]
 }
@@ -47,22 +48,39 @@ php artisan vendor:publish --tag=gcego-config
 
 ## Usage
 
+The `Gcego` facade is auto-aliased, so routes, Blade views and other
+non-namespaced code can use it without an import:
+
 ```php
-use Gcego\Core\Gcego;
+Gcego::isBooted();                   // true once Laravel has booted
+Gcego::hasCapability('reports');     // from active packages and extensions
+Gcego::diagnose()->isHealthy();
+```
 
-$gcego = app(Gcego::class);          // or inject Gcego / FrameworkInterface
+Classes you write can depend on the same API by injection instead:
 
-$gcego->name();                      // "GCEGO Admin Studio"
-$gcego->version()->version;          // from Composer, e.g. "1.0.0" or "dev-main"
-$gcego->state();                     // FrameworkState::Booted
-$gcego->isBooted();                  // true once Laravel has booted
-$gcego->packages();                  // list<PackageDescriptor>
-$gcego->isPackageActive('gcego/tables');
-$gcego->capabilities();              // sorted capabilities from active packages and extensions
-$gcego->hasCapability('tables');
-$gcego->plan()->toArray();           // preview discovered packages and eligible extensions
-$gcego->timings();                   // step timings, including failed attempts
-$gcego->diagnose()->toArray();       // structured health report
+```php
+use Gcego\Core\Contracts\FrameworkInterface;
+
+public function __construct(private FrameworkInterface $gcego) {}
+```
+
+Every facade method is a method of `FrameworkInterface`:
+
+```php
+use Gcego\Core\Facades\Gcego;
+
+Gcego::name();                       // "GCEGO Studio"
+Gcego::version()->version;           // from Composer, e.g. "1.0.0" or "dev-main"
+Gcego::state();                      // FrameworkState::Booted
+Gcego::isBooted();                   // true once Laravel has booted
+Gcego::packages();                   // list<PackageDescriptor>
+Gcego::isPackageActive('gcego/tables');
+Gcego::capabilities();               // sorted capabilities from active packages and extensions
+Gcego::hasCapability('tables');
+Gcego::plan()->toArray();            // preview discovered packages and eligible extensions
+Gcego::timings();                    // step timings, including failed attempts
+Gcego::diagnose()->toArray();        // structured health report
 ```
 
 ## Making a package a GCEGO package
@@ -111,6 +129,10 @@ maintain. See [packages](docs/packages.md) and [extensions](docs/extensions.md).
 | [Packages](docs/packages.md) | Package contract, dependencies, ordering |
 | [Extensions](docs/extensions.md) | Switchable capabilities and optional integrations |
 | [Diagnostics](docs/diagnostics.md) | Environment and framework checks |
+| [Developing packages](docs/developing-packages.md) | Third-party package guide with worked examples |
+| [Security](docs/security.md) | Trust model, guarantees and limitations |
+| [Performance](docs/performance.md) | Measured overhead and benchmarks |
+| [Releasing](docs/releasing.md) | Versioning, compatibility policy, migration, testing |
 | [API reference](docs/api-reference.md) | Every public class and method |
 
 ## Development

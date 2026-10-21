@@ -1,10 +1,9 @@
 # Startup planning and dependency inspection
 
 ```php
-use Gcego\Core\Gcego;
+use Gcego\Core\Facades\Gcego;
 
-$gcego = app(Gcego::class);
-$plan = $gcego->plan();
+$plan = Gcego::plan();
 
 $plan->isValid();
 $plan->enabled;

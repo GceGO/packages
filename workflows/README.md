@@ -9,7 +9,7 @@ Declarative business workflows for GCEGO Admin Studio. You declare states, guard
 
 The package builds on the GCEGO layers instead of duplicating them:
 
-- definitions are gcego/morfaw and are discovered by gcego/registry (kind `workflow`);
+- definitions are gcego/components and are discovered by gcego/registry (kind `workflow`);
 - authorization uses Laravel policies and gates plus gcego/security requirements and tenancy;
 - automation and deadlines use Laravel's queue and scheduler;
 - notifications go through gcego/notifications;

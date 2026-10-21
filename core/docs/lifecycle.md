@@ -32,9 +32,11 @@ GCEGO boots after **every** provider has booted. The callback then:
    with `BootStatus::Disabled`, retained by `bootResult()`;
 3. runs the environment checks when `environment_checks` is true;
 4. registers every loaded provider that implements `PackageInterface`, then locks package registration;
-5. resolves the package boot order, failing on missing, disabled or circular dependencies;
+5. resolves the package boot order, failing on missing, disabled or circular dependencies,
+   unsupported declared versions and exclusive-capability conflicts between packages;
 6. calls `bootPackage()` on each `Bootable` package, in that order;
-7. activates eligible extensions in dependency order;
+7. plans extensions, fails if an exclusive capability would gain a second provider,
+   then activates eligible extensions in dependency order;
 8. locks extension registration and moves to `Booted`.
 
 Package registration is complete before dependency resolution begins. The lock
@@ -48,7 +50,7 @@ registrations remain repairable until activation succeeds.
 The result is a `BootstrapResult`:
 
 ```php
-$result = app(Gcego::class)->bootResult();
+$result = Gcego::bootResult();
 
 $result->status;             // BootStatus::Booted
 $result->packages;           // ['gcego/core', 'gcego/tables', 'gcego/forms']
@@ -76,12 +78,31 @@ GCEGO package "acme/flaky" failed to boot: cache warming failed
 `boot()` may be called again. Packages and extensions that already succeeded
 are not initialized a second time; only the remaining work runs.
 
+Packages that booted before the failure stay booted: `isPackageActive()` and
+`hasCapability()` report them, while `state()` stays `Failed` and
+`diagnose()` reports `startup.consistency` as a partial start. Check
+`isBooted()`, not individual packages, before relying on the framework.
+
+### Diagnosing a failed automatic boot
+
+With `auto_boot` on, a boot failure is thrown from Laravel's `booted()`
+callback, so every HTTP request, queue worker and Artisan command fails loudly,
+including `gcego:diagnose`. To inspect the problem, run the read-only tools
+with automatic boot switched off (configuration must not be cached):
+
+```bash
+GCEGO_STUDIO_AUTO_BOOT=false php artisan gcego:plan
+GCEGO_STUDIO_AUTO_BOOT=false php artisan gcego:diagnose
+```
+
+With a cached configuration, run `php artisan config:clear` first.
+
 ## Manual boot
 
 With `auto_boot` set to false, nothing boots until you ask:
 
 ```php
-$result = app(Gcego::class)->boot();
+$result = Gcego::boot();
 ```
 
 ## Configuration snapshot

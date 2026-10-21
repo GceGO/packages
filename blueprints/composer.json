@@ -1,13 +1,13 @@
 {
     "name": "gcego/blueprints",
-    "description": "Declarative blueprint composition for GCEGO Admin Studio: compose components into role-classified, validated, normalizable feature definitions.",
+    "description": "Declarative feature definitions for GCEGO Admin Studio: Blueprint::define() with typed, validated, immutable definition objects, discovered through gcego/registry.",
     "type": "library",
     "keywords": [
         "gcego",
         "blueprints",
-        "components",
         "declarative",
-        "admin"
+        "admin",
+        "laravel"
     ],
     "homepage": "https://github.com/gcego/blueprints",
     "license": "MIT",
@@ -20,25 +20,17 @@
     ],
     "require": {
         "php": "^8.3",
-        "gcego/morfaw": "^0.1"
+        "gcego/core": "^1.0",
+        "gcego/registry": "^1.1",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0"
     },
     "require-dev": {
-        "laravel/framework": "^12.0|^13.0",
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
-        "pestphp/pest": "^4.0",
-        "phpstan/phpstan": "^2.1"
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../components",
-            "options": {
-                "versions": {
-                    "gcego/morfaw": "0.1.0"
-                }
-            }
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Gcego\\Blueprints\\": "src/"
@@ -46,7 +38,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Gcego\\Blueprints\\Tests\\": "tests/"
+            "Gcego\\Blueprints\\Tests\\": "tests/",
+            "App\\": "tests/Fixtures/App/"
         }
     },
     "scripts": {
@@ -63,5 +56,12 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gcego\\Blueprints\\BlueprintsServiceProvider"
+            ]
+        }
+    }
 }

@@ -53,6 +53,7 @@ is installed and enabled.
 | A required extension is not registered | `ExtensionException` |
 | A required extension is disabled by configuration | `ExtensionException`, telling you to disable the dependant too |
 | A dependency cycle exists | `ExtensionException` |
+| Activating it would give an exclusive capability a second active provider | `ExtensionException` (`extensions.capabilities.exclusive`), before any extension activates |
 | `activate()` throws | `BootstrapException` naming the extension; a retry activates only what has not succeeded yet |
 
 Eligibility and transitive package-based skips are resolved before validating
@@ -87,7 +88,25 @@ activation precedes the consumer. A capability provided only by the consuming
 extension itself cannot satisfy its own prerequisite. Missing prerequisites fail
 planning and activation before any extension hooks execute.
 
-`exclusiveCapabilities` is an optional subset of provided capabilities. Diagnostic
-checks report multiple active providers of an exclusive capability as an error;
-ordinary duplicate providers remain informational. Core does not select a winning
-provider or undo side effects automatically.
+`exclusiveCapabilities` is an optional subset of provided capabilities. Once
+any active package or planned extension declares a capability exclusive, a
+second provider fails startup after package hooks and before any extension
+activates (since 1.1.0); planning and diagnostics report the same conflict.
+Ordinary duplicate providers remain informational. Core does not select a
+winning provider.
+
+## Ownership
+
+Extensions have no implicit owner. Disabling a package in
+`gcego.packages.disabled` does not disable extensions its provider registered,
+because Laravel still runs that provider. To tie an extension to the package
+that ships it, list the package in `whenPackages`:
+
+```php
+new ExtensionDescriptor('reports.scheduling', whenPackages: ['vendor/reports']);
+```
+
+The extension is then skipped whenever `vendor/reports` is disabled or failed to
+register. Successful registration only means the identifier was free. It is
+never an authorization decision: extensions must still enforce the
+application's own authorization for anything they expose.

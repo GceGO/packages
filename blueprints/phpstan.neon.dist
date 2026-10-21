@@ -1,3 +1,6 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
 parameters:
     level: max
     phpVersion:
@@ -5,10 +8,17 @@ parameters:
         max: 80599
     paths:
         - src
+        - config
         - tests/Fixtures
         - benchmarks
     tmpDir: build/phpstan
-    # Policies and collections re-check values that PHPDoc
-    # describes (list<string>, ...) because PHP does not enforce PHPDoc at
-    # runtime and these APIs are called by third-party packages.
+    # Definitions and catalogs re-check values that PHPDoc describes
+    # (list<class-string>, ...) because PHP does not enforce PHPDoc at runtime
+    # and these APIs are called by application code and third-party packages.
     treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # config/gcego-blueprints.php is the package's mergeable config file: the
+        # one place env() belongs. Larastan only recognizes the app's config/ directory.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/gcego-blueprints.php

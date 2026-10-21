@@ -10,7 +10,6 @@ use Countable;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Blueprints\Contracts\BlueprintResolver;
 use Gcego\Blueprints\Exceptions\DuplicateBlueprintException;
-use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
 use Gcego\Blueprints\Exceptions\UnknownBlueprintException;
 use IteratorAggregate;
 use Traversable;
@@ -31,7 +30,6 @@ final readonly class BlueprintCollection implements BlueprintResolver, Countable
     private array $blueprints;
 
     /**
-     * @throws InvalidBlueprintException for a blueprint without a valid name.
      * @throws DuplicateBlueprintException for two different blueprints with the same name.
      */
     public function __construct(BlueprintInterface ...$blueprints)

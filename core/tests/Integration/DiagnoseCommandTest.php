@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Gcego\Core\Extensions\ExtensionManager;
 use Gcego\Core\Gcego;
+use Gcego\Core\Lifecycle\FrameworkState;
+use Gcego\Core\Tests\Fixtures\BrokenServiceProvider;
 use Gcego\Core\Tests\Fixtures\FixtureExtension;
 use Illuminate\Support\Facades\Artisan;
 
@@ -35,4 +37,18 @@ it('returns failure and explains invalid extension dependencies', function (): v
     $this->artisan('gcego:diagnose', ['--json' => true])
         ->expectsOutputToContain('requires the extension(s) missing')
         ->assertFailed();
+});
+
+it('diagnoses a failing automatic boot when the environment switches auto boot off', function (): void {
+    putenv('GCEGO_STUDIO_AUTO_BOOT=false');
+
+    try {
+        $this->rebuildApplication(providers: [BrokenServiceProvider::class]);
+
+        expect(app(Gcego::class)->state())->toBe(FrameworkState::Registered)
+            ->and(Artisan::call('gcego:diagnose'))->toBe(1)
+            ->and(Artisan::output())->toContain('requires "gcego/missing"');
+    } finally {
+        putenv('GCEGO_STUDIO_AUTO_BOOT');
+    }
 });

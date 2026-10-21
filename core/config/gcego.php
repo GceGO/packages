@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| GCEGO Admin Studio
+| GCEGO Studio
 |--------------------------------------------------------------------------
 |
 | Framework-level settings for gcego/core. Publish this file with
@@ -20,7 +20,7 @@ return [
     'enabled' => env('GCEGO_STUDIO_ENABLED', true),
 
     // Display name of this GCEGO installation.
-    'name' => env('GCEGO_STUDIO_NAME', 'GCEGO Admin Studio'),
+    'name' => env('GCEGO_STUDIO_NAME', 'GCEGO Studio'),
 
     // Boot automatically once Laravel has booted every service provider. Set
     // to false to call app(Gcego\Core\Gcego::class)->boot() yourself.
