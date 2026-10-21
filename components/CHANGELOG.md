@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `gcego/morfaw` are documented in this file.
+All notable changes to `gcego/components` are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]

@@ -4,7 +4,17 @@ All classes live under `Gcego\Core`.
 
 ## `Gcego` (final readonly, implements `Contracts\FrameworkInterface`)
 
-Resolve it with `app(Gcego::class)`, `app(FrameworkInterface::class)`, or constructor injection.
+Resolve it with `app(Gcego::class)`, `app(FrameworkInterface::class)`, or constructor injection,
+or call it statically through the facade.
+
+## `Facades\Gcego` (final, extends `Illuminate\Support\Facades\Facade`)
+
+Auto-aliased as `\Gcego` through Laravel package discovery. Every method in the table
+below is available statically (`Gcego::isBooted()`) with full `@method` types for IDEs
+and static analysis. The facade resolves `FrameworkInterface`, so it follows whichever
+implementation the container binds. `Gcego::shouldReceive()` and `Gcego::swap()` mock
+the contract, because the `Gcego` class itself is final. Core's own classes use
+constructor injection, never the facade.
 
 | Method | Returns | Notes |
 | --- | --- | --- |
@@ -130,7 +140,7 @@ Constants `MinimumPhpVersion`, `MinimumLaravelVersion`, `RequiredExtensions`.
 `version`, `reference`; `static detect(string $package = 'gcego/core')`,
 `isDevelopment()`, `toString()`. Constant `Unknown = 'dev'`.
 
-`DependencyGraph` and `Identifier` are `@internal`.
+`DependencyGraph`, `Identifier` and `ExclusiveCapabilities` are `@internal`.
 
 ## Exceptions
 
@@ -138,6 +148,8 @@ All implement `Exceptions\GcegoException`: `ConfigurationException`,
 `InvalidLifecycleException`, `BootstrapException`,
 `PackageRegistrationException`, `PackageDependencyException`,
 `ExtensionException`. See [architecture](architecture.md#error-handling).
+`PackageDependencyException` and `ExtensionException` expose `diagnosticCode`;
+both add `static exclusiveCapability(string $capability, list<string> $providers)` in 1.1.0.
 
 ## Planning, health extensions and observability
 

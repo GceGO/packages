@@ -5,7 +5,7 @@
 ```php
 return [
     'enabled' => env('GCEGO_STUDIO_ENABLED', true),
-    'name' => env('GCEGO_STUDIO_NAME', 'GCEGO Admin Studio'),
+    'name' => env('GCEGO_STUDIO_NAME', 'GCEGO Studio'),
     'auto_boot' => env('GCEGO_STUDIO_AUTO_BOOT', true),
     'environment_checks' => env('GCEGO_STUDIO_ENVIRONMENT_CHECKS', true),
     'packages' => ['disabled' => []],
@@ -16,8 +16,8 @@ return [
 | Key | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `enabled` | bool | `true` | When false, services register but no package or extension boots (`BootStatus::Disabled`). |
-| `name` | non-empty string, at most 120 characters | `GCEGO Admin Studio` | Returned by `Gcego::name()`; surrounding whitespace is trimmed. |
-| `auto_boot` | bool | `true` | Boot once Laravel has booted. When false, call `app(Gcego::class)->boot()` yourself. |
+| `name` | non-empty string, at most 120 characters | `GCEGO Studio` | Returned by `Gcego::name()`; surrounding whitespace is trimmed. |
+| `auto_boot` | bool | `true` | Boot once Laravel has booted. When false, call `Gcego::boot()` yourself. |
 | `environment_checks` | bool | `true` | Run the PHP/Laravel checks during boot and refuse to boot if one fails. |
 | `packages.disabled` | list of Composer names | `[]` | Installed GCEGO packages that should not boot. |
 | `extensions.disabled` | list of extension ids | `[]` | Registered extensions that should not activate. |
@@ -47,7 +47,7 @@ with `BootstrapException`. Its previous exception is the
 ```php
 use Gcego\Core\Configuration\GcegoConfig;
 
-$config = app(GcegoConfig::class);   // or app(Gcego::class)->config()
+$config = app(GcegoConfig::class);   // or Gcego::config()
 
 $config->enabled();
 $config->name();

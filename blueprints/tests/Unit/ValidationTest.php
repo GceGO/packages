@@ -3,134 +3,107 @@
 declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
+use Gcego\Blueprints\Contracts\BlueprintDeriver;
+use Gcego\Blueprints\Definitions\Derive;
+use Gcego\Blueprints\Definitions\Model;
+use Gcego\Blueprints\Definitions\Name;
+use Gcego\Blueprints\Definitions\Pages;
+use Gcego\Blueprints\Definitions\Table;
+use Gcego\Blueprints\Definitions\Title;
 use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
-use Gcego\Blueprints\Tests\Fixtures\ExampleAction;
-use Gcego\Blueprints\Tests\Fixtures\ExampleColumn;
-use Gcego\Blueprints\Tests\Fixtures\ExampleForm;
-use Gcego\Blueprints\Tests\Fixtures\ExampleSource;
-use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
-use Gcego\Blueprints\Tests\Fixtures\ExampleWidget;
-use Gcego\Blueprints\Tests\Fixtures\FakeModel;
-use Gcego\Blueprints\Tests\Fixtures\ResourceBlueprint;
-use Gcego\Blueprints\Validation\BlueprintErrorCode;
-use Gcego\Blueprints\Validation\BlueprintValidationError;
+use Gcego\Blueprints\Tests\Fixtures\ContractTable;
+use Gcego\Blueprints\Tests\Fixtures\PagesDeriver;
+use Gcego\Blueprints\Tests\Fixtures\PlainTable;
+use Gcego\Blueprints\Tests\Fixtures\TableContract;
 use Gcego\Blueprints\Validation\BlueprintValidator;
-use Gcego\Components\Component;
-use Gcego\Components\Properties\Property;
+use Gcego\Blueprints\Validation\ReferenceRules;
+use Gcego\Blueprints\Validation\Rules\ImplementsContract;
 
-it('accepts valid blueprints of any shape', function (Blueprint $blueprint): void {
+it('accepts references to existing classes', function (): void {
+    $blueprint = Blueprint::define(Name::make('subjects'), Model::make(stdClass::class), Table::make(PlainTable::class));
+
+    expect(BlueprintValidator::withDefaults()->validate($blueprint)->isValid())->toBeTrue();
+});
+
+it('reports each reference that cannot be autoloaded', function (): void {
+    $blueprint = Blueprint::define(
+        Name::make('subjects'),
+        Table::make('App\\Missing\\SubjectsTable'),
+        Pages::make([PlainTable::class, 'App\\Missing\\ListSubjects']),
+    );
+
+    $result = BlueprintValidator::withDefaults()->validate($blueprint);
+
+    expect($result->toArray())->toBe([
+        ['code' => 'blueprint.unresolvable_reference', 'message' => 'App\\Missing\\SubjectsTable does not exist or cannot be autoloaded.', 'blueprint' => 'subjects', 'key' => 'table', 'expected' => null, 'received' => 'App\\Missing\\SubjectsTable', 'hint' => null],
+        ['code' => 'blueprint.unresolvable_reference', 'message' => 'App\\Missing\\ListSubjects does not exist or cannot be autoloaded.', 'blueprint' => 'subjects', 'key' => 'pages', 'expected' => null, 'received' => 'App\\Missing\\ListSubjects', 'hint' => null],
+    ])->and($result->errorsForKey('pages'))->toHaveCount(1);
+});
+
+it('checks only structure when no rules are installed', function (): void {
+    $blueprint = Blueprint::define(Name::make('subjects'), Table::make('App\\Missing\\SubjectsTable'));
+
     expect((new BlueprintValidator)->validate($blueprint)->isValid())->toBeTrue();
-})->with([
-    'listing only' => [fn () => new Blueprint('subjects', new ExampleTable('table'))],
-    'form only' => [fn () => new Blueprint('enrolment', new ExampleForm('form'))],
-    'dashboard' => [fn () => new Blueprint('dashboard', new ExampleWidget('a'), new ExampleWidget('b'))],
-    'empty' => [fn () => new Blueprint('placeholder')],
-]);
-
-it('reports invalid metadata as component errors', function (): void {
-    $error = (new BlueprintValidator)->validate(new Blueprint('Subjects'))->first();
-
-    expect($error?->code)->toBe('component.invalid_value')
-        ->and($error?->blueprint)->toBe('Subjects')
-        ->and($error?->path)->toBe('Subjects')
-        ->and($error?->componentError)->not->toBeNull()
-        ->and($error?->isBlueprintError())->toBeFalse();
 });
 
-it('reports children that are not blueprint parts', function (): void {
-    $error = (new BlueprintValidator)->validate(new Blueprint('subjects', new ExampleColumn('stray')))->first();
+it('applies an adapter contract only to its own definition key', function (): void {
+    $validator = new BlueprintValidator(ReferenceRules::defaults()->add(new ImplementsContract('table', TableContract::class)));
 
-    expect($error?->code)->toBe('component.invalid_child')
-        ->and($error?->path)->toBe('subjects.stray');
-});
-
-it('reports duplicate singletons with role and path', function (): void {
-    $result = (new BlueprintValidator)->validate(new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b')));
-
-    expect($result->count())->toBe(1)
-        ->and($result->first()?->code)->toBe(BlueprintErrorCode::DuplicateSingleton->value)
-        ->and($result->errorsForRole('table'))->toHaveCount(1)
-        ->and($result->first()?->isBlueprintError())->toBeTrue();
-});
-
-it('enforces policy-required and policy-allowed roles', function (): void {
-    $result = (new BlueprintValidator)->validate(new ResourceBlueprint('subjects', new ExampleWidget('chart')));
-
-    expect(array_map(fn (BlueprintValidationError $error): string => $error->code, $result->errors()))->toBe([
-        BlueprintErrorCode::RoleNotAllowed->value,
-        BlueprintErrorCode::MissingRequiredRole->value,
-    ])
-        ->and($result->errorsWithCode(BlueprintErrorCode::MissingRequiredRole)[0]->message)->toBe('Blueprint "subjects" requires a "table" part.')
-        ->and($result->errorsWithCode(BlueprintErrorCode::RoleNotAllowed)[0]->path)->toBe('subjects.chart');
-});
-
-it('lets a policy force a single role', function (): void {
-    $result = (new BlueprintValidator)->validate(new ResourceBlueprint(
-        'subjects',
-        new ExampleSource(FakeModel::class),
-        new ExampleSource(FakeModel::class),
-        new ExampleTable('table'),
+    $result = $validator->validate(Blueprint::define(
+        Name::make('subjects'),
+        Model::make(PlainTable::class),
+        Table::make(PlainTable::class),
     ));
 
-    expect($result->errorsWithCode(BlueprintErrorCode::DuplicateSingleton))->toHaveCount(1);
+    expect($result->messages())->toBe([
+        PlainTable::class.' must implement '.TableContract::class." to be used as a \"table\" reference.\nDefinition: table\nReceived: ".PlainTable::class,
+    ])->and($result->first()?->code)->toBe('blueprint.incompatible_reference');
 });
 
-it('preserves nested component errors with full paths', function (): void {
-    $result = (new BlueprintValidator)->validate(new Blueprint(
-        'subjects',
-        new ExampleTable('table', new ExampleColumn(new Property(Component::Label, 'No name'))),
-    ));
+it('accepts a reference that implements the adapter contract', function (): void {
+    $validator = new BlueprintValidator(ReferenceRules::defaults()->add(new ImplementsContract('table', TableContract::class)));
 
-    expect($result->first()?->code)->toBe('component.missing_property')
-        ->and($result->first()?->path)->toBe('subjects.table.#0');
+    expect($validator->validate(Blueprint::define(Name::make('subjects'), Table::make(ContractTable::class)))->isValid())->toBeTrue();
 });
 
-it('collects multiple errors of both kinds', function (): void {
-    $result = (new BlueprintValidator)->validate(new Blueprint(
-        'Bad Name',
-        new ExampleTable('a'),
-        new ExampleTable('b'),
-        new ExampleAction(new Property('serchable', true)),
-    ));
+it('stops at the first failing rule of a reference', function (): void {
+    $validator = new BlueprintValidator(ReferenceRules::defaults()->add(new ImplementsContract('table', TableContract::class)));
 
-    expect($result->count())->toBeGreaterThanOrEqual(4)
-        ->and($result->errorsWithCode('component.invalid_value'))->toHaveCount(1)
-        ->and($result->errorsWithCode('component.missing_property'))->toHaveCount(1)
-        ->and($result->errorsWithCode('component.unknown_property'))->toHaveCount(1)
-        ->and($result->errorsWithCode(BlueprintErrorCode::DuplicateSingleton))->toHaveCount(1)
-        ->and($result->toArray()[0])->toHaveKeys(['code', 'message', 'blueprint', 'path', 'role', 'expected', 'received', 'hint']);
+    $result = $validator->validate(Blueprint::define(Name::make('subjects'), Table::make('App\\Missing\\SubjectsTable')));
+
+    expect($result)->toHaveCount(1)
+        ->and($result->first()?->code)->toBe('blueprint.unresolvable_reference');
 });
 
-it('does not report composition errors twice', function (): void {
-    $result = (new BlueprintValidator)->validate(new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b')));
+it('sees rules added to the live rule set after the validator was built', function (): void {
+    $rules = ReferenceRules::defaults();
+    $validator = new BlueprintValidator($rules);
 
-    expect($result->errorsWithCode('component.constraint_failed'))->toBe([]);
+    $rules->add(new ImplementsContract('table', TableContract::class));
+
+    expect($validator->validate(Blueprint::define(Name::make('subjects'), Table::make(PlainTable::class)))->isValid())->toBeFalse();
 });
 
-it('makes the component validate() reject the same blueprints', function (): void {
-    $blueprint = new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b'));
+it('requires derivers to implement the deriver contract', function (): void {
+    $result = BlueprintValidator::withDefaults()->validate(Blueprint::define(Name::make('subjects'), Derive::make([PlainTable::class, PagesDeriver::class])));
 
-    expect($blueprint->validate()->isValid())->toBeFalse()
-        ->and($blueprint->validate()->first()?->message)->toBe('Blueprint "subjects" already has a "table" part at subjects.a; the role allows only one.');
+    expect($result->messages())->toHaveCount(1)
+        ->and($result->first()?->message)->toBe(PlainTable::class.' must implement '.BlueprintDeriver::class.' to be used as a "derive" reference.');
 });
 
-it('throws a meaningful exception in strict mode', function (): void {
-    try {
-        (new BlueprintValidator)->assertValid(new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b')));
-        $this->fail('Expected an exception.');
-    } catch (InvalidBlueprintException $exception) {
-        expect($exception->getMessage())->toStartWith('Blueprint "subjects" failed validation with 1 error(s).')
-            ->and($exception->getMessage())->toContain("Role: table\nExpected: one \"table\" part\nReceived: 2 \"table\" parts\n\nPath: subjects.b")
-            ->and($exception->result()?->count())->toBe(1);
-    }
+it('throws a result with every error formatted', function (): void {
+    $result = BlueprintValidator::withDefaults()->validate(Blueprint::define(Name::make('subjects'), Title::make('Subjects'), Table::make('App\\Missing\\Table')));
 
-    (new BlueprintValidator)->assertValid(new Blueprint('subjects'));
+    expect(fn () => $result->throwIfInvalid())->toThrow(
+        InvalidBlueprintException::class,
+        "Blueprint \"subjects\" failed validation with 1 error(s).\n\nApp\\Missing\\Table does not exist or cannot be autoloaded.\nDefinition: table\nReceived: App\\Missing\\Table",
+    );
 });
 
-it('formats results', function (): void {
-    $result = (new BlueprintValidator)->validate(new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b')));
+it('locks its rule set on first validation', function (): void {
+    $rules = ReferenceRules::defaults();
+    (new BlueprintValidator($rules))->validate(Blueprint::define(Name::make('subjects')));
 
-    expect($result->format())->toBe($result->first()?->format())
-        ->and((string) $result->first())->toBe($result->first()?->format())
-        ->and(iterator_to_array($result))->toBe($result->errors());
+    expect($rules->isLocked())->toBeTrue()
+        ->and(fn () => $rules->add(new ImplementsContract('table', TableContract::class)))->toThrow(LogicException::class, 'Cannot add '.ImplementsContract::class);
 });

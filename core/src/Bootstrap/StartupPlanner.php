@@ -11,6 +11,7 @@ use Gcego\Core\Exceptions\ExtensionException;
 use Gcego\Core\Exceptions\PackageRegistrationException;
 use Gcego\Core\Extensions\ExtensionManager;
 use Gcego\Core\Packages\PackageDiscovery;
+use Gcego\Core\Support\ExclusiveCapabilities;
 use Illuminate\Contracts\Foundation\Application;
 use Throwable;
 
@@ -34,6 +35,14 @@ final readonly class StartupPlanner
                         array_push($packageCapabilities, ...$packages->descriptor($id)->capabilities);
                     }
                     $extensionPlan = $this->extensions->plan($config->disabledExtensions(), $order, $packageCapabilities);
+                    $providers = [
+                        ...array_map($packages->descriptor(...), $order),
+                        ...array_map($this->extensions->descriptor(...), $extensionPlan['order']),
+                    ];
+
+                    foreach (ExclusiveCapabilities::conflicts($providers) as $capability => $ids) {
+                        $problems[] = ExtensionException::exclusiveCapability($capability, $ids)->getMessage();
+                    }
                 } catch (ExtensionException $exception) {
                     $problems[] = $exception->getMessage();
                 }

@@ -1,6 +1,6 @@
 {
     "name": "gcego/core",
-    "description": "Laravel integration kernel for GCEGO Admin Studio: configuration, lifecycle, package coordination, extensions and diagnostics.",
+    "description": "Laravel integration kernel for GCEGO Studio: configuration, lifecycle, package coordination, extensions and diagnostics.",
     "type": "library",
     "keywords": [
         "gcego",
@@ -27,18 +27,11 @@
         "psr/log": "^3.0"
     },
     "require-dev": {
-        "gcego/morfaw": "@dev",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../components"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Gcego\\Core\\": "src/"
@@ -66,7 +59,10 @@
         "laravel": {
             "providers": [
                 "Gcego\\Core\\GcegoServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Gcego": "Gcego\\Core\\Facades\\Gcego"
+            }
         }
     },
     "config": {

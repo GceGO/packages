@@ -37,7 +37,7 @@ professional, accessible defaults that support light and dark mode.
 ## Requirements
 
 - PHP 8.3+, Laravel 13, Livewire 4 (through gcego/runtime)
-- `gcego/morfaw` and `gcego/runtime` ^0.1
+- `gcego/components` and `gcego/runtime` ^0.1
 - Tailwind CSS **v4**, installed by the application (`tailwindcss`, `@tailwindcss/vite`).
   This package ships CSS sources and adds no npm dependencies, CDN links or second CSS framework.
 

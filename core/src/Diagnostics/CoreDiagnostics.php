@@ -23,6 +23,7 @@ use Gcego\Core\Lifecycle\FrameworkState;
 use Gcego\Core\Lifecycle\LifecycleManager;
 use Gcego\Core\Packages\PackageDiscovery;
 use Gcego\Core\Packages\PackageManager;
+use Gcego\Core\Support\ExclusiveCapabilities;
 use Gcego\Core\Support\FrameworkVersion;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Support\DeferrableProvider;
@@ -99,7 +100,7 @@ final readonly class CoreDiagnostics
         $env = $this->app->environment();
 
         return [
-            DiagnosticResult::passed('framework.identity', 'GCEGO Admin Studio Core.', ['name' => 'GCEGO Admin Studio', 'version' => $version->version]),
+            DiagnosticResult::passed('framework.identity', 'GCEGO Studio Core.', ['name' => 'GCEGO Studio', 'version' => $version->version]),
             DiagnosticResult::passed('framework.build', $reference === null ? 'No Composer build reference is available.' : 'Composer build metadata is available.', ['reference' => $reference !== null && preg_match('/^[a-f0-9]{7,64}$/i', $reference) ? $reference : null]),
             DiagnosticResult::passed('composer.runtime', is_string($runtime) ? 'Composer runtime API metadata is available.' : 'Composer runtime API version is not exposed by this installation.', ['version' => is_string($runtime) ? $runtime : null, 'required' => '^2.2']),
             DiagnosticResult::passed('runtime.platform', 'Runtime platform and SAPI.', ['os' => PHP_OS_FAMILY, 'sapi' => PHP_SAPI]),
@@ -242,6 +243,14 @@ final readonly class CoreDiagnostics
         }
         try {
             $plan = $this->extensions->plan($values['disabled_extensions'], $order, $capabilities);
+            $providers = [
+                ...array_map($snapshot->descriptor(...), $order),
+                ...array_map($this->extensions->descriptor(...), $plan['order']),
+            ];
+
+            foreach (ExclusiveCapabilities::conflicts($providers) as $capability => $ids) {
+                throw ExtensionException::exclusiveCapability($capability, $ids);
+            }
 
             return [DiagnosticResult::passed('extensions.order', 'Resolved and actual extension activation order.', ['resolved' => $plan['order'], 'actual' => $this->extensions->active(), 'skipped' => array_keys($plan['skipped'])])];
         } catch (ExtensionException $exception) {

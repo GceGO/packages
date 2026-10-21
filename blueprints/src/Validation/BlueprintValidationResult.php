@@ -58,9 +58,19 @@ final readonly class BlueprintValidationResult implements Countable, IteratorAgg
     /**
      * @return list<BlueprintValidationError>
      */
-    public function errorsForRole(string $role): array
+    public function errorsForKey(string $key): array
     {
-        return array_values(array_filter($this->errors, static fn (BlueprintValidationError $error): bool => $error->role === $role));
+        return array_values(array_filter($this->errors, static fn (BlueprintValidationError $error): bool => $error->key === $key));
+    }
+
+    /**
+     * One formatted string per error, as gcego/registry kinds report them.
+     *
+     * @return list<string>
+     */
+    public function messages(): array
+    {
+        return array_map(static fn (BlueprintValidationError $error): string => $error->format(), $this->errors);
     }
 
     /**

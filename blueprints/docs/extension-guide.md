@@ -1,136 +1,124 @@
 # Extension guide
 
-The fixtures in `tests/Fixtures` are working examples of everything below.
+For the list of built-in definitions, and where definitions that aren't built
+in belong, see the [definitions guide](definitions.md).
 
-## A part
+## Adding a definition type
 
-Any component becomes a part by implementing `BlueprintPart`. This is the
-`ExampleTable` fixture, standing in for a future `gcego/tables` table:
+The core only builds in definitions that GCEGO engines read: Name, Title,
+Description, Icon, Model, Policy, Table, Form, Infolist, Pages, Actions,
+BulkActions, Relations, Widgets and Derive. Everything else belongs to the
+package that reads it, which registers it in its service provider's
+`register()` method:
 
 ```php
-use Gcego\Blueprints\BlueprintRole;
-use Gcego\Blueprints\Contracts\BlueprintPart;
-use Gcego\Components\Component;
-use Gcego\Components\Schema\ComponentDefinition;
-use Gcego\Components\Schema\PropertyDefinition;
-use Gcego\Components\Schema\Type;
+DefinitionCatalog::register(Navigation::class);
+```
 
-final class ExampleTable extends Component implements BlueprintPart
+### Choosing a shape
+
+| The capability is... | Extend | Example |
+| --- | --- | --- |
+| data with several fields | `OptionsDefinition` | `Navigation::make(group: 'Academics', icon: 'book-open', sort: 2)` |
+| a list of names | `IdentifierListDefinition` | `Permissions::make(['view', 'create', 'subjects.export'])` |
+| one class the engine instantiates | `ReferenceDefinition` | `Exporter::make(SubjectsExporter::class)` |
+| several classes | `ReferenceCollectionDefinition` | `Reports::make([AttendanceReport::class])` |
+
+Prefer data over classes. Use a class reference only when the engine will
+instantiate or call that class.
+
+### Options definitions
+
+```php
+final readonly class Navigation extends OptionsDefinition
 {
-    protected static function defineSchema(): ComponentDefinition
+    public const string Key = 'navigation';
+
+    public static function definitionKey(): string
     {
-        return parent::defineSchema()
-            ->withType('fixtures.ExampleTable')
-            ->withProperties(new PropertyDefinition(self::Name, Type::string(), required: true))
-            ->withAllowedChildren([ExampleColumn::class, ExampleAction::class]);
+        return self::Key;
     }
 
-    protected static function shorthand(): array
+    public static function schema(): array
     {
-        return [self::Name, self::Label];
+        return [
+            'group' => Option::text(required: true),
+            'icon' => Option::icon(),
+            'sort' => Option::integer(default: 0, min: 0, max: 1000),
+            'visible' => Option::boolean(default: true),
+            'badge' => Option::className(),
+        ];
     }
 
-    public function blueprintRole(): BlueprintRole
+    public static function make(string $group, ?string $icon = null, int $sort = 0, bool $visible = true, ?string $badge = null): self
     {
-        return BlueprintRole::single(BlueprintRole::Table);
+        return self::fromOptions(['group' => $group, 'icon' => $icon, 'sort' => $sort, 'visible' => $visible, 'badge' => $badge]);
     }
 }
 ```
 
-`ExampleAction`, `ExampleWidget` and `ReportChart` (role `reports.chart`)
-return `BlueprintRole::multiple(...)`.
+- Give `make()` named, typed parameters. PHP then checks types and names
+  before `fromOptions()` checks values.
+- `null` means absent: the default applies, or the option is reported if
+  it's required.
+- `className()` options are references. They're stored without autoloading,
+  and checked by the reference rules in the registry and by the
+  `ReferenceResolver`.
+- Engines read `$blueprint->find(Navigation::class)?->option('group')`.
 
-Guidelines:
-
-- **Spell standard roles with the constants** (`BlueprintRole::Table`, ...) and
-  use their conventional cardinality.
-- **Namespace new roles** (`reports.chart`, `scheduling.calendar`) to avoid
-  collisions.
-- **Return the same role from every instance of a class.** Parts of one role
-  that disagree on cardinality fail validation.
-- **The part's children are its own business.** A row action inside a table
-  is not a blueprint action.
-
-## A container
-
-Implement `PartContainer` (which extends `BlueprintPart`) on layout parts whose
-children are themselves parts. This is the `ExampleSection` fixture:
+### Identifier lists
 
 ```php
-final class ExampleSection extends Component implements PartContainer
+final readonly class Permissions extends IdentifierListDefinition
 {
-    protected static function defineSchema(): ComponentDefinition
-    {
-        return parent::defineSchema()
-            ->withType('fixtures.ExampleSection')
-            ->withProperties(new PropertyDefinition(self::Name, Type::string(), required: true))
-            ->withAllowedChildren([BlueprintPart::class]);
-    }
+    public const string Key = 'permissions';
 
-    protected static function shorthand(): array
+    public static function definitionKey(): string
     {
-        return [self::Name];
-    }
-
-    public function blueprintRole(): BlueprintRole
-    {
-        return BlueprintRole::multiple(BlueprintRole::Layout);
+        return self::Key;
     }
 }
 ```
 
-Widgets inside sections then count as the blueprint's widgets, with paths such
-as `dashboard.overview.enrolments`.
+Identifiers are lowercase, made of letters and digits separated by `.`, `_`
+or `-`, distinct, and in a non-empty list.
 
-## A stricter blueprint
+### Rules
 
-Higher-level packages subclass `Blueprint` and override `definePolicy()` (see
-the `ResourceBlueprint` fixture and [composition](composition.md#policies)).
-They may also extend `define()` to add their own metadata properties:
+- Keys are lowercase identifiers (`navigation`, `reports.charts`) of at most
+  64 characters, and each key belongs to one class.
+- Validate in `make()`, and keep the object immutable.
+- Register required types (`required: true`) only from `register()`. Once a
+  blueprint exists, registering one throws.
 
-```php
-protected static function defineSchema(): ComponentDefinition
-{
-    return parent::defineSchema()
-        ->withType('modules.resource')
-        ->withProperties(new PropertyDefinition('navigationGroup', Type::string()));
-}
-```
+Working versions of these examples live in `tests/Fixtures/Extensions`.
 
-`compositionPolicy()`, `part()`, `parts()`, `withPart()` and the other
-blueprint methods are `final`, which protects the invariants.
-
-## Styling and other configuration
-
-Pass `ConfigurationNode` objects, such as a future `Tailwind` node (the
-`ExampleStyle` fixture stands in for one), directly to the constructor. They
-are available through `configurations()` and normalized as configuration.
-They are never parts.
-
-## Consuming blueprints (registry, runtime)
-
-Depend on `BlueprintInterface` and `BlueprintResolver`, not on `Blueprint` or
-`BlueprintCollection`:
+## Checking references against a feature contract
 
 ```php
-function render(BlueprintResolver $blueprints, string $name): void
-{
-    $blueprint = $blueprints->resolve($name);
-    $blueprint->assertValid();
-
-    foreach ($blueprint->parts() as $part) {
-        // dispatch on $part->blueprintRole()->name
-    }
-}
-```
-
-## Testing a custom part
-
-```php
-it('is a single table part', function (): void {
-    $blueprint = new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b'));
-
-    expect((new BlueprintValidator)->validate($blueprint)->first()?->code)
-        ->toBe(BlueprintErrorCode::DuplicateSingleton->value);
+// TablesServiceProvider::register()
+$this->callAfterResolving(ReferenceRules::class, function (ReferenceRules $rules): void {
+    $rules->add(new ImplementsContract(Table::Key, TableDefinition::class));
 });
 ```
+
+Implement `ReferenceRule` for anything more specific: `appliesTo($key)`,
+`check($key, $class)` returning an error message or `null`, and `code()`.
+
+## Deriving registry definitions
+
+```php
+final readonly class SubjectPages implements BlueprintDeriver
+{
+    public function derive(BlueprintInterface $blueprint): iterable
+    {
+        foreach ($blueprint->pages() as $page) {
+            yield new PageDefinition(/* ... */);   // a definition of a registered kind
+        }
+    }
+}
+```
+
+A blueprint opts in with `Derive::make([SubjectPages::class])`. Derivers take
+no constructor arguments, must be deterministic, and must not yield
+blueprints.

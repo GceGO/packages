@@ -75,7 +75,7 @@ and packages listed as both required and optional throw
 `PackageRegistrationException`.
 
 `requires` describes **framework-level** relationships between GCEGO packages.
-Library dependencies such as `gcego/morfaw` belong in `composer.json`;
+Library dependencies such as `composer/semver` belong in `composer.json`;
 Composer remains responsible for installation and version constraints.
 
 ## Dependency rules
@@ -86,6 +86,7 @@ Composer remains responsible for installation and version constraints.
 | A required package is in `gcego.packages.disabled` | `PackageDependencyException`, telling you to disable the dependant too |
 | A cycle exists (including through `optional`) | `PackageDependencyException`: `Circular GCEGO package dependency: gcego/a -> gcego/b -> gcego/a.` |
 | An optional package is absent or disabled | No error; ordering ignores it |
+| Two enabled packages provide a capability that one of them declares exclusive | `PackageDependencyException` (`packages.capabilities.exclusive`), before any hook runs |
 
 Any of these errors makes the boot fail with `BootstrapException`.
 
@@ -137,8 +138,25 @@ package has no version metadata are reported as unverifiable warnings; Core does
 not invent a version. Optional dependencies remain optional when absent. Composer
 continues to manage library installation and its own version constraints.
 
-`exclusiveCapabilities` may name a subset of a package's declared `capabilities`.
-Multiple active providers are informational by default. If any active provider
-declares a capability exclusive, diagnostics report a conflict when multiple
-providers are active. Exclusivity is an integrity diagnostic, not an automatic
-provider-selection or rollback mechanism.
+## Capabilities
+
+A capability is an identifier (`ledger`, `search.fulltext`), not an
+implementation Core owns. Any package may declare any capability: Core keeps
+no list of known capabilities, so new packages never require Core changes.
+Consumers check availability with `Gcego::hasCapability()` and
+`Gcego::capabilityProviders()`, or `BootstrapContext::hasCapability()` inside a
+boot hook. Declaring a capability grants nothing: it is metadata, never an
+authorization decision.
+
+Several active packages may provide the same ordinary capability.
+`exclusiveCapabilities` may name a subset of a package's declared
+`capabilities`; once any enabled provider declares a capability exclusive,
+exactly one enabled provider (package or extension) is allowed. Since 1.1.0 a
+conflict fails dependency resolution, the startup plan and diagnostics
+**before any hook runs**; earlier versions booted and only flagged the conflict
+in diagnostics. Core never picks a winner: disable all but one provider in
+`gcego.packages.disabled`.
+
+Disabling a package stops its boot hook, not its Laravel service provider:
+Laravel still calls `register()` and `boot()`. Keep framework work in
+`bootPackage()` so `gcego.packages.disabled` is effective.

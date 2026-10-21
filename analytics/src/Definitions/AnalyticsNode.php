@@ -12,7 +12,7 @@ use Gcego\Components\Properties\Property;
 use Gcego\Security\Contracts\Requirement;
 
 /**
- * The base of analytics definitions: immutable gcego/morfaw that also
+ * The base of analytics definitions: immutable gcego/components that also
  * accept named arguments. Constructing one never queries anything.
  */
 abstract class AnalyticsNode extends Component

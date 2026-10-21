@@ -128,7 +128,7 @@ return new Panel(
 
 ## Defining panels
 
-`Panel` is an immutable gcego/morfaw definition. Its registry kind is `panel` and its identity is `panel:<name>`. Constructing a panel never queries, registers routes or authenticates anyone.
+`Panel` is an immutable gcego/components definition. Its registry kind is `panel` and its identity is `panel:<name>`. Constructing a panel never queries, registers routes or authenticates anyone.
 
 | Property | Default | Meaning |
 | --- | --- | --- |

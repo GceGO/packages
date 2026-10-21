@@ -7,9 +7,14 @@ namespace Gcego\Core\Packages;
 use Composer\Semver\Semver;
 use Gcego\Core\Exceptions\PackageDependencyException;
 use Gcego\Core\Support\DependencyGraph;
+use Gcego\Core\Support\ExclusiveCapabilities;
 
 /**
  * Validates GCEGO package dependencies and computes the boot order.
+ *
+ * Problems are reported in this order: disabled requirements, unsupported
+ * versions, missing requirements, a dependency cycle, then exclusive
+ * capabilities offered by more than one enabled package.
  *
  * This works only on framework-level descriptors of packages that Composer
  * has already installed. It never resolves versions or installs anything.
@@ -27,13 +32,14 @@ final class PackageDependencyValidator
      */
     public function resolve(array $descriptors, array $disabled = []): array
     {
-        $problems = $this->problems($descriptors, $disabled);
+        $graph = $this->graph($descriptors, $disabled);
+        $problems = $this->collectProblems($descriptors, $disabled, $graph);
 
         if ($problems !== []) {
             throw $problems[0];
         }
 
-        return $this->graph($descriptors, $disabled)->order();
+        return $graph->order();
     }
 
     /**
@@ -45,21 +51,33 @@ final class PackageDependencyValidator
      */
     public function problems(array $descriptors, array $disabled = []): array
     {
+        return $this->collectProblems($descriptors, $disabled, $this->graph($descriptors, $disabled));
+    }
+
+    /**
+     * @param  list<PackageDescriptor>  $descriptors
+     * @param  list<string>  $disabled
+     * @return list<PackageDependencyException>
+     */
+    private function collectProblems(array $descriptors, array $disabled, DependencyGraph $graph): array
+    {
         $problems = [];
         $registered = [];
+        $isDisabled = array_fill_keys($disabled, true);
+        $enabled = [];
 
         foreach ($descriptors as $descriptor) {
             $registered[$descriptor->id] = $descriptor;
+
+            if (! isset($isDisabled[$descriptor->id])) {
+                $enabled[] = $descriptor;
+            }
         }
 
-        foreach ($descriptors as $descriptor) {
-            if (in_array($descriptor->id, $disabled, true)) {
-                continue;
-            }
-
+        foreach ($enabled as $descriptor) {
             $disabledRequirements = array_values(array_filter(
                 $descriptor->requires,
-                static fn (string $id): bool => isset($registered[$id]) && in_array($id, $disabled, true),
+                static fn (string $id): bool => isset($registered[$id], $isDisabled[$id]),
             ));
 
             if ($disabledRequirements !== []) {
@@ -67,13 +85,10 @@ final class PackageDependencyValidator
             }
         }
 
-        foreach ($descriptors as $descriptor) {
-            if (in_array($descriptor->id, $disabled, true)) {
-                continue;
-            }
+        foreach ($enabled as $descriptor) {
             foreach ($descriptor->versionConstraints as $dependency => $constraint) {
                 $version = $registered[$dependency]->version ?? null;
-                if ($version === null || in_array($dependency, $disabled, true)) {
+                if ($version === null || isset($isDisabled[$dependency])) {
                     continue;
                 }
                 try {
@@ -85,8 +100,6 @@ final class PackageDependencyValidator
                 }
             }
         }
-
-        $graph = $this->graph($descriptors, $disabled);
 
         foreach ($graph->missing() as $id => $missing) {
             $missing = array_values(array_filter($missing, static fn (string $dependency): bool => ! isset($registered[$dependency])));
@@ -102,6 +115,10 @@ final class PackageDependencyValidator
             $problems[] = PackageDependencyException::circular($cycle);
         }
 
+        foreach (ExclusiveCapabilities::conflicts($enabled) as $capability => $providers) {
+            $problems[] = PackageDependencyException::exclusiveCapability($capability, $providers);
+        }
+
         return $problems;
     }
 
@@ -112,9 +129,10 @@ final class PackageDependencyValidator
     private function graph(array $descriptors, array $disabled): DependencyGraph
     {
         $nodes = [];
+        $isDisabled = array_fill_keys($disabled, true);
 
         foreach ($descriptors as $descriptor) {
-            if (! in_array($descriptor->id, $disabled, true)) {
+            if (! isset($isDisabled[$descriptor->id])) {
                 $nodes[$descriptor->id] = ['requires' => $descriptor->requires, 'optional' => $descriptor->optional];
             }
         }

@@ -1,124 +1,90 @@
 # Architecture
 
-## Relationship to `gcego/morfaw`
+## Responsibilities
 
-`Blueprint` **extends** `Gcego\Components\Component`. Everything the component
-engine already does is reused unchanged:
+`gcego/blueprints` owns three things:
 
-| Concern | Provided by gcego/morfaw |
-| --- | --- |
-| Constructor parsing, shorthand, duplicate keys | `Component::__construct`, `shorthand()` |
-| Properties and metadata storage | `Property`, `PropertyCollection` |
-| Schema rules for metadata values | `PropertyDefinition` rules in `Blueprint::defineSchema()` |
-| "Only parts may be children" | `withAllowedChildren([BlueprintPart::class])` |
-| Tree, paths, traversal, cycle safety | `ComponentTree`, `ComponentWalker` |
-| Schema validation of the whole tree | `ComponentValidator` |
-| Normalization of the tree | `ComponentNormalizer` |
-| Immutable copies that keep the subtype | `withProperty()`, `withChildren()`, ... |
-| Styling and other configuration | `ConfigurationNode` (never children) |
+1. **Definition objects**: typed, `readonly` value objects (`Name`, `Table`,
+   `Pages`, ...) that validate and normalize their own value in `make()`.
+2. **Compilation**: `Blueprint::define()` checks the set of definitions
+   (supported keys, one definition per key, required keys) and returns an
+   immutable `Blueprint`.
+3. **Registry integration**: the `blueprint` kind (`BlueprintKind`), its
+   discovery roots, the `BlueprintProvider` convention and the
+   `BlueprintValidator` reference checks.
+4. **Checked resolution**: `ReferenceResolver`, which engines use to take
+   references they are about to execute.
 
-Blueprint adds only blueprint semantics: the metadata schema and its defaults,
-role classification, cardinality rules, part lookup, blueprint-level
-validation codes, normalization, inspection, and in-memory collections.
+It does not own any engine. Tables, forms, infolists, pages, actions,
+relations and widgets are referenced by class name, and the package that
+owns each capability reads those references.
 
-### Composition rules are part of the component schema
-
-`Blueprint::defineSchema()` registers a schema constraint that reports composition
-issues. `$blueprint->validate()` and `assertValid()`, which registries and
-runtimes already call on any component, therefore reject duplicate singleton
-parts and similar mistakes. `BlueprintValidator` reports the same issues in
-structured form (code, role, path) and removes the plain-message duplicates.
-
-## Relationship to `gcego/core`
-
-There is none. A blueprint is a definition, so it is constructed, validated
-and normalized through the registered component foundation. The component
-provider requires a Laravel application; the GCEGO kernel remains independent.
-The dependency graph is:
+## Dependency graph
 
 ```text
-gcego/blueprints ──▶ gcego/morfaw ──▶ illuminate/*
-gcego/core       ──▶ (illuminate/*)          # no dependency between blueprints and core
+gcego/blueprints ──▶ gcego/registry ──▶ gcego/core ──▶ illuminate/*
+        └──────────────────────────────▶ gcego/core
 ```
 
-Laravel integration (discovering blueprints, registering them as GCEGO
-packages or extensions) is the job of `gcego/registry`, which can depend on
-both.
+Feature packages depend on blueprints, never the other way round. Registry
+does not depend on blueprints.
 
-## Decisions and deviations from the original plan
+## Phases
 
-- **`Blueprint` extends `Component`.** The component contracts support it
-  cleanly, so there is a single tree, a single validator and a single
-  normalizer.
-- **Roles are value objects declared by parts** (`BlueprintRole`: name and
-  cardinality). There is no central role registry, so future packages add
-  roles without changing this package.
-- **`CompositionPolicy` replaces the planned `BlueprintDefinition`.** Per-class
-  rules (required, allowed and single-only roles) sit beside the component
-  `ComponentDefinition` rather than duplicating it.
-- **`PartContainer`** was added so that layout parts can group other parts.
-  Without it, a part's children are its private content: a table's row actions
-  are not blueprint actions.
-- **`BlueprintResolver`** is the lookup contract. `BlueprintCollection`
-  implements it in memory, and `gcego/registry` will provide the discovering
-  implementation.
-- **Not created:**
-  - `BlueprintFactory`: the constructor already covers every supported input,
-    and nothing needed adapting.
-  - `BlueprintAware`: components are immutable and have no parent pointers, so
-    a part cannot know its blueprint.
-  - A separate part resolver: lookup lives on `Blueprint` and `BlueprintComposition`.
-- **Model-first shorthand (`new Blueprint(Subject::class, ...)`) is not
-  supported.** The only positional value is the name. A class string is
-  rejected by the name rule, and binding a model is the job of a source part
-  owned by `gcego/data`. This keeps every positional string unambiguous.
-- **`Label` and `Id` are removed from the blueprint schema.** `Title` is the
-  display text and `Name` is the identity, so there are no competing
-  properties.
+| Phase | When | What runs | Loads referenced classes? |
+| --- | --- | --- | --- |
+| Definition | `X::make(...)` | value validation and normalization | no |
+| Compilation | `Blueprint::define()`, `with()`, `without()` | key and cardinality checks against the `DefinitionCatalog` | no |
+| Registration | registry discovery, provider loading, `Registry::register()` | `BlueprintKind`: name, `BlueprintValidator`, metadata; opt-in derivation | autoload only (`ClassExists`), never instantiated |
+| Resolution | `Registry::get()` from a cached index | entrypoint reloaded, validated again (`validate_on_resolve`) | autoload only |
+| Execution | feature engines, through `ReferenceResolver` | full reference rules again (memoized per blueprint), then the engine builds objects | yes, by the engines, only after the check |
 
-## Composition rules
+## Storage
 
-1. **Parts:**
-   - the blueprint's direct children implementing `BlueprintPart`;
-   - recursively, the `BlueprintPart` children of `PartContainer` parts.
+`Blueprint` keeps one private `array<string, BlueprintDefinition>` in
+declaration order. Every value is a string, a list of strings, or an
+extension's immutable value, so the object can be shared safely. Accessors
+are thin reads over that array:
 
-   Other descendants are not parts.
-2. A direct child that is not a `BlueprintPart` fails validation
-   (`component.invalid_child`).
-3. Parts of one role must agree on cardinality (`blueprint.role_conflict`).
-4. A single role allows one part (`blueprint.duplicate_singleton`). The policy
-   can force a role to be single.
-5. The policy can restrict roles (`blueprint.role_not_allowed`) or require them
-   (`blueprint.missing_required_role`). The base `Blueprint` policy does
-   neither, so listings, forms, dashboards and custom features are all valid.
+- `references()` collects `ReferencesClasses::classes()`;
+- `pages()` and the other collection accessors return lists;
+- `table()` and the other single-reference accessors return the first
+  (only) reference, or `null`.
 
-Composition is computed once per instance and cached. The cache is keyed on
-the immutable children collection and the name, because `Component::__clone()`
-is final and cannot reset subclass caches.
+## Extension points
 
-## Identity
-
-| Concept | Source |
+| Extension | Mechanism |
 | --- | --- |
-| name | `Blueprint::Name`, required, lowercase |
-| slug | `Blueprint::Slug`, else derived from the name |
-| title | `Blueprint::Title`, else derived from the name (presentation, not identity) |
-| class | the PHP class |
-| type | `blueprint`, or the subclass's class name / `withType()` |
+| New definition types | `DefinitionCatalog::register(Navigation::class)`: one class per key, process-wide, idempotent |
+| Contract checks for references | `ReferenceRules::add(new ImplementsContract($key, $contract))` or a custom `ReferenceRule` |
+| Derived registry definitions | `BlueprintDeriver`, requested per blueprint with `Derive::make([...])` |
+| Discovery roots | `gcego-blueprints.discovery` (`paths`, `entrypoint`, `enabled`) |
 
-Instance identity (which PHP object) is deliberately not part of a
-blueprint's identity, so equal declarations have equal identities. Global
-uniqueness of names is `gcego/registry`'s job; `BlueprintCollection` only
-rejects duplicates within itself.
+The catalog is static because definitions are plain PHP values, created
+before (and without) a container. Rules and the kind are container
+singletons because they run inside the registry.
 
-## Boundaries
+## Configuration lifecycle
 
-- **Registry:** `gcego/registry` discovers and registers blueprints.
-  This package provides the stable inputs: `BlueprintInterface`,
-  `identity()`, `metadata()`, `assertValid()`, `BlueprintNormalizer` and
-  `BlueprintResolver`.
-- **Runtime:** `gcego/runtime` renders blueprints. It reads `roles()`,
-  `parts()`, `part()` and the component tree; nothing here executes or renders.
-- **Styling:** Tailwind declarations are `ConfigurationNode`s, stored in
-  `configurations()` and normalized as configuration, never treated as parts.
-- **Security:** there are no authorization methods on blueprints.
+Configuration is mutable only while packages register, and fixed once it
+is in use:
+
+| What | Open | Fixed |
+| --- | --- | --- |
+| Optional definition types | always | never (they don't change existing blueprints) |
+| Required definition types | until the first `Blueprint::define()` | `DefinitionRegistrationException` afterwards |
+| Reference rules | until the first validation | `LogicException` afterwards |
+| Reference validation switch | `local` and `testing` only | always on in every other environment |
+
+## Registry ownership
+
+`blueprint` is owned by gcego/blueprints and `module` by gcego/modules. Each
+package registers its kind after `DefinitionKinds` resolves, and adds its
+roots just before `RegistryConfig` resolves, which makes provider order
+irrelevant. Both use `app/GCEGo/Modules` with disjoint entrypoint conventions
+(`Subjects/Subjects.php` and `Module.php`). When an entrypoint matches roots
+of several kinds, such as the registry's default `module` root, gcego/registry
+gives it to the registered kind whose contract accepts the loaded object.
+
+Entrypoints declare classes, so gcego/registry includes them at most once per
+process and reuses the result (see `Gcego\Registry\Loading\ClassEntrypoints`).

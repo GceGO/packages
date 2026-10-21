@@ -1,6 +1,6 @@
 # Architecture
 
-`gcego/core` is GCEGO Admin Studio's Laravel kernel. It coordinates the GCEGO
+`gcego/core` is GCEGO Studio's Laravel kernel. It coordinates the GCEGO
 packages installed in an application and builds on Laravel's own primitives:
 
 | Concern | Provided by |
@@ -107,7 +107,7 @@ All exceptions implement `Gcego\Core\Exceptions\GcegoException`.
 | `InvalidLifecycleException` | `LogicException` | illegal state transition, for example a re-entrant boot |
 | `BootstrapException` | `RuntimeException` | any boot failure; the cause is preserved as `getPrevious()` |
 | `PackageRegistrationException` | `LogicException` | invalid descriptor, duplicate id, late registration, unknown id |
-| `PackageDependencyException` | `LogicException` | missing, disabled or circular package dependencies |
+| `PackageDependencyException` | `LogicException` | missing, disabled or circular package dependencies, unsupported versions, exclusive-capability conflicts |
 | `DiagnosticException` | `LogicException` | invalid or duplicate health checks, registration during checks, recursive custom checks |
 | `ExtensionException` | `LogicException` | the same, for extensions |
 
@@ -115,10 +115,10 @@ All exceptions implement `Gcego\Core\Exceptions\GcegoException`.
 
 - Runtime dependencies: `illuminate/support`, `illuminate/contracts`,
   `illuminate/console`, `psr/log`, `composer/semver` and `composer-runtime-api`. No Livewire, Blade, Tailwind or Filament.
-- `gcego/morfaw` is a **development** dependency, used to prove that real
-  component definitions work in a GCEGO application. Core has no runtime use
-  for it. Packages that build components require it themselves.
-- The dependency direction is one-way: `gcego/morfaw` never imports
-  `gcego/core`, and a test enforces this.
+- Core depends on no GCEGO package, at runtime or in development. Every other
+  package, including `gcego/components`, depends on Core, never the reverse.
+  Core's tests use their own fixtures, never another GCEGO package.
+- The dependency direction is one-way: Core's code never references another
+  GCEGO namespace, and `DependencyBoundaryTest` enforces both rules.
 - Core is not a registry. It knows packages and extensions, never components
   or application definitions.

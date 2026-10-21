@@ -56,7 +56,7 @@ service provider with `$this->app->make(RendererRegistry::class)->register(...)`
 
 | Member | Meaning |
 | --- | --- |
-| `node`, `component()`, `path()`, `depth()` | the occurrence (`TreeNode` from gcego/morfaw) |
+| `node`, `component()`, `path()`, `depth()` | the occurrence (`TreeNode` from gcego/components) |
 | `identity` | the definition identity, e.g. `blueprint:subjects` (or `null`) |
 | `mode`, `isLivewire()` | `RenderMode::Static` or `RenderMode::Livewire` |
 | `locale` | the application locale at render time |

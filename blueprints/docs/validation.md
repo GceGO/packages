@@ -1,75 +1,70 @@
 # Validation
 
-## Two entry points
+## Structural (always, no autoloading)
 
-```php
-$blueprint->validate();      // gcego/morfaw ValidationResult (memoized)
-$blueprint->assertValid();   // throws Gcego\Components\Exceptions\InvalidComponentException
+Each definition validates its own value in `make()` and throws
+`InvalidDefinitionException`. The exception exposes `$key`, `$reason` and
+`$hint`.
 
-$result = (new BlueprintValidator)->validate($blueprint);   // BlueprintValidationResult
-(new BlueprintValidator)->assertValid($blueprint);          // throws InvalidBlueprintException
-```
-
-Both reject exactly the same blueprints. `BlueprintValidator` adds structure:
-every error carries a code, the blueprint name, the path, and the role when
-there is one.
-
-## Error codes
-
-Component schema errors keep their `gcego/morfaw` code with a
-`component.` prefix (`component.missing_property`, `component.invalid_value`,
-`component.unknown_property`, `component.invalid_child`, ...). Blueprint
-composition errors use:
-
-| Code | Meaning |
+| Definition | Rule |
 | --- | --- |
-| `blueprint.invalid_role` | a part's `blueprintRole()` is invalid |
-| `blueprint.duplicate_singleton` | a second part for a single role |
-| `blueprint.role_conflict` | parts of one role disagree on cardinality |
-| `blueprint.role_not_allowed` | the policy does not allow the role |
-| `blueprint.missing_required_role` | the policy requires a role that no part plays |
+| `Name` | lowercase identifier: `^[a-z][a-z0-9]*([-_][a-z0-9]+)*$`, at most 100 characters; never rewritten, but a suggestion is given |
+| `Title` | non-empty after trimming, at most 200 characters |
+| `Description` | non-empty after trimming, at most 1000 characters, no control characters except `\n`, `\r`, `\t` |
+| `Model`, `Table`, `Form`, `Infolist` | one syntactically valid class name; a leading `\` is removed |
+| `Pages`, `Actions`, `Relations`, `Widgets`, `Derive` | a non-empty list (not a map) of valid class names, without case-insensitive duplicates |
 
-`BlueprintErrorCode` holds the blueprint codes.
+`Blueprint::define()` then validates the whole set. It collects every
+problem and throws a single `InvalidBlueprintException` whose `result()` is a
+`BlueprintValidationResult`:
 
-## What is checked
+| Code | Cause |
+| --- | --- |
+| `blueprint.unsupported_definition` | a key that is not in the `DefinitionCatalog`, or a class claiming a key it does not own |
+| `blueprint.duplicate_definition` | a key declared twice (never silently overwritten) |
+| `blueprint.missing_required_definition` | `Name`, or a required extension, is absent |
 
-- the name is present and valid; title, slug, icon and description have valid types and formats;
-- no unknown metadata keys;
-- every direct child is a `BlueprintPart`;
-- every nested component's own schema, with full paths (for example `subjects.table.#0`);
-- role validity, cardinality and the policy.
+## Integration (registry phase)
 
-A blueprint is **not** required to have a table, form, source or action.
+`BlueprintValidator::validate($blueprint)` runs the installed
+`ReferenceRule`s over `$blueprint->references()`. For each reference the
+rules run in order, and only the first failure is reported.
 
-## Results
+| Code | Rule |
+| --- | --- |
+| `blueprint.unresolvable_reference` | `ClassExists`: the class, interface or enum cannot be autoloaded (including a parent class from an uninstalled package) |
+| `blueprint.incompatible_reference` | `ImplementsContract`: the class does not implement the contract required for its key |
+
+`BlueprintKind::validate()` returns the formatted errors to the registry,
+which reports them as an `InvalidDefinitionException` naming the identity
+and source, or records them as a failure in non-strict mode.
+
+`gcego-blueprints.validate_references = false` skips this phase only in the
+`local` and `testing` environments. Everywhere else the setting is ignored.
+
+## Execution guard
+
+Engines take the references they execute from `ReferenceResolver`, which
+runs the full rules regardless of configuration (and, optionally, a contract
+check) and throws `InvalidReferenceException` before any class is run. This
+also covers blueprints that never went through the registry, and references
+that disappeared after a cache was built.
+
+## Fixed configuration
+
+Reference rules lock on the first validation, and required definition types
+can't be registered once a blueprint exists. Either attempt throws, so a
+process never validates different blueprints by different rules.
+
+## Error shape
 
 ```php
-$result->isValid();
-$result->errors();                              // list<BlueprintValidationError>
-$result->first();
-$result->errorsWithCode(BlueprintErrorCode::DuplicateSingleton);
-$result->errorsWithCode('component.invalid_child');
-$result->errorsForRole('table');
-$result->toArray();
-echo $result->format();
+$error->code;      // "blueprint.duplicate_definition"
+$error->message;   // 'The "table" definition is declared twice (arguments 5 and 8); ...'
+$error->blueprint; // "subjects", or "(unnamed)"
+$error->key;       // "table"
+$error->expected;  // optional
+$error->received;  // optional
+$error->hint;      // optional
+$error->format();  // message plus details, one per line
 ```
-
-A formatted error:
-
-```text
-Blueprint "subjects" already has a "table" part at subjects.a; the role allows only one.
-
-Role: table
-Expected: one "table" part
-Received: 2 "table" parts
-
-Path: subjects.b
-```
-
-Component errors keep the original `ValidationError` in `$error->componentError`.
-
-## Strict mode
-
-`InvalidBlueprintException` starts with `Blueprint "subjects" failed
-validation with N error(s).`, lists up to ten formatted errors, and exposes
-`result()`.

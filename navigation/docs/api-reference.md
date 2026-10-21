@@ -4,7 +4,7 @@ Namespace `Gcego\Navigation`.
 
 ## Nodes
 
-All nodes extend `NavigationNode` (gcego/morfaw `Component`).
+All nodes extend `NavigationNode` (gcego/components `Component`).
 
 | Class | Shorthand | Properties |
 | --- | --- | --- |

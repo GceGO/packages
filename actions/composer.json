@@ -22,7 +22,7 @@
     "require": {
         "php": "^8.3",
         "gcego/blueprints": "^0.1",
-        "gcego/morfaw": "^0.1",
+        "gcego/components": "^0.1",
         "gcego/core": "^0.1",
         "gcego/data": "^0.1",
         "gcego/luminaries": "^0.1",
@@ -50,7 +50,7 @@
             "url": "../components",
             "options": {
                 "versions": {
-                    "gcego/morfaw": "0.1.0"
+                    "gcego/components": "0.1.0"
                 }
             }
         },

@@ -65,3 +65,40 @@ it('handles long chains without recursion', function (): void {
         ->and($order[0])->toBe('n0')
         ->and($order[2999])->toBe('n2999');
 });
+
+it('handles an empty graph', function (): void {
+    expect(graph([])->order())->toBe([])
+        ->and(graph([])->cycle())->toBeNull()
+        ->and(graph([])->missing())->toBe([]);
+});
+
+it('orders large irregular graphs exactly like a re-sorting reference implementation', function (): void {
+    $requires = [];
+
+    for ($index = 0; $index < 600; $index++) {
+        $requires['pkg-'.$index] = $index === 0 ? [] : ['pkg-'.(crc32((string) $index) % $index), 'pkg-'.intdiv($index, 3)];
+    }
+
+    $pending = array_map(static fn (array $dependencies): int => count(array_unique($dependencies)), $requires);
+    $dependents = [];
+    foreach ($requires as $id => $dependencies) {
+        foreach (array_unique($dependencies) as $dependency) {
+            $dependents[$dependency][] = $id;
+        }
+    }
+    $ready = array_keys(array_filter($pending, static fn (int $count): bool => $count === 0));
+    $expected = [];
+    while ($ready !== []) {
+        sort($ready);
+        $id = array_shift($ready);
+        $expected[] = $id;
+        foreach ($dependents[$id] ?? [] as $dependent) {
+            if (--$pending[$dependent] === 0) {
+                $ready[] = $dependent;
+            }
+        }
+    }
+
+    expect(graph($requires)->order())->toBe($expected)
+        ->and($expected)->toHaveCount(600);
+});

@@ -79,11 +79,11 @@ final class FormEvaluation
      */
     public function evaluate(Closure $closure, FormState|State $state, ?string $itemPath = null, array $parameters = []): mixed
     {
-        $morfawState = $state instanceof State ? $state : new State($state->all());
+        $componentState = $state instanceof State ? $state : new State($state->all());
         $context = EvaluationContext::make([...($this->scopes === [] ? [] : $this->scopes[array_key_last($this->scopes)]), ...$parameters])
-            ->withState($morfawState, $itemPath ?? '');
+            ->withState($componentState, $itemPath ?? '');
 
-        $recording = $morfawState->record(static fn (): mixed => Components::evaluator()->evaluate($closure, $context, subject: 'a form closure'));
+        $recording = $componentState->record(static fn (): mixed => Components::evaluator()->evaluate($closure, $context, subject: 'a form closure'));
 
         foreach (array_keys($this->discoveries) as $index) {
             foreach ($recording['reads'] as $path) {

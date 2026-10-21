@@ -17,7 +17,7 @@ use Gcego\Core\Support\Identifier;
  * - optional: GCEGO packages that boot first when present.
  * - capabilities: names other packages can test with Gcego::hasCapability().
  *
- * Composer-level library dependencies (such as gcego/morfaw) belong in
+ * Composer-level library dependencies (such as composer/semver) belong in
  * composer.json, not here: Composer resolves installation and versions.
  */
 final readonly class PackageDescriptor

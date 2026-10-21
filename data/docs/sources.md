@@ -16,7 +16,7 @@ provider (see [providers](providers.md)).
 
 ## Properties
 
-Every setting has a Property form, using the gcego/morfaw property
+Every setting has a Property form, using the gcego/components property
 system. Property and node forms are equivalent. Declaring one setting twice
 (both forms, or two `Paginate` nodes) is an error, never a silent override.
 

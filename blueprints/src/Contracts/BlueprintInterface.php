@@ -4,61 +4,126 @@ declare(strict_types=1);
 
 namespace Gcego\Blueprints\Contracts;
 
-use Gcego\Blueprints\Composition\BlueprintComposition;
-use Gcego\Blueprints\Composition\BlueprintPartCollection;
-use Gcego\Blueprints\Composition\CompositionPolicy;
-use Gcego\Blueprints\Exceptions\BlueprintCompositionException;
-use Gcego\Blueprints\Exceptions\DuplicateBlueprintPartException;
-use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
-use Gcego\Blueprints\Exceptions\MissingBlueprintPartException;
 use Gcego\Blueprints\Metadata\BlueprintMetadata;
 use Gcego\Blueprints\Support\BlueprintIdentity;
-use Gcego\Components\Contracts\ComponentInterface;
 
 /**
- * The read-only contract registries and runtimes consume.
+ * The read-only contract registries, runtimes and feature engines consume.
+ *
+ * Single-reference accessors return a class name or null when the
+ * definition is absent; collection accessors return a list of class names
+ * in declaration order, empty when absent.
  */
-interface BlueprintInterface extends ComponentInterface
+interface BlueprintInterface
 {
-    public static function compositionPolicy(): CompositionPolicy;
+    public function name(): string;
 
-    public function name(): ?string;
+    /**
+     * The Title definition, else the humanized name ("academic-subjects" -> "Academic Subjects").
+     */
+    public function title(): string;
+
+    public function description(): ?string;
+
+    public function icon(): ?string;
+
+    /**
+     * The slugified name ("academic_subjects" -> "academic-subjects").
+     */
+    public function slug(): string;
+
+    /**
+     * @return class-string|null
+     */
+    public function model(): ?string;
+
+    /**
+     * @return class-string|null
+     */
+    public function policy(): ?string;
+
+    /**
+     * @return class-string|null
+     */
+    public function table(): ?string;
+
+    /**
+     * @return class-string|null
+     */
+    public function form(): ?string;
+
+    /**
+     * @return class-string|null
+     */
+    public function infolist(): ?string;
+
+    /**
+     * @return list<class-string>
+     */
+    public function pages(): array;
+
+    /**
+     * @return list<class-string>
+     */
+    public function actions(): array;
+
+    /**
+     * @return list<class-string>
+     */
+    public function bulkActions(): array;
+
+    /**
+     * @return list<class-string>
+     */
+    public function relations(): array;
+
+    /**
+     * @return list<class-string>
+     */
+    public function widgets(): array;
+
+    public function identity(): BlueprintIdentity;
 
     public function metadata(): BlueprintMetadata;
 
-    /**
-     * @throws InvalidBlueprintException when the blueprint has no valid name.
-     */
-    public function identity(): BlueprintIdentity;
+    public function has(string $key): bool;
 
-    public function composition(): BlueprintComposition;
+    public function definition(string $key): ?BlueprintDefinition;
 
     /**
-     * The part of a single-cardinality role, or null when absent.
+     * The definition of the given class, typed for extension packages.
      *
-     * @throws BlueprintCompositionException when the role allows several parts.
-     * @throws DuplicateBlueprintPartException when several parts claim a single role.
-     */
-    public function part(string $role): ?BlueprintPart;
-
-    /**
-     * Like part(), but a missing part throws.
+     * @template T of BlueprintDefinition
      *
-     * @throws MissingBlueprintPartException
-     * @throws BlueprintCompositionException when the role allows several parts.
-     * @throws DuplicateBlueprintPartException when several parts claim a single role.
+     * @param  class-string<T>  $class
+     * @return T|null
      */
-    public function requirePart(string $role): BlueprintPart;
+    public function find(string $class): ?BlueprintDefinition;
 
     /**
-     * All parts, or the parts of one role, in document order.
+     * The normalized value of a definition, or null when it is absent.
      */
-    public function parts(?string $role = null): BlueprintPartCollection;
-
-    public function hasPart(string $role): bool;
+    public function get(string $key): mixed;
 
     /**
-     * @return list<string>
+     * @return list<string> Definition keys in declaration order.
      */
-    public function roles(): array;
+    public function keys(): array;
+
+    /**
+     * @return list<BlueprintDefinition> In declaration order.
+     */
+    public function definitions(): array;
+
+    /**
+     * Every class reference, by definition key, in declaration order.
+     *
+     * @return array<string, list<class-string>>
+     */
+    public function references(): array;
+
+    /**
+     * @return array{name: string, title: string, slug: string, definitions: array<string, mixed>}
+     */
+    public function toArray(): array;
 }

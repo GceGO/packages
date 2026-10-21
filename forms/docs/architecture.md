@@ -17,7 +17,7 @@ FormSchema ─ FieldEntry per state path ("name", "objectives.*.title")
 
 | Package | Used for |
 | --- | --- |
-| gcego/morfaw | `Form`, fields and layouts are `Component`s; configuration is `Property` plus configuration nodes |
+| gcego/components | `Form`, fields and layouts are `Component`s; configuration is `Property` plus configuration nodes |
 | gcego/runtime | `FieldRenderer`, `LayoutRenderer` and `FormRenderer` are registered renderers (Blade) |
 | gcego/chroma | slots for every field and layout; presets in `Presets\FormPresets` |
 | gcego/data | relationship options through `DataManager::query()`, as the current user |

@@ -4,257 +4,400 @@ declare(strict_types=1);
 
 namespace Gcego\Blueprints;
 
-use Gcego\Blueprints\Composition\BlueprintComposer;
-use Gcego\Blueprints\Composition\BlueprintComposition;
-use Gcego\Blueprints\Composition\BlueprintPartCollection;
-use Gcego\Blueprints\Composition\CompositionPolicy;
+use Gcego\Blueprints\Contracts\BlueprintDefinition;
+use Gcego\Blueprints\Contracts\BlueprintDeriver;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
-use Gcego\Blueprints\Contracts\BlueprintPart;
-use Gcego\Blueprints\Exceptions\BlueprintCompositionException;
-use Gcego\Blueprints\Exceptions\DuplicateBlueprintPartException;
+use Gcego\Blueprints\Contracts\ReferencesClasses;
+use Gcego\Blueprints\Definitions\Actions;
+use Gcego\Blueprints\Definitions\BulkActions;
+use Gcego\Blueprints\Definitions\DefinitionCatalog;
+use Gcego\Blueprints\Definitions\Derive;
+use Gcego\Blueprints\Definitions\Description;
+use Gcego\Blueprints\Definitions\Form;
+use Gcego\Blueprints\Definitions\Icon;
+use Gcego\Blueprints\Definitions\Infolist;
+use Gcego\Blueprints\Definitions\Model;
+use Gcego\Blueprints\Definitions\Name;
+use Gcego\Blueprints\Definitions\Pages;
+use Gcego\Blueprints\Definitions\Policy;
+use Gcego\Blueprints\Definitions\ReferenceCollectionDefinition;
+use Gcego\Blueprints\Definitions\Relations;
+use Gcego\Blueprints\Definitions\Table;
+use Gcego\Blueprints\Definitions\Title;
+use Gcego\Blueprints\Definitions\Widgets;
 use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
-use Gcego\Blueprints\Exceptions\MissingBlueprintPartException;
 use Gcego\Blueprints\Metadata\BlueprintMetadata;
 use Gcego\Blueprints\Support\BlueprintIdentity;
 use Gcego\Blueprints\Support\Naming;
-use Gcego\Components\Collections\ComponentCollection;
-use Gcego\Components\Component;
-use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Schema\ComponentDefinition;
-use Gcego\Components\Schema\PropertyDefinition;
-use Gcego\Components\Schema\Type;
+use Gcego\Blueprints\Validation\BlueprintErrorCode;
+use Gcego\Blueprints\Validation\BlueprintValidationError;
+use Gcego\Blueprints\Validation\BlueprintValidationResult;
+use Gcego\Registry\Contracts\DerivesDefinitions;
+use LogicException;
 
 /**
- * A composed feature definition: metadata plus role-classified parts.
+ * An immutable, validated feature definition:
  *
- *     new Blueprint('subjects', new SubjectsTable, new SubjectsForm);
- *
- *     new Blueprint(
- *         new Property(Blueprint::Name, 'subjects'),
- *         new Property(Blueprint::Title, 'Subject Management'),
- *         new SubjectsTable,
+ *     Blueprint::define(
+ *         Name::make('subjects'),
+ *         Title::make('Subject Management'),
+ *         Model::make(Subject::class),
+ *         Table::make(SubjectsTable::class),
+ *         Pages::make([ListSubjects::class, CreateSubject::class]),
  *     );
  *
- * Blueprint is a gcego/morfaw Component: construction, properties,
- * copying, traversal, validation and normalization are the component
- * engine's. Blueprint adds the schema (metadata properties, BlueprintPart
- * children), role classification and part lookup.
- *
- * Constructor shorthand: one leading string is the name. Nothing else is
- * positional, so a string never means a title, slug or model.
+ * A blueprint stores references to feature classes; it never loads or runs
+ * them. Engines (tables, forms, pages, ...) read the references through the
+ * typed accessors and build their own objects.
  */
-class Blueprint extends Component implements BlueprintInterface
+final readonly class Blueprint implements BlueprintInterface, DerivesDefinitions
 {
-    public const string Title = 'title';
-
-    public const string Icon = 'icon';
-
-    public const string Slug = 'slug';
+    public const string Type = 'blueprint';
 
     /**
-     * @var array<class-string, CompositionPolicy>
+     * @param  array<string, BlueprintDefinition>  $definitions  Keyed by definition key, in declaration order.
      */
-    private static array $policies = [];
+    private function __construct(
+        private array $definitions,
+    ) {}
 
     /**
-     * The children and name the cached composition was computed for.
-     * Component's final __clone() cannot reset subclass caches, so the cache
-     * is keyed on the (immutable) children collection and the name instead.
-     */
-    private ?ComponentCollection $composedChildren = null;
-
-    private ?string $composedName = null;
-
-    private ?BlueprintComposition $composition = null;
-
-    protected static function defineSchema(): ComponentDefinition
-    {
-        return parent::defineSchema()
-            ->withType(static::class === self::class ? 'blueprint' : static::class)
-            ->withoutProperties(self::Label, self::Id)
-            ->withProperties(
-                new PropertyDefinition(
-                    self::Name,
-                    Type::string(),
-                    required: true,
-                    rule: Naming::isName(...),
-                    ruleDescription: 'a lowercase name such as "subjects" or "academic-subjects" (letters, digits, "-" and "_"; at most 100 characters)',
-                    description: 'Logical identity; registries key blueprints by it.',
-                ),
-                new PropertyDefinition(
-                    self::Title,
-                    Type::string(),
-                    rule: Naming::isTitle(...),
-                    ruleDescription: 'a non-empty title of at most 200 characters',
-                    description: 'Display title; derived from the name when omitted.',
-                ),
-                new PropertyDefinition(self::Description, Type::string()),
-                new PropertyDefinition(
-                    self::Icon,
-                    Type::string(),
-                    rule: Naming::isIcon(...),
-                    ruleDescription: 'an icon identifier such as "actions.edit", "lucide:book-open" or "academic-cap"',
-                ),
-                new PropertyDefinition(
-                    self::Slug,
-                    Type::string(),
-                    rule: Naming::isSlug(...),
-                    ruleDescription: 'a lowercase slug such as "subject-management"',
-                    description: 'URL-safe identifier; derived from the name when omitted.',
-                ),
-            )
-            ->withAllowedChildren([BlueprintPart::class])
-            ->withConstraint(static fn (ComponentInterface $component): array => $component instanceof BlueprintInterface
-                ? $component->composition()->messages()
-                : []);
-    }
-
-    protected static function shorthand(): array
-    {
-        return [self::Name];
-    }
-
-    /**
-     * The composition rules of this class, built once.
-     */
-    final public static function compositionPolicy(): CompositionPolicy
-    {
-        return self::$policies[static::class] ??= static::definePolicy();
-    }
-
-    /**
-     * Override to require or restrict roles. The base policy imposes nothing.
-     */
-    protected static function definePolicy(): CompositionPolicy
-    {
-        return new CompositionPolicy;
-    }
-
-    final public function metadata(): BlueprintMetadata
-    {
-        return BlueprintMetadata::of($this);
-    }
-
-    final public function title(): ?string
-    {
-        return $this->metadata()->title;
-    }
-
-    final public function slug(): ?string
-    {
-        return $this->metadata()->slug;
-    }
-
-    final public function identity(): BlueprintIdentity
-    {
-        $metadata = $this->metadata();
-
-        if ($metadata->name === null || ! Naming::isName($metadata->name) || $metadata->slug === null) {
-            throw InvalidBlueprintException::unnamed(static::class);
-        }
-
-        return new BlueprintIdentity($metadata->name, $metadata->slug, static::class, $this->type());
-    }
-
-    final public function composition(): BlueprintComposition
-    {
-        if ($this->composition === null || $this->composedChildren !== $this->children() || $this->composedName !== $this->name()) {
-            $this->composition = (new BlueprintComposer)->compose($this);
-            $this->composedChildren = $this->children();
-            $this->composedName = $this->name();
-        }
-
-        return $this->composition;
-    }
-
-    final public function part(string $role): ?BlueprintPart
-    {
-        $composition = $this->composition();
-        $parts = $composition->ofRole($role);
-
-        if ($parts->isEmpty()) {
-            return null;
-        }
-
-        if ($composition->role($role)?->multiple === true) {
-            throw BlueprintCompositionException::multipleRole($this->displayName(), $role);
-        }
-
-        if ($parts->count() > 1) {
-            throw DuplicateBlueprintPartException::forRole($this->displayName(), $role, $parts->paths());
-        }
-
-        return $parts->first();
-    }
-
-    final public function requirePart(string $role): BlueprintPart
-    {
-        return $this->part($role) ?? throw MissingBlueprintPartException::forRole($this->displayName(), $role);
-    }
-
-    final public function parts(?string $role = null): BlueprintPartCollection
-    {
-        return $role === null ? $this->composition()->parts() : $this->composition()->ofRole($role);
-    }
-
-    final public function hasPart(string $role): bool
-    {
-        return $this->composition()->has($role);
-    }
-
-    final public function roles(): array
-    {
-        return $this->composition()->roles();
-    }
-
-    /**
-     * Copy with a part added.
+     * Compile definitions into a blueprint.
      *
-     * For a single-cardinality role the new part replaces the existing direct
-     * part(s) of that role, keeping the first one's position; otherwise it is
-     * appended. Other parts keep their order.
+     * Every definition must be of a type in the DefinitionCatalog, each key
+     * may appear once, and the required definitions (Name) must be present.
+     * All problems are reported together.
+     *
+     * @throws InvalidBlueprintException
      */
-    final public function withPart(BlueprintPart $part): static
+    public static function define(BlueprintDefinition ...$definitions): self
     {
-        $role = $part->blueprintRole();
-        $single = ! $role->multiple || static::compositionPolicy()->forcesSingle($role->name);
+        return self::compile(array_values($definitions));
+    }
 
-        if (! $single) {
-            return $this->withAppendedChildren($part);
+    /**
+     * Copy with definitions added; a definition replaces the existing one with
+     * the same key in place (explicit replacement, unlike define()).
+     *
+     * @throws InvalidBlueprintException
+     */
+    public function with(BlueprintDefinition ...$definitions): self
+    {
+        $merged = $this->definitions;
+        $added = [];
+
+        foreach (array_values($definitions) as $definition) {
+            if (array_key_exists($definition->key(), $merged) && ! isset($added[$definition->key()])) {
+                $merged[$definition->key()] = $definition;
+                $added[$definition->key()] = true;
+
+                continue;
+            }
+
+            $merged[] = $definition;
         }
 
-        $children = [];
-        $replaced = false;
+        return self::compile(array_values($merged));
+    }
 
-        foreach ($this->children() as $child) {
-            if (! $child instanceof BlueprintPart || $child->blueprintRole()->name !== $role->name) {
-                $children[] = $child;
-            } elseif (! $replaced) {
-                $children[] = $part;
-                $replaced = true;
+    /**
+     * Copy without the given definition keys.
+     *
+     * @throws InvalidBlueprintException when a required definition is removed.
+     */
+    public function without(string ...$keys): self
+    {
+        return self::compile(array_values(array_diff_key($this->definitions, array_flip($keys))));
+    }
+
+    public function name(): string
+    {
+        $name = $this->definitions[Name::Key] ?? null;
+
+        // define() guarantees a Name; the check only narrows the type.
+        return $name instanceof Name ? $name->value() : throw new LogicException('A blueprint always has a name.');
+    }
+
+    public function title(): string
+    {
+        return $this->text(Title::Key) ?? Naming::humanize($this->name());
+    }
+
+    public function description(): ?string
+    {
+        return $this->text(Description::Key);
+    }
+
+    public function icon(): ?string
+    {
+        return $this->text(Icon::Key);
+    }
+
+    public function slug(): string
+    {
+        return Naming::slugify($this->name());
+    }
+
+    public function model(): ?string
+    {
+        return $this->reference(Model::Key);
+    }
+
+    public function policy(): ?string
+    {
+        return $this->reference(Policy::Key);
+    }
+
+    public function table(): ?string
+    {
+        return $this->reference(Table::Key);
+    }
+
+    public function form(): ?string
+    {
+        return $this->reference(Form::Key);
+    }
+
+    public function infolist(): ?string
+    {
+        return $this->reference(Infolist::Key);
+    }
+
+    public function pages(): array
+    {
+        return $this->references()[Pages::Key] ?? [];
+    }
+
+    public function actions(): array
+    {
+        return $this->references()[Actions::Key] ?? [];
+    }
+
+    public function bulkActions(): array
+    {
+        return $this->references()[BulkActions::Key] ?? [];
+    }
+
+    public function relations(): array
+    {
+        return $this->references()[Relations::Key] ?? [];
+    }
+
+    public function widgets(): array
+    {
+        return $this->references()[Widgets::Key] ?? [];
+    }
+
+    /**
+     * The BlueprintDeriver classes requested with Derive::make([...]).
+     *
+     * @return list<class-string>
+     */
+    public function derivers(): array
+    {
+        return $this->references()[Derive::Key] ?? [];
+    }
+
+    public function identity(): BlueprintIdentity
+    {
+        return new BlueprintIdentity($this->name(), $this->slug(), self::class, self::Type);
+    }
+
+    public function metadata(): BlueprintMetadata
+    {
+        return new BlueprintMetadata(
+            $this->name(),
+            $this->title(),
+            $this->slug(),
+            $this->description(),
+            ! isset($this->definitions[Title::Key]),
+            $this->icon(),
+        );
+    }
+
+    public function has(string $key): bool
+    {
+        return isset($this->definitions[$key]);
+    }
+
+    public function definition(string $key): ?BlueprintDefinition
+    {
+        return $this->definitions[$key] ?? null;
+    }
+
+    public function find(string $class): ?BlueprintDefinition
+    {
+        foreach ($this->definitions as $definition) {
+            if ($definition instanceof $class) {
+                return $definition;
             }
         }
 
-        if (! $replaced) {
-            $children[] = $part;
+        return null;
+    }
+
+    public function get(string $key): mixed
+    {
+        return ($this->definitions[$key] ?? null)?->value();
+    }
+
+    public function keys(): array
+    {
+        return array_keys($this->definitions);
+    }
+
+    public function definitions(): array
+    {
+        return array_values($this->definitions);
+    }
+
+    public function references(): array
+    {
+        $references = [];
+
+        foreach ($this->definitions as $key => $definition) {
+            // Options definitions may reference no class at all; they then have no entry.
+            if ($definition instanceof ReferencesClasses && $definition->classes() !== []) {
+                $references[$key] = $definition->classes();
+            }
         }
 
-        return $this->withChildren(...$children);
+        return $references;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name(),
+            'title' => $this->title(),
+            'slug' => $this->slug(),
+            'definitions' => array_map(static fn (BlueprintDefinition $definition): mixed => $definition->value(), $this->definitions),
+        ];
     }
 
     /**
-     * Copy without the direct parts of the given role(s).
+     * The definitions of the requested derivers (gcego/registry's
+     * DerivesDefinitions); nothing unless Derive::make([...]) was declared.
+     *
+     * @return iterable<object>
+     *
+     * @throws LogicException for a deriver that is not a BlueprintDeriver, or one that derives a blueprint.
      */
-    final public function withoutRole(string ...$roles): static
+    public function derivedDefinitions(): iterable
     {
-        return $this->withChildren(...array_filter(
-            $this->children()->all(),
-            static fn (ComponentInterface $child): bool => ! $child instanceof BlueprintPart || ! in_array($child->blueprintRole()->name, $roles, true),
-        ));
+        foreach ($this->derivers() as $class) {
+            $deriver = is_a($class, BlueprintDeriver::class, true)
+                ? new $class
+                : throw new LogicException(sprintf('Blueprint "%s" derives with %s, which does not implement %s.', $this->name(), $class, BlueprintDeriver::class));
+
+            foreach ($deriver->derive($this) as $derived) {
+                if ($derived instanceof BlueprintInterface) {
+                    throw new LogicException(sprintf('Deriver %s of blueprint "%s" returned a blueprint; derived definitions must be of other kinds.', $class, $this->name()));
+                }
+
+                yield $derived;
+            }
+        }
     }
 
-    private function displayName(): string
+    /**
+     * @param  list<BlueprintDefinition>  $definitions
+     *
+     * @throws InvalidBlueprintException
+     */
+    private static function compile(array $definitions): self
     {
-        return $this->name() ?? static::class;
+        DefinitionCatalog::markInUse();
+        $label = self::label($definitions);
+        $compiled = [];
+        $positions = [];
+        $errors = [];
+
+        foreach ($definitions as $position => $definition) {
+            $key = $definition->key();
+            $type = DefinitionCatalog::find($key);
+
+            if ($type === null || $key !== $definition::definitionKey() || ! $definition instanceof $type->class) {
+                $errors[] = BlueprintValidationError::of(
+                    BlueprintErrorCode::UnsupportedDefinition,
+                    sprintf('Argument %d (%s) declares the unsupported definition key "%s".', $position + 1, $definition::class, $key),
+                    $label,
+                    $key,
+                    expected: $type === null ? 'one of: '.implode(', ', array_keys(DefinitionCatalog::all())) : $type->class,
+                    received: $definition::class,
+                    hint: $type === null ? 'Register extension definitions with DefinitionCatalog::register() before defining blueprints.' : null,
+                );
+
+                continue;
+            }
+
+            if (isset($compiled[$key])) {
+                $errors[] = BlueprintValidationError::of(
+                    BlueprintErrorCode::DuplicateDefinition,
+                    sprintf('The "%s" definition is declared twice (arguments %d and %d); each definition may appear once.', $key, $positions[$key] + 1, $position + 1),
+                    $label,
+                    $key,
+                    hint: self::isCollection($definition) || self::isCollection($compiled[$key])
+                        ? 'Merge the lists into one ::make([...]) call.'
+                        : 'Remove one of them, or use $blueprint->with() to replace a definition explicitly.',
+                );
+
+                continue;
+            }
+
+            $compiled[$key] = $definition;
+            $positions[$key] = $position;
+        }
+
+        foreach (DefinitionCatalog::required() as $type) {
+            if (! isset($compiled[$type->key])) {
+                $errors[] = BlueprintValidationError::of(
+                    BlueprintErrorCode::MissingRequiredDefinition,
+                    sprintf('The required "%s" definition is missing.', $type->key),
+                    $label,
+                    $type->key,
+                    expected: $type->class,
+                    hint: $type->class === Name::class ? "Add Name::make('subjects')." : null,
+                );
+            }
+        }
+
+        (new BlueprintValidationResult($label, ...$errors))->throwIfInvalid();
+
+        return new self($compiled);
+    }
+
+    /**
+     * @param  list<BlueprintDefinition>  $definitions
+     */
+    private static function label(array $definitions): string
+    {
+        foreach ($definitions as $definition) {
+            if ($definition instanceof Name) {
+                return $definition->value();
+            }
+        }
+
+        return '(unnamed)';
+    }
+
+    private static function isCollection(BlueprintDefinition $definition): bool
+    {
+        return $definition instanceof ReferenceCollectionDefinition;
+    }
+
+    private function text(string $key): ?string
+    {
+        $value = ($this->definitions[$key] ?? null)?->value();
+
+        return is_string($value) ? $value : null;
+    }
+
+    /**
+     * @return class-string|null
+     */
+    private function reference(string $key): ?string
+    {
+        return $this->references()[$key][0] ?? null;
     }
 }

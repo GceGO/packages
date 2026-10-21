@@ -87,4 +87,16 @@ class ExtensionException extends LogicException implements GcegoException
     {
         return new self('Circular GCEGO extension dependency: '.implode(' -> ', $cycle).'.', diagnosticCode: 'extensions.dependencies.circular');
     }
+
+    /**
+     * @param  list<string>  $providers  Package and extension identifiers.
+     */
+    public static function exclusiveCapability(string $capability, array $providers): self
+    {
+        return new self(sprintf(
+            'Capability "%s" is exclusive but is provided by %s. Disable all but one provider in gcego.packages.disabled or gcego.extensions.disabled.',
+            $capability,
+            implode(', ', $providers),
+        ), diagnosticCode: 'extensions.capabilities.exclusive');
+    }
 }

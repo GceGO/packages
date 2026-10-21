@@ -8,9 +8,9 @@ namespace Gcego\Blueprints\Support;
  * The stable identity of a blueprint definition.
  *
  *  - name:  the logical identifier ("subjects"); the key registries use;
- *  - slug:  the URL-safe form, explicit or derived from the name;
+ *  - slug:  the URL-safe form, derived from the name;
  *  - class: the concrete PHP class;
- *  - type:  the component schema type ("blueprint" or the subclass's type).
+ *  - type:  "blueprint".
  *
  * The title is presentation, not identity. Runtime instance identity (which
  * PHP object) is deliberately not part of it: equal declarations have equal identities.

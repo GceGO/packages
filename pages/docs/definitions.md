@@ -1,6 +1,6 @@
 # Definitions
 
-A page definition is an immutable gcego/morfaw tree. Build it with properties and children; nothing runs until the page is opened.
+A page definition is an immutable gcego/components tree. Build it with properties and children; nothing runs until the page is opened.
 
 ```php
 new ViewPage(

@@ -100,7 +100,7 @@ it('integrates with the GCEGO packages it builds on', function (): void {
 
     expect($descriptor->requires)->toContain('gcego/panels', 'gcego/security', 'gcego/actions', 'gcego/chroma')
         ->and($descriptor->capabilities)->toContain('notifications.toasts', 'notifications.broadcast')
-        ->and(array_intersect(['gcego/morfaw', 'gcego/core', 'gcego/blueprints', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/tables', 'gcego/infolists', 'gcego/widgets', 'gcego/layouts', 'gcego/navigation', 'gcego/pages', 'gcego/modules', 'gcego/panels', 'gcego/notifications'], $installed))->not->toBeEmpty()
+        ->and(array_intersect(['gcego/components', 'gcego/core', 'gcego/blueprints', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/tables', 'gcego/infolists', 'gcego/widgets', 'gcego/layouts', 'gcego/navigation', 'gcego/pages', 'gcego/modules', 'gcego/panels', 'gcego/notifications'], $installed))->not->toBeEmpty()
         ->and(Livewire::exists('gcego-toasts'))->toBeTrue()
         ->and(Livewire::exists('gcego-notification-center'))->toBeTrue()
         ->and(Livewire::exists('gcego-notification-inbox'))->toBeTrue()

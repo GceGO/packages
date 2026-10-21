@@ -52,8 +52,8 @@ failed checks; use `health()` when warnings must affect readiness decisions.
 | Identity and environment | `framework.identity`, `framework.build`, `composer.runtime`, `runtime.platform`, `application.environment`, `php.version`, `php.extensions`, `laravel.version` |
 | Lifecycle | `framework.registration`, `framework.boot`, `lifecycle.history`, `lifecycle.transitions`; accepted/rejected transitions, current state and bounded transition history |
 | Registration and discovery | `packages.discovery`, `packages.inventory`, `packages.status.<id>`, `packages.order`; registered versus discovered counts, versions, capabilities, status, attempts, resolved and actual order |
-| Package dependencies | `packages.dependencies`, `packages.dependencies.missing`, `.disabled`, `.circular`, `.unsupported_version`, `packages.ordering`, `packages.versions.<id>`, `packages.composer.<id>` |
-| Extensions | `extensions.inventory`, `extensions.status.<id>`, `extensions.order`, `extensions.dependencies`, `.missing`, `.disabled`, `.circular`, `.capabilities`; eligibility, skips, actual order, failed attempts and requirements |
+| Package dependencies | `packages.dependencies`, `packages.dependencies.missing`, `.disabled`, `.circular`, `.unsupported_version`, `packages.capabilities.exclusive`, `packages.ordering`, `packages.versions.<id>`, `packages.composer.<id>` |
+| Extensions | `extensions.inventory`, `extensions.status.<id>`, `extensions.order`, `extensions.dependencies`, `.missing`, `.disabled`, `.circular`, `.capabilities`, `extensions.capabilities.exclusive`; eligibility, skips, actual order, failed attempts and requirements |
 | Configuration | `configuration`, `configuration.required`, `.deprecated`, `.dynamic_classes`, `.packages`, `.extensions`, `.environment`, `laravel.configuration_cache` |
 | Laravel integration | `laravel.provider`, `laravel.bindings`, `laravel.lifecycle`, `laravel.deferred_providers`, `laravel.commands` |
 | Failure analysis | `startup.failure`, `startup.consistency`; safe root exception class, failure component, blocked package/extension dependants, partial startup |
@@ -62,8 +62,13 @@ failed checks; use `health()` when warnings must affect readiness decisions.
 | Operations | `security.production_debug`, `security.diagnostic_access`, `security.redaction`; production debug and unsafe Core environment combinations |
 | Rejected operations | `packages.registration.duplicate`, `.late`, `.mutation`, `extensions.registration.*`, `packages.descriptor.invalid`, `extensions.descriptor.invalid`, `packages.discovery.failed`, `packages.provider.deferred`, `framework.recursive_boot`, `packages.recursive_boot`, `extensions.recursive_boot`, `startup.observer_failed` |
 
-`packages.components` retains the optional `gcego/morfaw` availability check.
-Absence is a warning, never a Core runtime requirement.
+Core does not inspect other GCEGO packages. The `packages.components` check
+was removed in 1.1.0; packages that want an availability or health check
+contribute one through `DiagnosticRegistry`.
+
+When package dependencies are broken, `extensions.dependencies` is a warning
+pointing at `packages.dependencies`, because extensions cannot be planned
+without a package order.
 
 ## Collection and interpretation
 

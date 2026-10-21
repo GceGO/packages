@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 
 /**
  * The base of every navigation node (items, groups, dropdowns, headings,
- * dividers, external links): an immutable gcego/morfaw definition.
+ * dividers, external links): an immutable gcego/components definition.
  *
  * Visibility is decided per request from gcego/security requirements: the
  * node's own (Requirement nodes and the Permission property) and those of

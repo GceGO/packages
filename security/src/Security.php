@@ -21,7 +21,7 @@ use Gcego\Security\Requirements\VerifiedEmail;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Requirements in the gcego/morfaw Property syntax:
+ * Requirements in the gcego/components Property syntax:
  *
  *     new Security(
  *         new Property(Security::Permission, 'subjects.view'),

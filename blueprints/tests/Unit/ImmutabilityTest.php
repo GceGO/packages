@@ -3,86 +3,63 @@
 declare(strict_types=1);
 
 use Gcego\Blueprints\Blueprint;
-use Gcego\Blueprints\Tests\Fixtures\ExampleAction;
-use Gcego\Blueprints\Tests\Fixtures\ExampleForm;
-use Gcego\Blueprints\Tests\Fixtures\ExampleSource;
-use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
-use Gcego\Blueprints\Tests\Fixtures\FakeModel;
-use Gcego\Blueprints\Tests\Fixtures\ResourceBlueprint;
-use Gcego\Components\Properties\Property;
+use Gcego\Blueprints\Definitions\DefinitionCatalog;
+use Gcego\Blueprints\Definitions\Form;
+use Gcego\Blueprints\Definitions\Name;
+use Gcego\Blueprints\Definitions\Pages;
+use Gcego\Blueprints\Definitions\Table;
+use Gcego\Blueprints\Definitions\Title;
+use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
 
-it('replaces single-role parts in place and keeps everything else', function (): void {
-    $original = new Blueprint('subjects', new ExampleForm('form'), new ExampleTable('old'), new ExampleAction('create'));
-    $customized = $original->withPart(new ExampleTable('new'));
+it('declares blueprints and every built-in definition readonly', function (string $class): void {
+    expect((new ReflectionClass($class))->isReadOnly())->toBeTrue();
+})->with(array_merge([Blueprint::class], DefinitionCatalog::BuiltIn));
 
-    expect(array_map(fn ($part): ?string => $part->name(), $customized->parts()->all()))->toBe(['form', 'new', 'create'])
-        ->and(array_map(fn ($part): ?string => $part->name(), $original->parts()->all()))->toBe(['form', 'old', 'create'])
-        ->and($customized->title())->toBe('Subjects');
+it('replaces a definition in place and leaves the original untouched', function (): void {
+    $original = Blueprint::define(Name::make('subjects'), Table::make('App\\Tables\\SubjectsTable'), Title::make('Subjects'));
+
+    $copy = $original->with(Table::make('App\\Tables\\ArchivedSubjectsTable'));
+
+    expect($copy)->not->toBe($original)
+        ->and($copy->table())->toBe('App\\Tables\\ArchivedSubjectsTable')
+        ->and($copy->keys())->toBe(['name', 'table', 'title'])
+        ->and($original->table())->toBe('App\\Tables\\SubjectsTable');
 });
 
-it('collapses duplicate single-role parts when replacing', function (): void {
-    $customized = (new Blueprint('subjects', new ExampleTable('a'), new ExampleTable('b')))->withPart(new ExampleTable('c'));
+it('appends new definitions to a copy', function (): void {
+    $original = Blueprint::define(Name::make('subjects'));
 
-    expect($customized->parts('table')->count())->toBe(1)
-        ->and($customized->validate()->isValid())->toBeTrue();
+    $copy = $original->with(Form::make('App\\Forms\\SubjectForm'));
+
+    expect($copy->keys())->toBe(['name', 'form'])
+        ->and($original->keys())->toBe(['name']);
 });
 
-it('appends multiple-role parts and missing single roles', function (): void {
-    $customized = (new Blueprint('subjects', new ExampleAction('create')))
-        ->withPart(new ExampleAction('edit'))
-        ->withPart(new ExampleTable('table'));
+it('rejects a key passed twice to with()', function (): void {
+    Blueprint::define(Name::make('subjects'))->with(
+        Pages::make(['App\\Pages\\ListSubjects']),
+        Pages::make(['App\\Pages\\EditSubject']),
+    );
+})->throws(InvalidBlueprintException::class, 'The "pages" definition is declared twice');
 
-    expect($customized->parts()->paths())->toBe(['subjects.create', 'subjects.edit', 'subjects.table']);
+it('removes definitions from a copy', function (): void {
+    $original = Blueprint::define(Name::make('subjects'), Table::make('App\\Tables\\SubjectsTable'));
+
+    $copy = $original->without('table');
+
+    expect($copy->has('table'))->toBeFalse()
+        ->and($original->has('table'))->toBeTrue();
 });
 
-it('respects policy-forced single roles', function (): void {
-    $customized = (new ResourceBlueprint('subjects', new ExampleSource(FakeModel::class), new ExampleTable('table')))
-        ->withPart(new ExampleSource(FakeModel::class));
+it('refuses to remove the required name', function (): void {
+    Blueprint::define(Name::make('subjects'))->without('name');
+})->throws(InvalidBlueprintException::class, 'The required "name" definition is missing.');
 
-    expect($customized->parts('source')->count())->toBe(1);
-});
+it('cannot be modified through a returned collection', function (): void {
+    $blueprint = Blueprint::define(Name::make('subjects'), Pages::make(['App\\Pages\\ListSubjects']));
 
-it('removes roles', function (): void {
-    $customized = (new Blueprint('subjects', new ExampleTable('table'), new ExampleAction('a'), new ExampleAction('b')))->withoutRole('action');
+    $pages = $blueprint->pages();
+    $pages[] = 'App\\Pages\\Injected';
 
-    expect($customized->roles())->toBe(['table']);
-});
-
-it('preserves the concrete subtype', function (): void {
-    $blueprint = new ResourceBlueprint('subjects', new ExampleTable('table'));
-
-    expect($blueprint->withPart(new ExampleForm('form')))->toBeInstanceOf(ResourceBlueprint::class)
-        ->and($blueprint->withoutRole('form'))->toBeInstanceOf(ResourceBlueprint::class)
-        ->and($blueprint->withProperty(new Property(Blueprint::Title, 'Academic Subjects')))->toBeInstanceOf(ResourceBlueprint::class);
-});
-
-it('recomputes composition and messages for copies', function (): void {
-    $original = new Blueprint('subjects', new ExampleTable('a'));
-    $original->composition();
-
-    $duplicated = $original->withAppendedChildren(new ExampleTable('b'));
-    $renamed = $duplicated->withProperty(new Property(Blueprint::Name, 'courses'));
-
-    expect($original->composition()->hasIssues())->toBeFalse()
-        ->and($duplicated->composition()->hasIssues())->toBeTrue()
-        ->and($renamed->composition()->messages()[0])->toStartWith('Blueprint "courses"');
-});
-
-it('changes metadata through the component copy API', function (): void {
-    $original = new Blueprint('subjects');
-    $retitled = $original->withProperty(new Property(Blueprint::Title, 'Academic Subjects'));
-
-    expect($retitled->title())->toBe('Academic Subjects')
-        ->and($original->title())->toBe('Subjects')
-        ->and($retitled->metadata()->titleDerived)->toBeFalse();
-});
-
-it('allows reusing one part instance in several blueprints', function (): void {
-    $table = new ExampleTable('table');
-    $a = new Blueprint('subjects', $table);
-    $b = new Blueprint('courses', $table);
-
-    expect($a->part('table'))->toBe($b->part('table'))
-        ->and($a->parts()->paths())->toBe(['subjects.table'])
-        ->and($b->parts()->paths())->toBe(['courses.table']);
+    expect($blueprint->pages())->toBe(['App\\Pages\\ListSubjects']);
 });

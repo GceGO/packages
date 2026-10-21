@@ -1,4 +1,4 @@
-# gcego/morfaw
+# gcego/components
 
 The Laravel component foundation of **GCEGO Admin Studio**: a declarative,
 strongly validated, immutable PHP component model.
@@ -44,7 +44,7 @@ those same services. Rendering and styling belong to the packages built on top.
 
 ## Filament-style authoring
 
-If you know Filament v4, you already know morfaw. Every catalog component starts
+If you know Filament v4, you already know components. Every catalog component starts
 with `make()`, takes closures wherever it takes values, and shares Filament's
 layout and visibility vocabulary:
 
@@ -68,7 +68,7 @@ return Schema::make()->columns(['default' => 1, 'lg' => 2])->components([
 ]);
 ```
 
-| Filament v4 | morfaw | What morfaw adds |
+| Filament v4 | components | What components adds |
 | --- | --- | --- |
 | `TextInput::make('email')` | the same | Builders are immutable, so a shared definition can never be changed by mistake somewhere else. |
 | Closures with `$get`, `$set`, `$state`, `$record`, `$operation`, `$component`, typed injection | the same, through `$component->evaluateProperty('label', $context)` | A closure's result is checked against the property definition. A misspelled parameter fails with `Did you mean $record?`. |
@@ -92,7 +92,7 @@ protected static function setUp(ComponentBuilder $builder): ComponentBuilder
 ## The live engine
 
 `Components::live()` brings any schema to life over state. Every package
-built on morfaw (forms, tables, infolists, panels) gets the same reactive
+built on components (forms, tables, infolists, panels) gets the same reactive
 behavior from one place:
 
 ```php
@@ -177,7 +177,7 @@ rendering and browser/server behavior.
 ## Installation
 
 ```bash
-composer require gcego/morfaw
+composer require gcego/components
 ```
 
 Inside the GCEGO monorepo, add a path repository to the consuming `composer.json`:
@@ -188,7 +188,7 @@ Inside the GCEGO monorepo, add a path repository to the consuming `composer.json
         { "type": "path", "url": "packages/components" }
     ],
     "require": {
-        "gcego/morfaw": "*"
+        "gcego/components": "*"
     }
 }
 ```

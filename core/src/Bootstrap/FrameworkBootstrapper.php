@@ -12,11 +12,13 @@ use Gcego\Core\Events\FrameworkBooted;
 use Gcego\Core\Events\FrameworkBootFailed;
 use Gcego\Core\Events\FrameworkBooting;
 use Gcego\Core\Exceptions\BootstrapException;
+use Gcego\Core\Exceptions\ExtensionException;
 use Gcego\Core\Exceptions\InvalidLifecycleException;
 use Gcego\Core\Extensions\ExtensionManager;
 use Gcego\Core\Lifecycle\LifecycleManager;
 use Gcego\Core\Packages\PackageDiscovery;
 use Gcego\Core\Packages\PackageManager;
+use Gcego\Core\Support\ExclusiveCapabilities;
 use Illuminate\Contracts\Foundation\Application;
 use Throwable;
 
@@ -28,7 +30,8 @@ use Throwable;
  *  3. Optionally run the environment checks.
  *  4. Discover loaded service providers implementing PackageInterface and lock package registration.
  *  5. Validate dependencies and boot packages in dependency order.
- *  6. Activate extensions in dependency order.
+ *  6. Refuse exclusive capabilities with more than one provider, then
+ *     activate extensions in dependency order.
  *  7. Lock extension registration; lifecycle -> Booted.
  *
  * Any failure moves the lifecycle to Failed and throws BootstrapException.
@@ -91,7 +94,10 @@ final class FrameworkBootstrapper
             $context = new BootstrapContext($this->app, $config, $order, $this->capabilities($order));
 
             $this->telemetry->phase('packages', fn () => $this->packages->boot($order, $context));
-            $this->telemetry->phase('extensions', fn () => $this->extensions->activate($context, $config->disabledExtensions()));
+            $this->telemetry->phase('extensions', function () use ($context, $config): void {
+                $this->assertExclusiveCapabilities($context, $config->disabledExtensions());
+                $this->extensions->activate($context, $config->disabledExtensions());
+            });
 
             $this->extensions->lock();
             $this->lifecycle->completeBoot();
@@ -131,6 +137,27 @@ final class FrameworkBootstrapper
 
         if ($failures !== []) {
             throw BootstrapException::environment(array_map(static fn (DiagnosticResult $result): string => $result->message, $failures));
+        }
+    }
+
+    /**
+     * Package-only conflicts already failed dependency resolution, so any
+     * conflict found here involves an extension that has not activated yet.
+     *
+     * @param  list<string>  $disabledExtensions
+     *
+     * @throws ExtensionException
+     */
+    private function assertExclusiveCapabilities(BootstrapContext $context, array $disabledExtensions): void
+    {
+        $plan = $this->extensions->plan($disabledExtensions, $context->packages, $context->capabilities);
+        $providers = [
+            ...array_map($this->packages->descriptor(...), $context->packages),
+            ...array_map($this->extensions->descriptor(...), $plan['order']),
+        ];
+
+        foreach (ExclusiveCapabilities::conflicts($providers) as $capability => $ids) {
+            throw ExtensionException::exclusiveCapability($capability, $ids);
         }
     }
 

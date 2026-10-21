@@ -1,0 +1,6 @@
+{
+    "preset": "laravel",
+    "notPath": [
+        "tests/Fixtures/App/GCEGo/Modules/Academics/Subjects/Subjects.php"
+    ]
+}

@@ -12,7 +12,7 @@ it('verifies the eighteen foundation packages are installed, discovered, registe
 
     expect($statuses->where('required', true))->toHaveCount(18)
         ->and($statuses->where('required', true)->every(fn ($status) => $status->integrated()))->toBeTrue()
-        ->and($statuses['gcego/morfaw']->provider)->toBeNull()
+        ->and($statuses['gcego/components']->provider)->toBeNull()
         ->and($statuses['gcego/panels']->version)->toBe('0.1.0')
         ->and($statuses['gcego/notifications']->integrated())->toBeTrue()
         ->and($statuses['gcego/workflows']->installed)->toBeFalse()

@@ -50,6 +50,18 @@ class PackageDependencyException extends LogicException implements GcegoExceptio
     }
 
     /**
+     * @param  list<string>  $providers
+     */
+    public static function exclusiveCapability(string $capability, array $providers): self
+    {
+        return new self(sprintf(
+            'Capability "%s" is exclusive but is provided by %s. Disable all but one of these packages in gcego.packages.disabled.',
+            $capability,
+            implode(', ', $providers),
+        ), diagnosticCode: 'packages.capabilities.exclusive');
+    }
+
+    /**
      * @param  list<string>  $ids
      */
     private static function quote(array $ids): string

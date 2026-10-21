@@ -97,7 +97,7 @@ final class GcegoServiceProvider extends ServiceProvider implements PackageInter
         return new PackageDescriptor(
             Gcego::PackageName,
             capabilities: ['framework'],
-            description: 'GCEGO Admin Studio framework kernel.',
+            description: 'GCEGO Studio framework kernel.',
         );
     }
 

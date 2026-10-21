@@ -6,14 +6,14 @@ use Gcego\Blueprints\Blueprint;
 use Gcego\Blueprints\BlueprintCollection;
 use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Blueprints\Contracts\BlueprintResolver;
+use Gcego\Blueprints\Definitions\Name;
+use Gcego\Blueprints\Definitions\Table;
 use Gcego\Blueprints\Exceptions\DuplicateBlueprintException;
-use Gcego\Blueprints\Exceptions\InvalidBlueprintException;
 use Gcego\Blueprints\Exceptions\UnknownBlueprintException;
-use Gcego\Blueprints\Tests\Fixtures\ExampleTable;
 
 it('keys blueprints by name in order', function (): void {
-    $subjects = new Blueprint('subjects');
-    $courses = new Blueprint('courses');
+    $subjects = Blueprint::define(Name::make('subjects'));
+    $courses = Blueprint::define(Name::make('courses'));
     $collection = new BlueprintCollection($subjects, $courses);
 
     expect($collection->names())->toBe(['subjects', 'courses'])
@@ -28,26 +28,22 @@ it('keys blueprints by name in order', function (): void {
 });
 
 it('rejects different blueprints with the same name', function (): void {
-    new BlueprintCollection(new Blueprint('subjects'), new Blueprint('subjects', new ExampleTable('table')));
+    new BlueprintCollection(Blueprint::define(Name::make('subjects')), Blueprint::define(Name::make('subjects'), Table::make('App\\Tables\\SubjectsTable')));
 })->throws(DuplicateBlueprintException::class, 'A blueprint named "subjects"');
 
 it('ignores the same instance twice', function (): void {
-    $subjects = new Blueprint('subjects');
+    $subjects = Blueprint::define(Name::make('subjects'));
 
     expect((new BlueprintCollection($subjects, $subjects))->count())->toBe(1);
 });
 
-it('rejects unnamed blueprints', function (): void {
-    new BlueprintCollection(new Blueprint);
-})->throws(InvalidBlueprintException::class);
-
 it('reports unknown names with the known ones', function (): void {
-    (new BlueprintCollection(new Blueprint('subjects')))->resolve('courses');
+    (new BlueprintCollection(Blueprint::define(Name::make('subjects'))))->resolve('courses');
 })->throws(UnknownBlueprintException::class, 'No blueprint named "courses". Known blueprints: subjects.');
 
 it('returns modified copies', function (): void {
-    $original = new BlueprintCollection(new Blueprint('subjects'));
-    $added = $original->with(new Blueprint('courses'));
+    $original = new BlueprintCollection(Blueprint::define(Name::make('subjects')));
+    $added = $original->with(Blueprint::define(Name::make('courses')));
     $removed = $added->without('subjects');
     $filtered = $added->filter(fn (BlueprintInterface $blueprint): bool => $blueprint->name() === 'courses');
 
@@ -56,5 +52,5 @@ it('returns modified copies', function (): void {
         ->and($removed->names())->toBe(['courses'])
         ->and($filtered->names())->toBe(['courses'])
         ->and((new BlueprintCollection)->isEmpty())->toBeTrue()
-        ->and(fn () => $added->with(new Blueprint('courses')))->toThrow(DuplicateBlueprintException::class);
+        ->and(fn () => $added->with(Blueprint::define(Name::make('courses'))))->toThrow(DuplicateBlueprintException::class);
 });

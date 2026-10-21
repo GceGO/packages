@@ -8,7 +8,7 @@
 
 First release.
 
-- **Definitions:** `Notification` (a gcego/morfaw definition, with `success/error/warning/info()`, `make()`, `fromActionResult()`, `send()` and `sendTo()`), `NotificationBuilder`, `NotificationAction` (checked URLs), `NotificationType`, `NotificationPriority`, `NotificationCategory`/`NotificationCategories`, `NotificationPayload` and `DeliveryOptions`.
+- **Definitions:** `Notification` (a gcego/components definition, with `success/error/warning/info()`, `make()`, `fromActionResult()`, `send()` and `sendTo()`), `NotificationBuilder`, `NotificationAction` (checked URLs), `NotificationType`, `NotificationPriority`, `NotificationCategory`/`NotificationCategories`, `NotificationPayload` and `DeliveryOptions`.
 - **Dispatching:** `NotificationDispatcher`. It resolves channels, the tenant, the panel, recipient authorization (`RecipientAuthorizer`: tenant membership plus `Contracts\NotificationDeliveryPolicy`), preferences, expiry and idempotency. It sends queued, immediate or after-commit, and returns per-recipient, per-channel `DispatchResult`s (pending, queued, sent, failed, skipped with a reason).
 - **Laravel integration:** `DeliveredNotification`/`QueuedDeliveredNotification`, the database channel with indexed gcego columns, broadcasts on HMAC-named private channels (`NotificationChannels`, `NotificationChannelAuthorizer`), mail in the recipient's locale, retries, backoff, delays and re-checks when queued jobs run.
 - **Toasts:** a session-backed `ToastQueue`, the Livewire response hook and `ToastHost` (`<livewire:gcego-toasts />`). Live regions, pause on hover and focus, dismiss, actions, Echo subscription with duplicate prevention, and gcego/actions result toasts.

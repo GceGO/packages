@@ -68,9 +68,18 @@ it('reports duplicate capability providers as informational unless exclusivity i
     $manager->register(new PlainPackage(new PackageDescriptor('acme/a', capabilities: ['shared'], exclusiveCapabilities: $exclusive ? ['shared'] : [])));
     $manager->register(new PlainPackage(new PackageDescriptor('acme/b', capabilities: ['shared'])));
     $gcego = app(Gcego::class);
+
+    if ($exclusive) {
+        expect(fn () => $gcego->boot())->toThrow(BootstrapException::class, 'Capability "shared" is exclusive')
+            ->and($manager->booted())->toBe([])
+            ->and($gcego->diagnose()->result('packages.capabilities.exclusive')?->isFailure())->toBeTrue();
+
+        return;
+    }
+
     $gcego->boot();
     $row = $gcego->diagnose()->result('capabilities.providers.shared');
-    expect($row?->severity())->toBe($exclusive ? 'error' : 'info')
+    expect($row?->severity())->toBe('info')
         ->and($row?->details['count'])->toBe(2);
 })->with([false, true]);
 

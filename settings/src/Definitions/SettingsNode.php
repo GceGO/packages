@@ -12,7 +12,7 @@ use Gcego\Security\Contracts\Requirement;
 use Gcego\Settings\Support\NamedArguments;
 
 /**
- * The base of settings definitions: gcego/morfaw definitions that also
+ * The base of settings definitions: gcego/components definitions that also
  * accept named arguments (see NamedArguments). Immutable; constructing one
  * never queries, reads configuration or writes anything.
  */

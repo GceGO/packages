@@ -1,6 +1,6 @@
 # Architecture
 
-`gcego/morfaw` is the lowest layer of GCEGO Admin Studio. It describes
+`gcego/components` is the lowest layer of GCEGO Admin Studio. It describes
 *what* an interface consists of. It never renders, stores or authorizes anything.
 
 ## Design principles

@@ -2,7 +2,7 @@
 
 Declarative analytics for GCEGO Admin Studio: datasets, metrics, reports and dashboards declared in a few lines of PHP. Each one is validated, authorized and tenant-scoped, and aggregated in the database.
 
-Definitions are gcego/morfaw discovered by gcego/registry, so authors never write analytics controllers, chart endpoints, export downloads or scheduling jobs. Analytics owns the calculations and reuses the rest of GCEGO:
+Definitions are gcego/components discovered by gcego/registry, so authors never write analytics controllers, chart endpoints, export downloads or scheduling jobs. Analytics owns the calculations and reuses the rest of GCEGO:
 
 | Need | Provided by |
 | --- | --- |

@@ -157,7 +157,7 @@ and rebuild Laravel's package discovery cache after updating the package.
 
 ## Composer registration and distribution
 
-`composer.json` declares the `gcego/morfaw` library name, PSR-4 autoloading,
+`composer.json` declares the `gcego/components` library name, PSR-4 autoloading,
 runtime dependencies, and Laravel provider and facade discovery. Composer handles
 package installation; Laravel discovers the root service provider through
 `extra.laravel.providers`. No additional package registry or Composer plugin is
