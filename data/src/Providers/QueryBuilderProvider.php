@@ -14,15 +14,15 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Plain query builders: Source::table('report_rows') or a trusted
- * Source::builder(fn () => DB::table(...)->join(...)) factory, called per execution.
+ * Plain query builders: DatabaseTable::make('report_rows') or a trusted
+ * BuilderFactory::make(fn () => DB::table(...)->join(...)), called per execution.
  *
  * Rows are returned as associative arrays. There are no models, so no global
  * scopes, casts, $hidden or relationships: select only the columns you mean
- * to expose (Source::Columns or select() in the factory). Fields are used as
+ * to expose (Columns::make([...]) or select() in the factory). Fields are used as
  * written ("name" or "subjects.name"); the key defaults to "id".
  *
- * Table sources (Source::table()) are writable: inserts, updates and deletes
+ * Table sources (DatabaseTable) are writable: inserts, updates and deletes
  * by key, with no model events. Builder factories (joins) are read-only.
  */
 final class QueryBuilderProvider extends BuilderProvider
@@ -45,7 +45,7 @@ final class QueryBuilderProvider extends BuilderProvider
 
             return $query instanceof QueryBuilder
                 ? $query
-                : throw InvalidSourceException::invalid($source->name, sprintf('the builder factory must return %s%s.', QueryBuilder::class, $query instanceof EloquentBuilder ? '; for Eloquent builders use new Source(Model::class) with a Query node' : ''));
+                : throw InvalidSourceException::invalid($source->name, sprintf('the builder factory must return %s%s.', QueryBuilder::class, $query instanceof EloquentBuilder ? '; for Eloquent builders use Model::make(...) with Constraints::make([Query::make(...)])' : ''));
         }
 
         return $this->container->make(ConnectionResolverInterface::class)->connection($source->connection)->table((string) $source->table);

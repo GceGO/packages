@@ -8,13 +8,15 @@ use Closure;
 use Gcego\Data\Aggregation\AggregateResult;
 use Gcego\Data\Aggregation\Aggregation;
 use Gcego\Data\Caching\QueryCache;
-use Gcego\Data\Contracts\DataProvider;
-use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Compilation\SourceCompiler;
 use Gcego\Data\Compilation\SourceDefinition;
+use Gcego\Data\Contracts\DataProvider;
+use Gcego\Data\Contracts\QueryConstraint;
+use Gcego\Data\Contracts\SourceProvider;
 use Gcego\Data\Diagnostics\DataReport;
 use Gcego\Data\Diagnostics\QueryInspector;
 use Gcego\Data\Exceptions\InvalidQueryException;
+use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Exceptions\MissingTenantException;
 use Gcego\Data\Exceptions\MutationException;
 use Gcego\Data\Exceptions\RecordNotFoundException;
@@ -31,6 +33,7 @@ use Gcego\Data\Security\ScopeRegistry;
 use Gcego\Data\Transactions\TransactionManager;
 use Gcego\Data\Transactions\TransactionOptions;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
@@ -40,9 +43,11 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * The entry point of gcego/data (a container singleton, also the Data facade):
+ * the execution engine for Source definitions; definitions never execute themselves.
  * the one way every GCEGO package reads and writes application data.
  *
- *     $page = Data::query(new Source(Subject::class), $request);            // authorized listing
+ *     $page = Data::query(EmployeesSource::class, $request);                 // a SourceProvider
+ *     $page = Data::query(Source::define(Model::make(Subject::class)), $request);
  *     $subject = Data::findOrFail($source, $id);                          // scoped, authorized lookup
  *     $page = Data::query($source, ['search' => 'alg'], QueryContext::for($user)->constrain($scope));
  *
@@ -67,6 +72,7 @@ final readonly class DataManager
         private MutationPipeline $mutations,
         private TransactionManager $transactions,
         private QueryCache $cache,
+        private Container $container,
     ) {}
 
     /**
@@ -74,7 +80,7 @@ final readonly class DataManager
      *
      * @throws InvalidQueryException
      */
-    public function query(Source|SourceDefinition $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): DataResult
+    public function query(Source|SourceDefinition|SourceProvider|string $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): DataResult
     {
         return $this->pipeline->run($this->definition($source), self::input($input), $context ?? new QueryContext);
     }
@@ -87,7 +93,7 @@ final readonly class DataManager
      *
      * @param  QueryInput|Request|array<mixed>|null  $input  Filters and search only.
      */
-    public function aggregate(Source|SourceDefinition $source, Aggregation $aggregation, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): AggregateResult
+    public function aggregate(Source|SourceDefinition|SourceProvider|string $source, Aggregation $aggregation, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): AggregateResult
     {
         return $this->pipeline->aggregate($this->definition($source), self::input($input), $context ?? new QueryContext, $aggregation);
     }
@@ -99,7 +105,7 @@ final readonly class DataManager
      * @param  QueryInput|Request|array<mixed>|null  $input
      * @return EloquentBuilder<Model>|QueryBuilder
      */
-    public function scopedQuery(Source|SourceDefinition $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): EloquentBuilder|QueryBuilder
+    public function scopedQuery(Source|SourceDefinition|SourceProvider|string $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null): EloquentBuilder|QueryBuilder
     {
         return $this->pipeline->scoped($this->definition($source), self::input($input), $context ?? new QueryContext);
     }
@@ -107,7 +113,7 @@ final readonly class DataManager
     /**
      * @param  QueryInput|Request|array<mixed>|null  $input  Only "include" is used.
      */
-    public function find(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null, QueryInput|Request|array|null $input = null): RecordResult
+    public function find(Source|SourceDefinition|SourceProvider|string $source, string|int $key, ?QueryContext $context = null, QueryInput|Request|array|null $input = null): RecordResult
     {
         return $this->records->find($this->definition($source), $key, $context ?? new QueryContext, self::input($input));
     }
@@ -117,7 +123,7 @@ final readonly class DataManager
      *
      * @throws RecordNotFoundException
      */
-    public function findOrFail(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null, QueryInput|Request|array|null $input = null): mixed
+    public function findOrFail(Source|SourceDefinition|SourceProvider|string $source, string|int $key, ?QueryContext $context = null, QueryInput|Request|array|null $input = null): mixed
     {
         return $this->find($source, $key, $context, $input)->orFail();
     }
@@ -129,7 +135,7 @@ final readonly class DataManager
      *
      * @throws ValidationException|AuthorizationException|MutationException|MissingTenantException
      */
-    public function create(Source|SourceDefinition $source, Request|array $input, ?QueryContext $context = null): MutationResult
+    public function create(Source|SourceDefinition|SourceProvider|string $source, Request|array $input, ?QueryContext $context = null): MutationResult
     {
         return $this->mutations->create($this->definition($source), self::attributes($input), $context ?? new QueryContext);
     }
@@ -141,7 +147,7 @@ final readonly class DataManager
      *
      * @throws ValidationException|AuthorizationException|MutationException|RecordNotFoundException
      */
-    public function update(Source|SourceDefinition $source, string|int $key, Request|array $input, ?QueryContext $context = null): MutationResult
+    public function update(Source|SourceDefinition|SourceProvider|string $source, string|int $key, Request|array $input, ?QueryContext $context = null): MutationResult
     {
         return $this->mutations->update($this->definition($source), $key, self::attributes($input), $context ?? new QueryContext);
     }
@@ -151,7 +157,7 @@ final readonly class DataManager
      *
      * @throws AuthorizationException|MutationException|RecordNotFoundException
      */
-    public function delete(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null, bool $force = false): MutationResult
+    public function delete(Source|SourceDefinition|SourceProvider|string $source, string|int $key, ?QueryContext $context = null, bool $force = false): MutationResult
     {
         return $this->mutations->delete($this->definition($source), $key, $context ?? new QueryContext, $force);
     }
@@ -159,7 +165,7 @@ final readonly class DataManager
     /**
      * @throws AuthorizationException|MutationException|RecordNotFoundException
      */
-    public function forceDelete(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null): MutationResult
+    public function forceDelete(Source|SourceDefinition|SourceProvider|string $source, string|int $key, ?QueryContext $context = null): MutationResult
     {
         return $this->delete($source, $key, $context, true);
     }
@@ -169,7 +175,7 @@ final readonly class DataManager
      *
      * @throws AuthorizationException|MutationException|RecordNotFoundException
      */
-    public function restore(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null): MutationResult
+    public function restore(Source|SourceDefinition|SourceProvider|string $source, string|int $key, ?QueryContext $context = null): MutationResult
     {
         return $this->mutations->restore($this->definition($source), $key, $context ?? new QueryContext);
     }
@@ -180,7 +186,7 @@ final readonly class DataManager
      * @param  list<Request|array<array-key, mixed>>  $inputs
      * @return list<MutationResult>
      */
-    public function createMany(Source|SourceDefinition $source, array $inputs, ?QueryContext $context = null): array
+    public function createMany(Source|SourceDefinition|SourceProvider|string $source, array $inputs, ?QueryContext $context = null): array
     {
         $definition = $this->definition($source);
 
@@ -194,7 +200,7 @@ final readonly class DataManager
      * @param  Request|array<array-key, mixed>  $input
      * @return list<MutationResult>
      */
-    public function updateMany(Source|SourceDefinition $source, array $keys, Request|array $input, ?QueryContext $context = null): array
+    public function updateMany(Source|SourceDefinition|SourceProvider|string $source, array $keys, Request|array $input, ?QueryContext $context = null): array
     {
         $definition = $this->definition($source);
 
@@ -207,7 +213,7 @@ final readonly class DataManager
      * @param  list<string|int>  $keys
      * @return list<MutationResult>
      */
-    public function deleteMany(Source|SourceDefinition $source, array $keys, ?QueryContext $context = null, bool $force = false): array
+    public function deleteMany(Source|SourceDefinition|SourceProvider|string $source, array $keys, ?QueryContext $context = null, bool $force = false): array
     {
         $definition = $this->definition($source);
 
@@ -228,18 +234,55 @@ final readonly class DataManager
     }
 
     /**
-     * Invalidate cached results that depend on a source, a model class or a "table:connection:name".
+     * Invalidate cached results that depend on a source (or SourceProvider), a model class or a "table:connection:name".
      */
-    public function invalidate(Source|SourceDefinition|string ...$targets): void
+    public function invalidate(Source|SourceDefinition|SourceProvider|string ...$targets): void
     {
         foreach ($targets as $target) {
-            is_string($target) ? $this->cache->invalidate($target) : $this->cache->invalidateSource($this->definition($target));
+            is_string($target) && ! is_subclass_of($target, SourceProvider::class)
+                ? $this->cache->invalidate($target)
+                : $this->cache->invalidateSource($this->definition($target));
         }
     }
 
-    public function definition(Source|SourceDefinition $source): SourceDefinition
+    /**
+     * The compiled definition of a Source, a SourceProvider, or a SourceProvider
+     * class name (resolved through the container).
+     *
+     * @param  Source|SourceDefinition|SourceProvider|string  $source  A SourceProvider class name is checked before it is resolved.
+     *
+     * @throws InvalidSourceException
+     */
+    public function definition(Source|SourceDefinition|SourceProvider|string $source): SourceDefinition
     {
-        return $source instanceof SourceDefinition ? $source : $this->compiler->compile($source);
+        return match (true) {
+            $source instanceof SourceDefinition => $source,
+            $source instanceof Source => $this->compiler->compile($source),
+            default => $this->compiler->compile($this->source($source)),
+        };
+    }
+
+    /**
+     * The Source a provider declares.
+     *
+     * @param  SourceProvider|string  $provider  A class name must implement SourceProvider.
+     *
+     * @throws InvalidSourceException
+     */
+    public function source(SourceProvider|string $provider): Source
+    {
+        if (is_string($provider)) {
+            // Checked before the container instantiates anything.
+            if (! is_subclass_of($provider, SourceProvider::class)) {
+                throw InvalidSourceException::invalidDefinition('Source provider', sprintf('"%s" does not implement %s.', mb_substr($provider, 0, 120), SourceProvider::class));
+            }
+
+            $provider = $this->container->make($provider);
+        }
+
+        return $provider instanceof SourceProvider
+            ? $provider->source()
+            : throw InvalidSourceException::invalidDefinition('Source provider', sprintf('%s does not implement %s.', get_debug_type($provider), SourceProvider::class));
     }
 
     /**
@@ -260,18 +303,18 @@ final readonly class DataManager
         $this->providers->register($name, $provider, $override);
     }
 
-    public function inspect(Source|SourceDefinition $source): DataReport
+    public function inspect(Source|SourceDefinition|SourceProvider|string $source): DataReport
     {
-        return $this->inspector->inspect($source);
+        return $this->inspector->inspect($source instanceof Source || $source instanceof SourceDefinition ? $source : $this->source($source));
     }
 
     /**
      * @param  QueryInput|Request|array<mixed>|null  $input
      * @return array{sql: string, bindings: int, values?: list<mixed>}
      */
-    public function explain(Source|SourceDefinition $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null, bool $includeBindings = false): array
+    public function explain(Source|SourceDefinition|SourceProvider|string $source, QueryInput|Request|array|null $input = null, ?QueryContext $context = null, bool $includeBindings = false): array
     {
-        return $this->inspector->explain($source, self::input($input), $context, $includeBindings);
+        return $this->inspector->explain($source instanceof Source || $source instanceof SourceDefinition ? $source : $this->source($source), self::input($input), $context, $includeBindings);
     }
 
     /**

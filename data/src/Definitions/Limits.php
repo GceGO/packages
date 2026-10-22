@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Performance;
+namespace Gcego\Data\Definitions;
 
 use Gcego\Data\Contracts\SourceConfiguration;
 use Gcego\Data\Exceptions\InvalidSourceException;
@@ -10,8 +10,8 @@ use Gcego\Data\Exceptions\InvalidSourceException;
 /**
  * Execution limits of one source, overriding gcego-data.performance:
  *
- *     new Limits(timeoutMs: 2000, maxOffset: 10000)
- *     new Limits(maxItems: 5000)              // collection sources
+ *     Limits::make(timeoutMs: 2000, maxOffset: 10000)
+ *     Limits::make(maxItems: 5000)              // collection sources
  *
  * - timeoutMs: statement timeout for reads (MySQL/MariaDB max_execution_time,
  *   PostgreSQL statement_timeout; other drivers ignore it). A timed-out query
@@ -25,16 +25,24 @@ final readonly class Limits implements SourceConfiguration
     /**
      * @throws InvalidSourceException
      */
-    public function __construct(
-        public ?int $timeoutMs = null,
-        public ?int $maxOffset = null,
-        public ?int $maxItems = null,
+    private function __construct(
+        public ?int $timeoutMs,
+        public ?int $maxOffset,
+        public ?int $maxItems,
     ) {
         foreach (['timeoutMs' => $timeoutMs, 'maxOffset' => $maxOffset, 'maxItems' => $maxItems] as $name => $value) {
             if ($value !== null && $value < 1) {
                 throw InvalidSourceException::invalidDefinition('Limits', sprintf('%s must be a positive integer.', $name));
             }
         }
+    }
+
+    /**
+     * @throws InvalidSourceException
+     */
+    public static function make(?int $timeoutMs = null, ?int $maxOffset = null, ?int $maxItems = null): self
+    {
+        return new self($timeoutMs, $maxOffset, $maxItems);
     }
 
     /**

@@ -16,12 +16,12 @@ final class MutationException extends LogicException implements DataException
 {
     public static function readOnly(string $source): self
     {
-        return new self(sprintf('Data source "%s" is read-only. Declare new Writable([...]) to allow writes.', $source));
+        return new self(sprintf('Data source "%s" is read-only. Declare Writable::make([...]) to allow writes.', $source));
     }
 
     public static function operationNotAllowed(string $source, string $operation): self
     {
-        return new self(sprintf('Data source "%s" does not allow %s. Add it to Writable operations.', $source, $operation));
+        return new self(sprintf('Data source "%s" does not allow %s. Add it to the Writable operations.', $source, $operation));
     }
 
     public static function unsupported(string $source, string $reason): self

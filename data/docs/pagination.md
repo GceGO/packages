@@ -3,19 +3,19 @@
 Sources are always paginated; there is no "load everything" mode.
 
 ```php
-new Paginate(25);               // page numbers with a total (COUNT + SELECT)
-Paginate::simple(50);           // page numbers, no COUNT: "has more" only
-Paginate::cursor(50);           // keyset pagination: no offsets, no COUNT
-new Paginate(25, max: 50);      // requests may ask for up to 50 per page
+Pagination::make(25);            // page numbers with a total (COUNT + SELECT)
+Pagination::simple(50);          // page numbers, no COUNT: "has more" only
+Pagination::cursor(50);          // keyset pagination: no offsets, no COUNT
+Pagination::make(25, max: 50);   // requests may ask for up to 50 per page
 ```
 
 | Parameter | Rule |
 | --- | --- |
-| `page` | positive integer. Pages past the end return no items (the total is still reported). |
-| `per_page` | positive integer, capped at the source's `max`, which defaults to `pagination.max_per_page` (100) and never exceeds it. |
-| `cursor` | for cursor sources only. A cursor that doesn't match the ordering returns 400. |
+| `page` | positive integer, at most the deepest offset (`performance.max_offset`, 100,000 rows, or `Limits::make(maxOffset: ...)`). Pages past the end return no items. |
+| `per_page` | positive integer, capped at the source's `max`, which never exceeds `pagination.max_per_page` (100). |
+| `cursor` | cursor sources only. A cursor that does not match the ordering returns 400. |
 
-Without a `Paginate` node, `pagination.default_per_page` (25) applies.
+Without `Pagination`, `pagination.default_per_page` (25) applies.
 
 ## Modes
 
@@ -25,24 +25,24 @@ Without a `Paginate` node, `pagination.default_per_page` (25) applies.
 | Simple | select (one extra row) | hasMorePages |
 | Cursor | select | nextCursor, previousCursor |
 
-- **Cursor ordering:** cursor pagination needs a deterministic order; the key
-  is always appended.
+- **Cursor ordering:** the key is always appended; sorting by a relation
+  aggregate alias is rejected for cursor sources.
 - **Provider support:** collection sources do not support cursors.
-- **Transforms:** cursors are computed before `Transform` runs, so transforms
-  may drop the ordering columns.
+- **Caching:** cursor pages are never cached.
+- **Transforms:** cursors are computed before `Transform` runs.
 
 ```php
-$page = $data->query($source, ['cursor' => $previous->pagination->nextCursor]);
+$next = Data::query($source, ['cursor' => $page->pagination->nextCursor]);
 ```
 
 ## Measured
 
-`benchmarks/run.php` was run with PHP 8.5, in-memory SQLite and 10,000
-subjects. Numbers vary by machine.
+`benchmarks/run.php`, PHP 8.5, in-memory SQLite, 10,000 rows (numbers vary
+by machine):
 
 | Case | Per call | Queries |
 | --- | --- | --- |
-| Page 1, page-number mode | 1.16 ms | 2 |
+| Page 1, page-number mode | 1.21 ms | 2 |
 | Page 1, simple | 0.69 ms | 1 |
 | Page 1, cursor | 0.74 ms | 1 |
-| Page about 390 of 400 | 1.76 ms | 2 |
+| Page about 390 of 400 | 1.82 ms | 2 |

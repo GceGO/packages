@@ -11,7 +11,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 
 /**
- * A trusted, mandatory constraint: developer-defined Query nodes, application
+ * A trusted, mandatory constraint: developer-defined Constraints (Query::make()), application
  * data scopes (for example tenancy) and request-scoped scopes from QueryContext.
  *
  * Constraints run before any request input is applied. Request filters and

@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Gcego\Data\Caching;
 
 use Closure;
-use Gcego\Data\DataConfig;
 use Gcego\Data\Compilation\SourceDefinition;
+use Gcego\Data\DataConfig;
+use Gcego\Data\Definitions\Cached;
 use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Tenancy\TenantGuard;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -175,7 +176,8 @@ final class QueryCache
         $scope = match ($cached->isolation) {
             CacheIsolation::User => ['user' => $this->user($context), 'tenant' => $this->tenant($source, $context)],
             CacheIsolation::Tenant => ['tenant' => $this->tenant($source, $context)],
-            CacheIsolation::Shared => [],
+            // Never shared across tenants: a tenant-scoped source is keyed by tenant whatever its isolation.
+            CacheIsolation::Shared => $this->tenants->column($source) === null ? [] : ['tenant' => $this->tenant($source, $context)],
         };
 
         $payload = (string) json_encode([

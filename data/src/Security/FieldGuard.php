@@ -12,6 +12,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -50,12 +51,34 @@ final readonly class FieldGuard
     /**
      * The record without the given fields. Models lose the attributes and hide
      * them (a model returned by gcego/data is never shared), so neither
-     * serialization nor a transform can reach them; arrays and objects are copied.
+     * serialization nor a transform can reach them; arrays and objects are
+     * copied. Dotted fields ("manager.salary") are removed from the loaded
+     * related records (every record of a to-many relation).
      *
      * @param  list<string>  $fields
      */
     public static function redact(mixed $record, array $fields): mixed
     {
+        if ($fields === []) {
+            return $record;
+        }
+
+        $nested = [];
+
+        foreach ($fields as $index => $field) {
+            if (str_contains($field, '.')) {
+                [$relation, $rest] = explode('.', $field, 2);
+                $nested[$relation][] = $rest;
+                unset($fields[$index]);
+            }
+        }
+
+        $fields = array_values($fields);
+
+        foreach ($nested as $relation => $inner) {
+            $record = self::redactRelation($record, $relation, $inner);
+        }
+
         if ($fields === []) {
             return $record;
         }
@@ -82,6 +105,36 @@ final readonly class FieldGuard
             }
 
             return $copy;
+        }
+
+        return $record;
+    }
+
+    /**
+     * @param  list<string>  $fields
+     */
+    private static function redactRelation(mixed $record, string $relation, array $fields): mixed
+    {
+        $redactAll = static function (mixed $related) use ($fields): mixed {
+            if ($related instanceof EloquentCollection) {
+                return $related->map(static fn (mixed $item): mixed => self::redact($item, $fields));
+            }
+
+            return is_array($related) && array_is_list($related)
+                ? array_map(static fn (mixed $item): mixed => self::redact($item, $fields), $related)
+                : self::redact($related, $fields);
+        };
+
+        if ($record instanceof Model) {
+            if ($record->relationLoaded($relation)) {
+                $record->setRelation($relation, $redactAll($record->getRelation($relation)));
+            }
+
+            return $record;
+        }
+
+        if (is_array($record) && array_key_exists($relation, $record)) {
+            $record[$relation] = $redactAll($record[$relation]);
         }
 
         return $record;

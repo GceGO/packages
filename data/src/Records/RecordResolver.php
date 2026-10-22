@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Gcego\Data\Records;
 
 use Gcego\Data\Caching\QueryCache;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\Contracts\ResolvesRecords;
-use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Exceptions\UnsupportedProviderException;
 use Gcego\Data\Performance\Profiler;
@@ -25,7 +25,7 @@ use Gcego\Data\Security\FieldGuard;
  * Resolves one record by key inside the source's permitted scope.
  *
  * The lookup starts from the same constrained query as listings (tenant
- * scope, global scopes, soft deletes, Query nodes, fixed filters, registered
+ * scope, global scopes, soft deletes, Constraints, registered
  * and context scopes), never from Model::find(). A record outside the scope
  * is "not found", exactly like a missing one. Malformed keys (a non-numeric
  * key for an integer primary key, an invalid UUID or ULID) are "not found"

@@ -8,35 +8,38 @@ use Closure;
 use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Contracts\RecordTransformer;
 use Gcego\Data\Contracts\SourceConfiguration;
-use Gcego\Data\Caching\Cached;
+use Gcego\Data\Definitions\BeforeSave;
+use Gcego\Data\Definitions\Cached;
+use Gcego\Data\Definitions\Limits;
+use Gcego\Data\Definitions\Pagination;
+use Gcego\Data\Definitions\Search;
+use Gcego\Data\Definitions\TenantScoped;
+use Gcego\Data\Definitions\Writable;
 use Gcego\Data\Filters\CustomFilter;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\Filterable;
-use Gcego\Data\Mutations\BeforeSave;
-use Gcego\Data\Mutations\Writable;
-use Gcego\Data\Pagination\Paginate;
-use Gcego\Data\Performance\Limits;
 use Gcego\Data\Relationships\RelationAggregate;
-use Gcego\Data\Search\Search;
 use Gcego\Data\Security\FieldAccess;
-use Gcego\Data\Sorting\Sort;
+use Gcego\Data\Sorting\SortDirection;
 use Gcego\Data\Source;
-use Gcego\Data\Tenancy\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * The compiled, immutable form of a Source: every property and configuration
- * node merged into one typed definition. Built once per Source by SourceCompiler.
+ * The compiled, immutable form of a Source: every definition validated and
+ * merged into one typed structure the providers execute. Built once per
+ * Source instance by SourceCompiler.
  */
 final readonly class SourceDefinition
 {
+    public Pagination $pagination;
+
     /**
      * @param  class-string<Model>|null  $model
      * @param  list<string>|null  $columns
-     * @param  list<QueryConstraint>  $constraints  Trusted Query nodes, in order.
+     * @param  list<QueryConstraint>  $constraints  Trusted Constraints queries, in order.
      * @param  list<Filter>  $filters  Fixed conditions.
      * @param  array<string, Filterable>  $filterables  Request filter allowlist by key.
-     * @param  list<Sort>  $sorts  Default ordering.
+     * @param  list<array{field: string, direction: SortDirection}>  $sorts  Default ordering.
      * @param  array<string, string>  $sortables  Request sort allowlist: key => column.
      * @param  array<string, Closure|null>  $with  Always eager loaded.
      * @param  array<string, Closure|null>  $includables  Request include allowlist.
@@ -64,7 +67,7 @@ final readonly class SourceDefinition
         public ?Search $search = null,
         public array $sorts = [],
         public array $sortables = [],
-        public Paginate $pagination = new Paginate,
+        ?Pagination $pagination = null,
         public array $with = [],
         public array $includables = [],
         public array $transforms = [],
@@ -77,7 +80,9 @@ final readonly class SourceDefinition
         public array $beforeSave = [],
         public ?Cached $cache = null,
         public ?Limits $limits = null,
-    ) {}
+    ) {
+        $this->pagination = $pagination ?? Pagination::make();
+    }
 
     /**
      * Always-computed relationship aggregates.
@@ -121,7 +126,7 @@ final readonly class SourceDefinition
             'filters' => array_map(static fn (Filter $filter): array => ['field' => $filter->field, 'operator' => $filter->operatorName()], $this->filters),
             'filterable' => array_map(static fn (Filterable $filterable): array => $filterable->normalize(), $this->filterables),
             'search' => $this->search?->normalize(),
-            'sort' => array_map(static fn (Sort $sort): array => $sort->normalize(), $this->sorts),
+            'sort' => array_map(static fn (array $sort): array => ['field' => $sort['field'], 'direction' => $sort['direction']->value], $this->sorts),
             'sortable' => $this->sortables,
             'pagination' => $this->pagination->normalize(),
             'with' => array_keys($this->with),

@@ -8,6 +8,7 @@ use Closure;
 use Gcego\Data\Contracts\FilterValueType;
 use Gcego\Data\Contracts\RelationOperator;
 use Gcego\Data\Exceptions\InvalidSourceException;
+use Gcego\Data\Support\Columns;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
@@ -34,7 +35,7 @@ final readonly class Has extends BuiltInOperator implements RelationOperator
 
     public function applyRelation(EloquentBuilder $query, string $relation, ?Closure $scope): void
     {
-        $query->whereHas($relation, $scope);
+        Columns::whereRelated($query, explode('.', $relation), $scope ?? static function (): void {}, exists: true);
     }
 
     public function apply(EloquentBuilder|QueryBuilder $query, string $column, mixed $value, FilterValueType $type): void

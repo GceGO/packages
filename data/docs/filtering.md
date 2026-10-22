@@ -1,128 +1,123 @@
 # Filtering
 
-## Fixed conditions (`Filter`): mandatory, trusted
+## Mandatory constraints: `Constraints`
 
 ```php
-new Filter('is_published', true);
-new Filter('level', 2, FilterOperator::GreaterThanOrEqual);
-new Filter('status', ['draft', 'review'], FilterOperator::In);
-new Filter('archived_at', operator: FilterOperator::Null);
-new Filter('topics.name', 'Algebra');          // Eloquent relation path (whereHas)
+Constraints::make([
+    Filter::make('is_active', true),
+    Filter::make('age', 18, GreaterThanOrEqual::make()),
+    Filter::make('status', ['draft', 'review'], In::make()),
+    Filter::make('archived_at', operator: IsNull::make()),
+    Filter::make('department.name', 'Finance'),             // Eloquent relation path (whereHas)
+    Filter::make('reports', operator: DoesntHave::make()),  // related records
+    Query::make(fn (Builder $query) => $query->whereNull('terminated_at')),
+]);
 ```
 
-`Equals null` means `IS NULL`, and `NotEquals null` means `IS NOT NULL`.
-Request input cannot remove a `Filter`.
+Constraints are trusted and always applied. `Equal` with `null` means
+`IS NULL`. The value type of a `Filter` is inferred from its value (pass a
+fourth argument, such as `Json::make()`, to choose it). Requests can never
+override or remove a constraint, and tenant isolation does not depend on
+them (see [tenancy](tenancy.md)).
 
-## Request filters (`Filterable`): allowlisted
+## Request filters: `Filterables`
 
 ```php
-new Filterable('status', options: ['draft', 'published']);                         // eq and in, strings
-new Filterable('level', [FilterOperator::Equals, FilterOperator::Between], ValueType::Integer);
-new Filterable('subject', type: ValueType::Integer, column: 'subject_id');         // key != column
-new Filterable('topic', column: 'topics.name');                                    // relation path
-new Filterable('published', FilterOperator::Equals, ValueType::Boolean, column: 'is_published');
+Filterables::make([
+    Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make(), LessThan::make()]),
+    Filterable::make('status', [Enum::make(EmployeeStatus::class), Equal::make(), In::make()]),
+    Filterable::make('name', [StringType::make(), Contains::make(), StartsWith::make()]),
+    Filterable::make('department', [StringType::make(), Column::make('department.name')]),
+    Filterable::make('team', [Integer::make(), In::make(), Column::make('team_id'), Options::make([1, 2, 3]), Label::make('Team')]),
+    Filterable::make('reports', [Has::make(), DoesntHave::make()]),
+    CustomFilter::make('overdue', fn (Builder $query, bool $overdue) => ..., [Boolean::make()]),
+]);
 ```
 
-The request names the **key**; the **column** comes only from the definition.
+Each configuration list holds:
+
+- **exactly one value type**; relation filters (`Has`, `DoesntHave`) take none;
+- **the permitted operators**; when none are listed, only `Equal` is allowed
+  (never every operator);
+- optionally `Options` (allowed values), `Label` and `Column` (the trusted
+  column when it differs from the key; dotted paths are Eloquent relations).
+
+Duplicate or unknown items, a second value type, and an operator that does
+not apply to the value type are rejected when the filter is defined. The
+request names the key; the column comes only from the definition.
 
 ```
-?filter[status]=published                 eq
-?filter[level][]=1&filter[level][]=3      in (a plain list)
-?filter[level][in]=1,3                    in (comma-separated)
-?filter[level][between]=2,3               between
-?filter[level][gte]=2&filter[level][lt]=4 several operators: AND
-?filter[code][null]=1                     null / not_null take no value (1, true or empty)
-?filter[status]=                          empty value: no filter (a form's "All")
+?filter[age][gte]=18&filter[age][lt]=65    several operators: AND
+?filter[status]=active                      eq
+?filter[status][]=active&filter[status][]=on_leave    in (a plain list)
+?filter[status][in]=active,on_leave         in (comma-separated)
+?filter[salary][between]=3000,5000          between
+?filter[manager][null]=1                    null / not_null take no value
+?filter[reports][has]=1                     relation existence
+?filter[status]=                            empty value: no filter (a form's "All")
 ```
 
-| Operator | Request name | Values |
+Unknown keys and operators return 400 in strict mode (the default); invalid
+values always return 400. Messages name the parameter, never the value.
+
+## Value types (`Gcego\Data\Filters\Types`)
+
+| Type | Accepts | Operators |
 | --- | --- | --- |
-| Equals, NotEquals | `eq`, `neq` | one |
-| GreaterThan(OrEqual), LessThan(OrEqual) | `gt`, `gte`, `lt`, `lte` | one |
-| In, NotIn | `in`, `not_in` | 1 to `filters.max_values` (100) |
-| Between | `between` | exactly two (inclusive) |
-| Null, NotNull | `null`, `not_null` | none |
-| Contains, NotContains, StartsWith, EndsWith | `contains`, `not_contains`, `starts_with`, `ends_with` | one (strings only) |
-| Has, DoesntHave | `has`, `doesnt_have` | none (Eloquent relation paths only) |
+| `StringType` | up to 255 characters, no control characters | equality, lists, null checks, text |
+| `Integer` | `-?\d{1,18}` | equality, lists, null checks, ranges |
+| `Decimal` | plain decimals (no exponent) | equality, lists, null checks, ranges |
+| `Boolean` | `true`, `false`, `1`, `0` | equality, lists, null checks |
+| `Date` | `YYYY-MM-DD` (a valid date) | equality, lists, null checks, ranges |
+| `DateTime` | `YYYY-MM-DD HH:MM[:SS]` or with `T`; normalized to `Y-m-d H:i:s` | equality, lists, null checks, ranges |
+| `Time` | `HH:MM[:SS]`; normalized to `H:i:s` | equality, lists, null checks, ranges |
+| `Enum::make(Status::class)` | the backed enum's values | equality, lists, null checks |
+| `Uuid` | UUIDs, normalized to lowercase | equality, lists, null checks |
+| `Json` | a scalar element of a JSON array column | `Contains`, null checks |
 
-## Text, enum and relation filters
+"Array" filtering is `Json` with `Contains` (`whereJsonContains`): a JSON
+array column contains the value. Implement `Contracts\FilterValueType` for
+your own types.
 
-```php
-Filterable::text('name');                              // contains, not_contains, starts_with, ends_with, eq, neq
-Filterable::enum('status', InvoiceStatus::class);      // only the enum's values: eq, neq, in, not_in
-Filterable::relation('topics');                        // ?filter[topics][has]=1, ?filter[topics][doesnt_have]=1
-new Filter('name', 'alg', FilterOperator::StartsWith); // fixed text condition
-new Filter('topics', operator: FilterOperator::DoesntHave);
-```
+## Operators (`Gcego\Data\Filters\Operators`)
 
-Text operators are case-insensitive (ILIKE on PostgreSQL; MySQL/MariaDB
-follow the column collation) and match `%` and `_` in the value literally.
-FilterOperator::comparisons() lists the value-comparison operators only.
+| Operator | Request | Values | Applies to |
+| --- | --- | --- | --- |
+| `Equal`, `NotEqual` | `eq`, `neq` | one | every type except `Json` |
+| `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual` | `gt`, `gte`, `lt`, `lte` | one | ordered types |
+| `Between` | `between` | exactly two (inclusive) | ordered types |
+| `In`, `NotIn` | `in`, `not_in` | 1 to `filters.max_values` (100) | every type except `Json` |
+| `Contains`, `NotContains`, `StartsWith`, `EndsWith` | `contains`, `not_contains`, `starts_with`, `ends_with` | one | text (`Contains` also `Json`) |
+| `IsNull`, `IsNotNull` | `null`, `not_null` | none | every type |
+| `Has`, `DoesntHave` | `has`, `doesnt_have` | none | relation paths (Eloquent) |
+
+Each operator carries its own SQL and in-memory behaviour, so database and
+collection sources agree. **SQL semantics:** `neq` and `not_in` do not match
+NULL; text operators are case-insensitive (ILIKE on PostgreSQL, the column
+collation on MySQL/MariaDB) and match `%` and `_` literally.
 
 ## Custom operators and custom filters
 
 ```php
-final readonly class JsonContains implements CustomOperator
+final readonly class JsonLength implements Operator
 {
-    public function name(): string { return 'json_contains'; }
+    public function name(): string { return 'json_length'; }
     public function arity(): int { return 1; }
-    public function apply(EloquentBuilder|QueryBuilder $query, string $column, mixed $value): void
+    public function supports(FilterValueType $type): bool { return $type instanceof Integer; }
+    public function apply(EloquentBuilder|QueryBuilder $query, string $column, mixed $value, FilterValueType $type): void
     {
-        $query->whereJsonContains($column, $value);
+        $query->whereJsonLength($column, $value);
     }
-    public function matches(mixed $actual, mixed $value): bool
+    public function matches(mixed $actual, mixed $value, FilterValueType $type): bool
     {
-        return is_array($actual) && in_array($value, $actual, true);
+        return is_array($actual) && count($actual) === $value;
     }
 }
 
-new Filterable('tags', [FilterOperator::Equals, new JsonContains]);   // ?filter[tags][json_contains]=php
-
-new CustomFilter('overdue', fn (Builder $query, bool $overdue) => $overdue
-    ? $query->where('due_at', '<', now())->whereNull('paid_at')
-    : $query, ValueType::Boolean);                                     // ?filter[overdue]=1
+Filterable::make('tags', [Integer::make(), new JsonLength]);   // ?filter[tags][json_length]=3
 ```
 
-A custom operator receives a trusted column and a validated, cast value and
-must bind it. A custom filter's handler receives only the validated value
-(one value, or a list with `multiple: true`) inside the request filters' own
+A custom operator receives a trusted column and a validated, cast value, and
+must bind it. A `CustomFilter` handler receives only the validated value
+(one value, or a list when `In` is declared) inside the request filters' own
 AND group, so it can narrow but never widen the mandatory scope.
-
-**SQL semantics:** `neq` and `not_in` do not match NULL. A relation filter
-means "has at least one related record matching".
-
-## Values
-
-`ValueType` validates and casts every value before it is bound:
-
-| Type | Accepts |
-| --- | --- |
-| `String` (default) | strings up to 255 characters, no control characters |
-| `Integer` | `-?\d{1,18}` |
-| `Decimal` | plain decimals (no exponent) |
-| `Boolean` | `true`, `false`, `1`, `0` |
-| `Date` | `YYYY-MM-DD` (a valid date) |
-| `DateTime` | `YYYY-MM-DD HH:MM[:SS]` or with `T`; normalized to `Y-m-d H:i:s`, no time-zone conversion |
-
-`options` restricts values to a list (after casting).
-
-## Errors
-
-All of these are `InvalidFilterException`, a 400 response:
-
-- **Unknown key:** in strict mode, which is the default.
-- **Bad operator:** not allowed for that key.
-- **Bad value:** wrong type, not an option, or the wrong number of values.
-
-Messages name keys and operators, never submitted values. In non-strict mode
-(`gcego-data.queries.strict = false`), unknown keys are ignored; invalid
-values are still rejected.
-
-## Composition
-
-```
-(mandatory constraints) AND (fixed filters) AND (request filter 1 AND request filter 2 ...) AND (search)
-```
-
-Request filters cannot widen a source. Filtering `published=false` on a
-source with `new Filter('is_published', true)` returns nothing.

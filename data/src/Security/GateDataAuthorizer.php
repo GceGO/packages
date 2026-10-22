@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Security;
 
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\DataConfig;
-use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Query\QueryContext;
 use Illuminate\Contracts\Auth\Access\Gate;
 

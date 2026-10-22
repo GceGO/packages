@@ -6,10 +6,11 @@ namespace Gcego\Data\Mutations;
 
 use Closure;
 use Gcego\Data\Caching\QueryCache;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\Contracts\ResolvesRecords;
 use Gcego\Data\Contracts\SupportsMutations;
-use Gcego\Data\Compilation\SourceDefinition;
+use Gcego\Data\Definitions\Writable;
 use Gcego\Data\Events\RecordCreated;
 use Gcego\Data\Events\RecordDeleted;
 use Gcego\Data\Events\RecordRestored;

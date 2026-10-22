@@ -32,9 +32,8 @@ use Gcego\Data\Support\FieldName;
  *
  * Equal with null means IS NULL. The value type is inferred from the value
  * (string, integer, decimal, boolean, date-time) unless given. Request input
- * can never remove a Filter; user filters are Filterables.
- *
- * Also the form request filters take once validated (QueryPlan::$filters).
+ * can never remove a Filter; user filters are Filterables. Validated request
+ * filters use the same class internally (QueryPlan::$filters).
  */
 final readonly class Filter
 {

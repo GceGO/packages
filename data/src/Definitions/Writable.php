@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Mutations;
+namespace Gcego\Data\Definitions;
 
 use Closure;
 use Gcego\Data\Contracts\SourceConfiguration;
@@ -14,14 +14,14 @@ use Gcego\Data\Support\FieldName;
  * Makes a source writable: the allowlist of fields input may set, their
  * Laravel validation rules, and the permitted operations.
  *
- *     new Writable([
+ *     Writable::make([
  *         'name' => ['required', 'string', 'max:120'],
  *         'code' => fn (?Subject $subject) => ['nullable', Rule::unique('subjects')->ignore($subject)],
  *         'level' => 'integer|between:1,6',
  *         'notes',                                        // writable, no rules
  *     ])
  *
- *     new Writable(['name' => 'required|string'], operations: [DataOperation::Create, DataOperation::Update])
+ *     Writable::make(['name' => 'required|string'], operations: [DataOperation::Create, DataOperation::Update])
  *
  * Input keys outside the allowlist are rejected (422), never silently
  * ignored. On update, rules apply only to the fields present (a "sometimes"
@@ -49,7 +49,7 @@ final readonly class Writable implements SourceConfiguration
      *
      * @throws InvalidSourceException
      */
-    public function __construct(array $fields, array $operations = self::DefaultOperations)
+    private function __construct(array $fields, array $operations)
     {
         $normalized = [];
 
@@ -79,6 +79,17 @@ final readonly class Writable implements SourceConfiguration
 
         $this->fields = $normalized;
         $this->operations = array_values(array_unique($operations, SORT_REGULAR));
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $fields  field => rules, or a field name without rules.
+     * @param  list<DataOperation>  $operations
+     *
+     * @throws InvalidSourceException
+     */
+    public static function make(array $fields, array $operations = self::DefaultOperations): self
+    {
+        return new self($fields, $operations);
     }
 
     public function allows(DataOperation $operation): bool

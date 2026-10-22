@@ -2,16 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Caching;
+namespace Gcego\Data\Definitions;
 
+use Gcego\Data\Caching\CacheIsolation;
 use Gcego\Data\Contracts\SourceConfiguration;
 use Gcego\Data\Exceptions\InvalidSourceException;
 
 /**
  * Caches a source's query, record and aggregate results:
  *
- *     Source::model(Subject::class, new Cached(ttl: 300))->named('catalogue')
- *     new Cached(ttl: 3600, isolation: CacheIsolation::Tenant, store: 'redis')
+ *     Source::define(Name::make('catalogue'), Model::make(Subject::class), Cached::make(ttl: 300))
+ *     Cached::make(ttl: 3600, isolation: CacheIsolation::Tenant, store: 'redis')
  *
  * Cached sources must be named: the name identifies the source in cache keys.
  * Entries are isolated (see CacheIsolation) and invalidated when the source's
@@ -27,19 +28,27 @@ final readonly class Cached implements SourceConfiguration
     public const int MaxTtl = 604800;
 
     /**
+     * @throws InvalidSourceException
+     */
+    private function __construct(
+        public int $ttl,
+        public CacheIsolation $isolation,
+        public ?string $store,
+    ) {
+        if ($ttl < 1 || $ttl > self::MaxTtl) {
+            throw InvalidSourceException::invalidDefinition('Cached', sprintf('ttl must be between 1 and %d seconds.', self::MaxTtl));
+        }
+    }
+
+    /**
      * @param  int  $ttl  Seconds, 1 to 604800 (one week).
      * @param  string|null  $store  A cache store name; null uses gcego-data.cache.store or the default store.
      *
      * @throws InvalidSourceException
      */
-    public function __construct(
-        public int $ttl = 300,
-        public CacheIsolation $isolation = CacheIsolation::User,
-        public ?string $store = null,
-    ) {
-        if ($ttl < 1 || $ttl > self::MaxTtl) {
-            throw InvalidSourceException::invalidDefinition('Cached', sprintf('ttl must be between 1 and %d seconds.', self::MaxTtl));
-        }
+    public static function make(int $ttl = 300, CacheIsolation $isolation = CacheIsolation::User, ?string $store = null): self
+    {
+        return new self($ttl, $isolation, $store);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Mutations;
+namespace Gcego\Data\Definitions;
 
 use Closure;
 use Gcego\Data\Contracts\SourceConfiguration;
@@ -12,7 +12,7 @@ use Gcego\Data\Security\DataOperation;
 /**
  * Trusted server-side preparation of validated attributes before they are saved:
  *
- *     new BeforeSave(fn (array $attributes, DataOperation $operation, ?Subject $record) => [
+ *     BeforeSave::make(fn (array $attributes, DataOperation $operation, ?Subject $record) => [
  *         ...$attributes,
  *         'slug' => Str::slug($attributes['name'] ?? $record?->name ?? ''),
  *     ])
@@ -29,15 +29,26 @@ final readonly class BeforeSave implements SourceConfiguration
      *
      * @throws InvalidSourceException
      */
-    public function __construct(
+    private function __construct(
         public Closure $callback,
-        public array $operations = [DataOperation::Create, DataOperation::Update],
+        public array $operations,
     ) {
         foreach ($operations as $operation) {
             if ($operation !== DataOperation::Create && $operation !== DataOperation::Update) {
                 throw InvalidSourceException::invalidDefinition('BeforeSave', 'operations must be Create and/or Update.');
             }
         }
+    }
+
+    /**
+     * @param  Closure(array<string, mixed>, DataOperation, mixed): array<string, mixed>  $callback
+     * @param  list<DataOperation>  $operations  Create and/or Update.
+     *
+     * @throws InvalidSourceException
+     */
+    public static function make(Closure $callback, array $operations = [DataOperation::Create, DataOperation::Update]): self
+    {
+        return new self($callback, $operations);
     }
 
     /**

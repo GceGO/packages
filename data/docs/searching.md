@@ -1,30 +1,32 @@
 # Searching
 
 ```php
-new Search('name', 'code');
-new Search(['name', 'code']);
-new Search('name', 'topics.name', 'topics.lessons.title');   // Eloquent relation paths
-(new Search('title', 'body'))->using(FullTextSearch::class);  // a custom strategy
+Search::make(['name', 'email']);
+Search::make(['name', 'department.name', 'reports.department.name']);   // Eloquent relation paths
+Search::make(['title', 'body'], FullTextSearch::class);                  // a custom strategy
 ```
 
 `?search=linear algebra`
 
 ## Processing
 
-- **Input:** the term is trimmed. Empty means no search.
+- **Input:** the term is trimmed; empty means no search.
 - **Limits:** input longer than `search.max_length` (200), more than
-  `search.max_terms` (8) words, or control characters → 400.
-- **Matching:** the input is split on whitespace. Each word must match at
-  least one field (words AND, fields OR), inside one group AND-ed with the
-  mandatory constraints.
-- **Fields:** only the declared fields are searched. Requests cannot choose
-  fields.
+  `search.max_terms` (8) words, or control characters → 400. A source
+  searches at most 20 fields, and relation paths cross at most three
+  relations.
+- **Matching:** each word must match at least one field (words AND, fields
+  OR), inside one group AND-ed with the mandatory constraints.
+- **Fields:** only the declared fields; requests cannot choose fields. Fields
+  the caller may not read ([field security](security.md#field-level-security))
+  are left out of their search.
+- **Relations:** relation paths use `whereHas` at each level, limited to the
+  call's tenant for tenant-owned related models.
 
 ## The default strategy: `LikeSearch`
 
-- **SQL:** `"column" like ? escape '!'`, with `%`, `_` and `!` escaped in the
-  term. A search for `%` matches a literal percent sign.
-- **Binding:** the term is always a bound parameter.
+- **SQL:** `"column" like ? escape '!'`, with `%`, `_` and `!` escaped, so a
+  search for `%` matches a literal percent sign. The term is always bound.
 
 | Database | Case-insensitive? |
 | --- | --- |
@@ -33,14 +35,8 @@ new Search('name', 'topics.name', 'topics.lessons.title');   // Eloquent relatio
 | SQLite | yes for ASCII |
 | SQL Server | follows the collation |
 
-Verification:
-
-- **SQLite:** searches are executed against real data.
-- **MySQL and PostgreSQL:** the generated SQL is checked; no queries run
-  against those servers.
-
 **Performance:** `%term%` cannot use B-tree indexes. For large tables, use a
-custom strategy (full-text index, prefix matching, a search engine).
+full-text, prefix or search-engine strategy.
 
 ## Custom strategies
 
@@ -54,9 +50,6 @@ final class FullTextSearch implements SearchStrategy
 }
 ```
 
-The strategy is resolved from the container for each query. It receives the
+The strategy is resolved from the container per query and receives the
 nested group (so it can only narrow), the trusted fields and the validated
-terms. `tests/Fixtures/StartsWithSearch.php` is a working example.
-
-Collection sources use case-insensitive substring matching (`mb_stripos`) over
-the declared fields.
+terms. Collection sources use case-insensitive substring matching.

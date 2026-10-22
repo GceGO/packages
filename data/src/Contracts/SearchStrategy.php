@@ -13,7 +13,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * Applies a validated search term to a builder. Replace the default
  * LikeSearch with a full-text or search-engine strategy per source:
  *
- *     (new Search('title', 'body'))->using(FullTextSearch::class)
+ *     Search::make(['title', 'body'], FullTextSearch::class)
  *
  * The strategy is called inside a nested where group that is AND-ed with the
  * mandatory constraints, so it can only narrow results.

@@ -35,7 +35,7 @@ abstract readonly class BuiltInOperator implements Operator
 
     /**
      * @param  scalar|list<scalar>|null  $value
-     * @return list<scalar>
+     * @return list<scalar|null>
      */
     protected static function list(mixed $value): array
     {

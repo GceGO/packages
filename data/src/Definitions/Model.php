@@ -28,8 +28,11 @@ final readonly class Model implements SourceConfiguration
      */
     public static function make(string $class): self
     {
+        /** @var class-string<EloquentModel> $normalized */
+        $normalized = ltrim($class, '\\');
+
         return preg_match('/^\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*$/', $class) === 1
-            ? new self(ltrim($class, '\\'))
+            ? new self($normalized)
             : throw InvalidSourceException::invalidDefinition('Model', sprintf('"%s" is not a class name.', mb_substr($class, 0, 80)));
     }
 

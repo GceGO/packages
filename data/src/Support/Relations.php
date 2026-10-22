@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Data\Support;
 
 use Gcego\Data\Compilation\SourceDefinition;
-use Gcego\Data\Filters\FilterOperator;
+use Gcego\Data\Contracts\RelationOperator;
 
 /**
  * @internal Detects relation features that only Eloquent sources support.
@@ -24,7 +24,7 @@ final class Relations
         }
 
         foreach ($source->filters as $filter) {
-            if ($filter->operator instanceof FilterOperator && $filter->operator->isRelation()) {
+            if ($filter->operator instanceof RelationOperator) {
                 return true;
             }
         }

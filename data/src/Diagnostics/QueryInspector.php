@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Diagnostics;
 
+use Gcego\Data\Compilation\SourceCompiler;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\DataProvider;
 use Gcego\Data\Contracts\InspectsQueries;
 use Gcego\Data\Contracts\ResolvesRecords;
@@ -13,8 +15,6 @@ use Gcego\Data\Contracts\SupportsMutations;
 use Gcego\Data\Contracts\SupportsRelationships;
 use Gcego\Data\Contracts\TenantResolver;
 use Gcego\Data\DataConfig;
-use Gcego\Data\Compilation\SourceCompiler;
-use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\UnsupportedProviderException;
 use Gcego\Data\Providers\ProviderRegistry;
 use Gcego\Data\Query\QueryContext;

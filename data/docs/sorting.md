@@ -1,36 +1,32 @@
 # Sorting
 
 ```php
-new Sort('name');                 // default ordering, ascending
-new Sort('created_at', 'desc');
-Sort::desc('level');
-new Sortable('name', 'level', ['newest' => 'created_at']);   // request keys => columns
+Sort::make('created_at', 'desc');                       // default ordering
+Sort::make(['level' => 'desc', 'name' => 'asc']);       // several defaults, in order
+Sortables::make(['name', 'created_at']);                // request keys = columns
+Sortables::make(['name', 'newest' => 'created_at', 'popular' => 'reports_count']);   // aliases
 ```
 
 `?sort=-newest,name`
 
-- **Defaults:** `Sort` nodes apply only when the request asks for no sort. They
-  apply in declaration order.
-- **Allowlist:** requested keys must be `Sortable`; the column comes from the
-  definition. Unknown keys return 400 in strict mode, and are ignored (falling
-  back to the defaults) otherwise.
+- **Defaults:** `Sort` applies only when the request sorts by nothing.
+- **Allowlist:** requested keys must be declared in `Sortables`; the column
+  comes from the definition. Unknown keys return 400 in strict mode, and are
+  ignored (falling back to the defaults) otherwise.
+- **Directions:** `asc` or `desc` in definitions; a `-` prefix in requests.
 - **Limit:** at most `sorting.max_fields` (3) requested fields.
-- **Columns:** sortable columns are the source's own columns. Relation paths
-  are not supported for sorting.
+- **Columns:** the source's own columns, or a relation aggregate alias
+  (`reports_count`); relation paths are rejected.
+- **Field security:** sorting by a field the caller may not read is 400.
 
 ## Stable ordering
 
 When `sorting.stable` is true (the default), the unique key is appended as
-the last ordering:
-
-- Eloquent: the model's qualified key, for example `"courses"."code"` for a
-  custom key;
-- query sources: `Source::Key`;
-- collections: the key field.
-
-Rows with equal sort values therefore keep the same order on every page, and
-pages never overlap or skip records. Cursor pagination always appends the key.
+the last ordering (the model's qualified key, `Key::make()` for table and
+collection sources), so rows with equal sort values keep the same order on
+every page and pages never overlap or skip records. Cursor pagination always
+appends the key.
 
 ```sql
-order by "subjects"."level" desc, "subjects"."id" asc
+order by "employees"."age" desc, "employees"."id" asc
 ```

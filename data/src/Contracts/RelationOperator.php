@@ -16,7 +16,8 @@ interface RelationOperator extends Operator
 {
     /**
      * @param  EloquentBuilder<Model>  $query
-     * @param  Closure(EloquentBuilder<Model>): void|null  $scope  Mandatory conditions of the related records (tenant scope).
+     * @param  string  $relation  A relation path ("reports" or "reports.department").
+     * @param  Closure(EloquentBuilder<Model>): void|null  $scope  Extra conditions on the last related query.
      */
     public function applyRelation(EloquentBuilder $query, string $relation, ?Closure $scope): void;
 }

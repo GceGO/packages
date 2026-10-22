@@ -32,7 +32,7 @@ interface DataProvider
     public function prepare(SourceDefinition $source): void;
 
     /**
-     * @param  list<QueryConstraint>  $constraints  Trusted constraints: the source's Query nodes, registered scopes and context scopes.
+     * @param  list<QueryConstraint>  $constraints  Trusted constraints: the tenant scope, the source's Constraints queries, registered scopes and context scopes.
      * @return AbstractPaginator<array-key, mixed>|AbstractCursorPaginator<array-key, mixed>
      *
      * @throws InvalidQueryException

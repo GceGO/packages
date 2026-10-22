@@ -7,13 +7,13 @@ namespace Gcego\Data\Query;
 use Gcego\Data\Aggregation\AggregateResult;
 use Gcego\Data\Aggregation\Aggregation;
 use Gcego\Data\Caching\QueryCache;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\Contracts\ProvidesScopedQueries;
 use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Contracts\SupportsAggregation;
 use Gcego\Data\Contracts\SupportsCursorPagination;
 use Gcego\Data\DataConfig;
-use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Events\SourceQueried;
 use Gcego\Data\Exceptions\InvalidFilterException;
 use Gcego\Data\Exceptions\InvalidSortException;
@@ -185,7 +185,7 @@ final readonly class QueryPipeline
     }
 
     /**
-     * Mandatory constraints in order: tenant scope, the source's Query nodes, registered scopes, context constraints.
+     * Mandatory constraints in order: tenant scope, the source's Constraints queries, registered scopes, context constraints.
      *
      * @return list<QueryConstraint>
      */

@@ -4,44 +4,55 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Compilation;
 
-use Gcego\Data\Caching\Cached;
 use Gcego\Data\Contracts\SourceConfiguration;
+use Gcego\Data\Definitions\Aggregates;
+use Gcego\Data\Definitions\BeforeSave;
+use Gcego\Data\Definitions\BuilderFactory;
+use Gcego\Data\Definitions\Cached;
+use Gcego\Data\Definitions\Columns;
+use Gcego\Data\Definitions\Connection;
+use Gcego\Data\Definitions\Constraints;
+use Gcego\Data\Definitions\DatabaseTable;
+use Gcego\Data\Definitions\FieldSecurity;
+use Gcego\Data\Definitions\Filterables;
+use Gcego\Data\Definitions\Includables;
+use Gcego\Data\Definitions\Items;
+use Gcego\Data\Definitions\Key;
+use Gcego\Data\Definitions\Limits;
+use Gcego\Data\Definitions\Model;
+use Gcego\Data\Definitions\Name;
+use Gcego\Data\Definitions\Pagination;
+use Gcego\Data\Definitions\Provider;
+use Gcego\Data\Definitions\Relations;
+use Gcego\Data\Definitions\Search;
+use Gcego\Data\Definitions\Sort;
+use Gcego\Data\Definitions\Sortables;
+use Gcego\Data\Definitions\TenantScoped;
+use Gcego\Data\Definitions\Transform;
+use Gcego\Data\Definitions\Writable;
 use Gcego\Data\Exceptions\InvalidSourceException;
-use Gcego\Data\Filters\CustomFilter;
-use Gcego\Data\Filters\Filter;
-use Gcego\Data\Filters\Filterable;
-use Gcego\Data\Filters\FilterOperator;
-use Gcego\Data\Mutations\BeforeSave;
-use Gcego\Data\Mutations\Writable;
-use Gcego\Data\Pagination\Paginate;
-use Gcego\Data\Performance\Limits;
-use Gcego\Data\Query\Query;
-use Gcego\Data\Relationships\Includable;
-use Gcego\Data\Relationships\RelationAggregate;
-use Gcego\Data\Relationships\With;
-use Gcego\Data\Search\Search;
-use Gcego\Data\Security\FieldAccess;
-use Gcego\Data\Sorting\Sort;
-use Gcego\Data\Sorting\Sortable;
-use Gcego\Data\Sorting\SortDirection;
 use Gcego\Data\Source;
-use Gcego\Data\Support\Callback;
-use Gcego\Data\Tenancy\TenantScoped;
-use Gcego\Data\Transform\Transform;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Str;
 use WeakMap;
 
 /**
- * Validates a Source and compiles its properties and configuration nodes into
- * one SourceDefinition. Pure: no database access, no container lookups.
- *
- * Property forms and node forms of the same setting are equivalent; declaring
- * both, or one setting twice, is an error rather than a silent override.
- * Results are cached per Source instance (Sources are immutable).
+ * Validates a Source's references and cross-definition rules, and compiles its
+ * definitions into one SourceDefinition. Pure: no database access, no
+ * container lookups. Results are cached per Source instance (Sources are
+ * immutable). Provider-specific checks (relations, columns) run when the
+ * provider prepares the definition.
  */
 final class SourceCompiler
 {
+    public const array BuiltIn = [
+        Name::class, Model::class, DatabaseTable::class, BuilderFactory::class, Items::class, Provider::class,
+        Connection::class, Key::class, Columns::class, Constraints::class, Filterables::class, Search::class,
+        Sort::class, Sortables::class, Pagination::class, Relations::class, Includables::class, Aggregates::class,
+        Transform::class, Writable::class, BeforeSave::class, TenantScoped::class, FieldSecurity::class,
+        Cached::class, Limits::class,
+    ];
+
     /**
      * @var WeakMap<Source, SourceDefinition>
      */
@@ -62,221 +73,81 @@ final class SourceCompiler
 
     private function build(Source $source): SourceDefinition
     {
-        $name = $this->name($source);
-        $errors = $source->validate();
+        $model = $source->get(Model::class)?->class;
+        $table = $source->get(DatabaseTable::class)?->name;
+        $name = $source->name() ?? match (true) {
+            $model !== null => Str::snake(Str::pluralStudly(class_basename($model))),
+            $table !== null => $table,
+            $source->has(Items::class) => 'collection',
+            default => 'query',
+        };
 
-        if ($errors !== []) {
-            throw InvalidSourceException::invalid($name, implode(' ', $errors));
+        if ($model !== null && (! class_exists($model) || ! is_subclass_of($model, EloquentModel::class))) {
+            throw InvalidSourceException::invalid($name, sprintf('"%s" is not an Eloquent model class.', $model));
         }
 
-        $constraints = [];
-        $filters = [];
-        $filterables = [];
-        $search = null;
-        $sorts = [];
-        $sortables = [];
-        $pagination = null;
-        $with = [];
-        $includables = [];
-        $transforms = [];
-        $extensions = [];
-        $customFilters = [];
-        $aggregates = [];
-        $tenant = null;
-        $fieldAccess = [];
-        $writable = null;
-        $beforeSave = [];
-        $cache = null;
-        $limits = null;
-        $once = static fn (string $what): never => throw InvalidSourceException::invalid($name, sprintf('declare %s once.', $what));
+        $filterables = $source->get(Filterables::class);
+        $aggregates = ($source->get(Aggregates::class)->aggregates ?? []);
+        $tenant = $source->get(TenantScoped::class);
+        $writable = $source->get(Writable::class);
+        $sortables = ($source->get(Sortables::class)->columns ?? []);
 
-        $query = $source->get(Source::Query);
-
-        if ($query instanceof Callback) {
-            $constraints[] = new Query($query->closure);
+        if ($tenant !== null && $writable !== null && array_key_exists($tenant->column, $writable->fields)) {
+            throw InvalidSourceException::invalid($name, sprintf('the tenant column "%s" cannot be writable; it is stamped from the current tenant.', $tenant->column));
         }
 
-        foreach ($this->arrayProperty($source, Source::Filters) as $field => $value) {
-            if (! is_scalar($value) && $value !== null && ! (is_array($value) && array_is_list($value) && array_filter($value, static fn (mixed $item): bool => ! is_scalar($item)) === [])) {
-                throw InvalidSourceException::invalid($name, sprintf('the filters property value of "%s" must be a scalar, null or a list of scalars.', $field));
-            }
-
-            /** @var scalar|list<scalar>|null $value */
-            $filters[] = is_array($value) ? new Filter((string) $field, $value, FilterOperator::In) : new Filter((string) $field, $value);
+        if ($source->has(Cached::class) && $source->name() === null) {
+            throw InvalidSourceException::invalid($name, 'cached sources need a unique Name::make(...): it identifies them in cache keys.');
         }
 
-        if ($source->has(Source::Search)) {
-            /** @var list<string> $fields */
-            $fields = $source->get(Source::Search);
-            $search = new Search($fields);
+        if ($model !== null && ($source->has(Columns::class) || $source->has(Key::class))) {
+            throw InvalidSourceException::invalid($name, 'model sources use the model\'s key and attributes; Columns and Key are for table, builder and collection sources (use $hidden, FieldSecurity or Transform).');
         }
 
-        foreach ($this->arrayProperty($source, Source::Sort) as $field) {
-            if (is_string($field)) {
-                $sorts[] = new Sort(ltrim($field, '-'), str_starts_with($field, '-') ? SortDirection::Descending : SortDirection::Ascending);
-            }
-        }
-
-        if (is_int($perPage = $source->get(Source::Pagination))) {
-            $pagination = new Paginate($perPage);
-        }
-
-        if ($source->has(Source::Relationships)) {
-            /** @var list<string> $relations */
-            $relations = $source->get(Source::Relationships);
-            $with = (new With($relations))->relations;
-        }
-
-        $sortProperty = $sorts !== [];
-
-        foreach ($source->configurations() as $node) {
-            match (true) {
-                $node instanceof Query => $constraints[] = $node,
-                $node instanceof Filter => $filters[] = $node,
-                $node instanceof Filterable => isset($filterables[$node->key])
-                    ? throw InvalidSourceException::invalid($name, sprintf('filterable key "%s" is declared twice.', $node->key))
-                    : $filterables[$node->key] = $node,
-                $node instanceof Search => $search === null
-                    ? $search = $node
-                    : throw InvalidSourceException::invalid($name, 'declare searchable fields once (one Search node or the search property).'),
-                $node instanceof Sort => $sortProperty
-                    ? throw InvalidSourceException::invalid($name, 'declare the default ordering either with the sort property or with Sort nodes.')
-                    : $sorts[] = $node,
-                $node instanceof Sortable => array_intersect_key($sortables, $node->columns) !== []
-                    ? throw InvalidSourceException::invalid($name, sprintf('sortable key "%s" is declared twice.', (string) array_key_first(array_intersect_key($sortables, $node->columns))))
-                    : $sortables += $node->columns,
-                $node instanceof Paginate => $pagination === null
-                    ? $pagination = $node
-                    : throw InvalidSourceException::invalid($name, 'declare pagination once (one Paginate node or the pagination property).'),
-                $node instanceof With => $with = array_merge($with, $node->relations),
-                $node instanceof Includable => $includables = array_merge($includables, $node->relations),
-                $node instanceof Transform => $transforms[] = $node,
-                $node instanceof CustomFilter => isset($customFilters[$node->key])
-                    ? throw InvalidSourceException::invalid($name, sprintf('custom filter key "%s" is declared twice.', $node->key))
-                    : $customFilters[$node->key] = $node,
-                $node instanceof RelationAggregate => isset($aggregates[$node->alias])
-                    ? throw InvalidSourceException::invalid($name, sprintf('the relation aggregate alias "%s" is declared twice.', $node->alias))
-                    : $aggregates[$node->alias] = $node,
-                $node instanceof TenantScoped => $tenant === null ? $tenant = $node : $once('TenantScoped'),
-                $node instanceof FieldAccess => isset($fieldAccess[$node->field])
-                    ? throw InvalidSourceException::invalid($name, sprintf('field access for "%s" is declared twice.', $node->field))
-                    : $fieldAccess[$node->field] = $node,
-                $node instanceof Writable => $writable === null ? $writable = $node : $once('Writable'),
-                $node instanceof BeforeSave => $beforeSave[] = $node,
-                $node instanceof Cached => $cache === null ? $cache = $node : $once('Cached'),
-                $node instanceof Limits => $limits === null ? $limits = $node : $once('Limits'),
-                $node instanceof SourceConfiguration => $extensions[] = $node,
-                default => null,
-            };
-        }
-
-        $this->check($name, $source, $filterables, $customFilters, $tenant, $writable, $cache);
-
-        $builder = $source->get(Source::Builder);
-        $items = $source->get(Source::Items);
-        /** @var list<string>|null $columns */
-        $columns = $source->get(Source::Columns);
-        /** @var class-string<Model>|null $model */
-        $model = $source->get(Source::Model);
+        $transform = $source->get(Transform::class);
+        $beforeSave = $source->get(BeforeSave::class);
+        $constraints = $source->get(Constraints::class);
 
         return new SourceDefinition(
             name: $name,
             provider: $this->provider($source),
             source: $source,
             model: $model,
-            table: $this->stringProperty($source, Source::Table),
-            connection: $this->stringProperty($source, Source::Connection),
-            key: $this->stringProperty($source, Source::Key),
-            columns: $columns,
-            builder: $builder instanceof Callback ? $builder->closure : null,
-            items: $items instanceof Callback ? $items->closure : null,
-            constraints: $constraints,
-            filters: $filters,
-            filterables: $filterables,
-            search: $search,
-            sorts: $sorts,
+            table: $table,
+            connection: $source->get(Connection::class)?->name,
+            key: $source->get(Key::class)?->column,
+            columns: $source->get(Columns::class)?->names,
+            builder: $source->get(BuilderFactory::class)?->factory,
+            items: $source->get(Items::class)?->factory,
+            constraints: $constraints === null ? [] : $constraints->queries,
+            filters: $constraints === null ? [] : $constraints->filters,
+            filterables: $filterables === null ? [] : $filterables->filterables,
+            search: $source->get(Search::class),
+            sorts: ($source->get(Sort::class)->orders ?? []),
             sortables: $sortables,
-            pagination: $pagination ?? new Paginate,
-            with: $with,
-            includables: $includables,
-            transforms: $transforms,
-            extensions: $extensions,
-            customFilters: $customFilters,
+            pagination: $source->get(Pagination::class),
+            with: ($source->get(Relations::class)->paths ?? []),
+            includables: ($source->get(Includables::class)->paths ?? []),
+            transforms: $transform === null ? [] : [$transform],
+            extensions: array_values(array_filter($source->definitions(), static fn (SourceConfiguration $definition): bool => ! in_array($definition::class, self::BuiltIn, true))),
+            customFilters: $filterables === null ? [] : $filterables->custom,
             aggregates: $aggregates,
             tenant: $tenant,
-            fieldAccess: $fieldAccess,
+            fieldAccess: ($source->get(FieldSecurity::class)->fields ?? []),
             writable: $writable,
-            beforeSave: $beforeSave,
-            cache: $cache,
-            limits: $limits,
+            beforeSave: $beforeSave === null ? [] : [$beforeSave],
+            cache: $source->get(Cached::class),
+            limits: $source->get(Limits::class),
         );
-    }
-
-    /**
-     * Cross-node rules.
-     *
-     * @param  array<string, Filterable>  $filterables
-     * @param  array<string, CustomFilter>  $customFilters
-     *
-     * @throws InvalidSourceException
-     */
-    private function check(string $name, Source $source, array $filterables, array $customFilters, ?TenantScoped $tenant, ?Writable $writable, ?Cached $cache): void
-    {
-        $shared = array_intersect_key($filterables, $customFilters);
-
-        if ($shared !== []) {
-            throw InvalidSourceException::invalid($name, sprintf('filter key "%s" is declared by both a Filterable and a CustomFilter.', (string) array_key_first($shared)));
-        }
-
-        if ($tenant !== null && $writable !== null && array_key_exists($tenant->column, $writable->fields)) {
-            throw InvalidSourceException::invalid($name, sprintf('the tenant column "%s" cannot be writable; it is stamped from the current tenant.', $tenant->column));
-        }
-
-        if ($cache !== null && $source->name() === null) {
-            throw InvalidSourceException::invalid($name, 'cached sources need a unique name: ->named(\'...\') identifies them in cache keys.');
-        }
     }
 
     private function provider(Source $source): string
     {
-        $provider = $source->get(Source::Provider);
-
         return match (true) {
-            is_string($provider) => $provider,
-            $source->has(Source::Model) => 'eloquent',
-            $source->has(Source::Items) => 'collection',
+            $source->has(Provider::class) => $source->get(Provider::class)->name ?? 'query',
+            $source->has(Model::class) => 'eloquent',
+            $source->has(Items::class) => 'collection',
             default => 'query',
         };
-    }
-
-    private function name(Source $source): string
-    {
-        $model = $source->get(Source::Model);
-        $table = $source->get(Source::Table);
-
-        return match (true) {
-            is_string($source->name()) => $source->name(),
-            is_string($model) => Str::snake(Str::pluralStudly(class_basename($model))),
-            is_string($table) => $table,
-            $source->has(Source::Items) => 'collection',
-            default => 'query',
-        };
-    }
-
-    /**
-     * @return array<array-key, mixed>
-     */
-    private function arrayProperty(Source $source, string $key): array
-    {
-        $value = $source->get($key);
-
-        return is_array($value) ? $value : [];
-    }
-
-    private function stringProperty(Source $source, string $key): ?string
-    {
-        $value = $source->get($key);
-
-        return is_string($value) ? $value : null;
     }
 }

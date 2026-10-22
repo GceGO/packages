@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Transform;
+namespace Gcego\Data\Definitions;
 
 use Closure;
 use Gcego\Data\Contracts\RecordTransformer;
@@ -13,14 +13,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A trusted server-side mapping applied to every returned record:
+ * The output shape of every returned record (after field security, and for
+ * every caller, cached or not):
  *
- *     new Transform(fn (Subject $subject) => ['id' => $subject->id, 'name' => $subject->name])
- *     new Transform(new SubjectSummary)              // a RecordTransformer
- *     Transform::only('id', 'name', 'code')          // approved attributes
- *     Transform::except('internal_notes')            // everything else
- *     Transform::map(['id', 'title' => 'name', 'topics' => fn ($s) => $s->topics_count])
- *     Transform::resource(SubjectResource::class)    // a Laravel API resource
+ *     Transform::only(['id', 'name', 'email'])          // approved attributes
+ *     Transform::except(['internal_notes'])             // everything else
+ *     Transform::map(['id', 'title' => 'name', 'reports' => fn ($e) => $e->reports_count])
+ *     Transform::resource(EmployeeResource::class)      // a Laravel API resource
+ *     Transform::make(fn (Employee $e) => [...])        // trusted closure or RecordTransformer
  *
  * only(), except() and map() read models through toArray(), so attributes in
  * a model's $hidden (and fields removed by FieldAccess) stay hidden even when
@@ -32,32 +32,44 @@ final readonly class Transform implements RecordTransformer, SourceConfiguration
     /**
      * @param  Closure(mixed): mixed|RecordTransformer  $transformer
      */
-    public function __construct(public Closure|RecordTransformer $transformer) {}
+    private function __construct(public Closure|RecordTransformer $transformer) {}
 
     /**
+     * @param  Closure(mixed): mixed|RecordTransformer  $transformer
+     */
+    public static function make(Closure|RecordTransformer $transformer): self
+    {
+        return new self($transformer);
+    }
+
+    /**
+     * @param  list<string>  $attributes
+     *
      * @throws InvalidSourceException
      */
-    public static function only(string ...$attributes): self
+    public static function only(array $attributes): self
     {
         if ($attributes === []) {
             throw InvalidSourceException::invalidDefinition('Transform::only()', 'list at least one attribute.');
         }
 
-        $keys = array_flip($attributes);
+        $keys = array_flip(self::names($attributes));
 
         return new self(static fn (mixed $record): array => array_intersect_key(self::data($record), $keys));
     }
 
     /**
+     * @param  list<string>  $attributes
+     *
      * @throws InvalidSourceException
      */
-    public static function except(string ...$attributes): self
+    public static function except(array $attributes): self
     {
         if ($attributes === []) {
             throw InvalidSourceException::invalidDefinition('Transform::except()', 'list at least one attribute.');
         }
 
-        $keys = array_flip($attributes);
+        $keys = array_flip(self::names($attributes));
 
         return new self(static fn (mixed $record): array => array_diff_key(self::data($record), $keys));
     }
@@ -141,5 +153,16 @@ final readonly class Transform implements RecordTransformer, SourceConfiguration
             is_object($record) => get_object_vars($record),
             default => [],
         };
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $attributes
+     * @return list<string>
+     *
+     * @throws InvalidSourceException
+     */
+    private static function names(array $attributes): array
+    {
+        return array_values(array_map(static fn (mixed $attribute): string => is_string($attribute) && $attribute !== '' ? $attribute : throw InvalidSourceException::invalidDefinition('Transform', 'attributes are non-empty strings.'), $attributes));
     }
 }

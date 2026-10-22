@@ -4,12 +4,19 @@
 
 ### Breaking
 
+- New declaration API: `Source::define()` with typed definitions (`Gcego\Data\Definitions`: `Name`, `Model`, `DatabaseTable`, `BuilderFactory`, `Items`, `Provider`, `Connection`, `Key`, `Columns`, `Constraints`, `Filterables`, `Search`, `Sort`, `Sortables`, `Pagination`, `Relations`, `Includables`, `Aggregates`, `Transform`, `Writable`, `BeforeSave`, `TenantScoped`, `FieldSecurity`, `Cached`, `Limits`), each with `::make()` and private constructors, once per source. Removed: `new Source(...)`, `Source::model/table/builder/collection()`, `Property`, `Support\Callback`, `Paginate`, `Sort`/`Sortable` (Sorting), `Search` (Search), `With`, `Includable`, `->named()`. See docs/migration.md.
+- Filters: `Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make()])` with typed value types (`Filters\Types`: `StringType`, `Integer`, `Decimal`, `Boolean`, `Date`, `DateTime`, `Time`, `Enum`, `Uuid`, `Json`) and operator objects (`Filters\Operators`), validated for compatibility when defined; `Equal` only when no operator is listed. The `FilterOperator` and `ValueType` enums and `CustomOperator` are replaced by `Contracts\Operator` and `Contracts\FilterValueType`. `Filter::make()`, `CustomFilter::make()`, `Options`, `Label`, `Column`.
+- `Definition\SourceDefinition` and `SourceCompiler` moved to `Compilation\`.
 - No longer depends on `gcego/components` or `gcego/runtime`. `Source` is a standalone immutable value object (`final class Source`), and `Gcego\Data\Property` replaces `Gcego\Components\Properties\Property`. `configurations()` returns a list; use `configuration(Filter::class)` and `hasConfiguration(Filter::class)`. `validate()` returns a list of messages. `Source::Name` replaces `Component::Name`; `named()` sets it.
 - `SourceConfiguration` no longer extends a components contract; it declares `normalize(): array` itself. `Support\Callback` no longer implements `RuntimeValue`.
 - Depends only on `gcego/core` ^1.0 (from Packagist). All `gcego/blueprints` and `gcego/registry` integration is removed (`BlueprintRole`/`BlueprintPart`, `DataManager::sourceOf()`), as is `Integration\SourceRenderer`: gcego/data is the domain-agnostic data engine other packages build on.
 
 ### Added
 
+- `Contracts\SourceProvider`: class-based sources resolved through the container; every `Data` method accepts a provider instance or class name (validated before instantiation).
+- Tenant isolation of related records: includes, eager loads, relation aggregates, relation filters and relation search only see related `BelongsToTenant` records of the call's tenant (`Tenancy\RelationScope`).
+- Field security on relation fields (`FieldAccess::hidden('manager.salary')`).
+- Relation depth limit (three relations) and a 20-field search limit.
 - Data mutations: `Data::create()`, `update()`, `delete()`, `forceDelete()`, `restore()`, `createMany()`, `updateMany()`, `deleteMany()` on sources that declare `Mutations\Writable` (field allowlist, Laravel validation rules, permitted operations). Writes lock the record inside the source's scope, authorize through policies (`create`, `update`, `delete`, `restore`, `forceDelete`), run `Mutations\BeforeSave` callbacks, roll back writes that would leave the scope, and dispatch `RecordCreated`, `RecordUpdated`, `RecordDeleted` and `RecordRestored` after commit. New `Contracts\SupportsMutations` (Eloquent and table sources), `Results\MutationResult`, `Exceptions\MutationException`.
 - Transaction manager: `Data::transaction()` with rollback, deadlock and serialization-failure retries with exponential backoff and jitter, configurable retryable exceptions, isolation levels and savepoint nesting (`Transactions\TransactionManager`, `TransactionOptions`, `IsolationLevel`).
 - Query caching: `Caching\Cached` caches query, record and aggregate results of named sources with `User`, `Tenant` or `Shared` isolation, version-token invalidation after gcego/data writes, Eloquent model events and `Data::invalidate()`, and stampede locks. Authorization, field rules and transforms still run for every caller.
@@ -26,6 +33,8 @@
 
 ### Changed
 
+- Security: 404, 403 (missing tenant) and 503 (timeout) responses carry generic messages; source names, timeouts and hints moved to the exceptions' `context()` for logs.
+- Security: tenant-scoped sources are always keyed by tenant in the result cache, including `CacheIsolation::Shared`.
 - The config file is only offered for publishing in the console. New configuration sections: `cache`, `transactions`, `performance`, `events`.
 - `Contracts\ResolvesRecords::find()` takes a fifth `$aggregates` parameter; custom providers implementing it must add it.
 - `Filters\Filter::$operator` and `Filterable::$operators` may hold `CustomOperator` instances; use `Filter::operatorName()` for the request name.

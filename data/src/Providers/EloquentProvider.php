@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Providers;
 
-use Gcego\Data\Contracts\SupportsRelationships;
 use Gcego\Data\Compilation\SourceDefinition;
+use Gcego\Data\Contracts\RelationOperator;
+use Gcego\Data\Contracts\SupportsRelationships;
 use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Exceptions\MutationException;
-use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Pagination\PaginationMode;
 use Gcego\Data\Relationships\RelationPathValidator;
+use Gcego\Data\Tenancy\RelationScope;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Concerns\HasUniqueStringIds;
@@ -21,7 +22,7 @@ use ReflectionClass;
 
 /**
  * Eloquent models: $model->newQuery() keeps global scopes (tenancy, soft
- * deletes, ...) and the model's connection unless Source::Connection is set.
+ * deletes, ...) and the model's connection unless Connection::make() is declared.
  * Keys follow the model: integer, UUID, ULID or custom primary keys.
  * Records are model instances, so $hidden, $visible, casts and accessors apply.
  *
@@ -51,7 +52,7 @@ final class EloquentProvider extends BuilderProvider implements SupportsRelation
         }
 
         foreach ($source->filters as $filter) {
-            $filter->operator instanceof FilterOperator && $filter->operator->isRelation() ? $paths[] = $filter->field : $fields[] = $filter->field;
+            $filter->operator instanceof RelationOperator ? $paths[] = $filter->field : $fields[] = $filter->field;
         }
 
         foreach ($fields as $field) {
@@ -112,7 +113,7 @@ final class EloquentProvider extends BuilderProvider implements SupportsRelation
         }
 
         foreach ($aggregates as $aggregate) {
-            $relation = [$aggregate->relation.' as '.$aggregate->alias => $aggregate->constraint ?? static fn (): null => null];
+            $relation = [$aggregate->relation.' as '.$aggregate->alias => RelationScope::wrap($aggregate->constraint)];
 
             match ($aggregate->eloquentFunction()) {
                 'count' => $query->withCount($relation),
@@ -122,16 +123,39 @@ final class EloquentProvider extends BuilderProvider implements SupportsRelation
         }
     }
 
+    /**
+     * Eager load every path, with the tenant scope on every level of it (a
+     * nested path also constrains its intermediate relations).
+     */
     protected function load(EloquentBuilder|QueryBuilder $query, array $relations): void
     {
         if (! $query instanceof EloquentBuilder || $relations === []) {
             return;
         }
 
-        $with = [];
+        $levels = [];
 
         foreach ($relations as $path => $constraint) {
-            $constraint === null ? $with[] = $path : $with[$path] = $constraint;
+            $prefix = '';
+
+            foreach (explode('.', $path) as $segment) {
+                $prefix = $prefix === '' ? $segment : $prefix.'.'.$segment;
+                $levels[$prefix] ??= [];
+
+                if ($prefix === $path && $constraint !== null) {
+                    $levels[$prefix][] = $constraint;
+                }
+            }
+        }
+
+        $with = [];
+
+        foreach ($levels as $path => $constraints) {
+            $with[$path] = RelationScope::wrap($constraints === [] ? null : static function (mixed $related) use ($constraints): void {
+                foreach ($constraints as $constraint) {
+                    $constraint($related);
+                }
+            });
         }
 
         $query->with($with);

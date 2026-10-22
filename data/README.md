@@ -1,81 +1,64 @@
 # gcego/data
 
-Universal data access and query engine for GCEGO Studio: the one standardized,
-secure and reusable way every GCEGO package reads and writes application data,
-whether the application runs a school, a hospital, a business, a government
-agency or a store. Declare a data source once; gcego/data handles querying,
+The universal data access and query engine of **GCEGO Studio**: one
+standardized, secure and reusable way for every GCEGO package to read and
+write application data, whether the application runs a school, a hospital,
+a business, a government agency or a store.
+
+Declare a source once with typed definitions; gcego/data handles querying,
 filtering, searching, sorting, pagination, relationships, validated writes,
-transactions, caching, tenant isolation, field-level security and
-performance limits. Application code doesn't need repositories, query
-services or filter controllers.
+transactions, caching, tenant isolation, field-level security and execution
+limits. Application code needs no repositories, query services or filter
+controllers.
 
 ```php
-use App\Models\Subject;
+use App\Models\Employee;
+use Gcego\Data\Definitions\{Constraints, Filterables, Model, Name, Pagination, Search, Sort, Sortables};
+use Gcego\Data\Filters\{Filter, Filterable};
+use Gcego\Data\Filters\Operators\{Between, Equal, GreaterThan, GreaterThanOrEqual, In, LessThan};
+use Gcego\Data\Filters\Types\{Date, Decimal, Integer, StringType};
 use Gcego\Data\Source;
 
-new Source(Subject::class);
-```
-
-```php
-use Gcego\Data\Property;
-
-new Source(
-    new Property(Source::Model, Subject::class),
+return Source::define(
+    Name::make('employees'),
+    Model::make(Employee::class),
+    Constraints::make([
+        Filter::make('is_active', true),
+    ]),
+    Filterables::make([
+        Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make(), LessThan::make()]),
+        Filterable::make('salary', [Decimal::make(), GreaterThan::make(), Between::make()]),
+        Filterable::make('status', [StringType::make(), Equal::make(), In::make()]),
+        Filterable::make('created_at', [Date::make(), Between::make()]),
+    ]),
+    Search::make(['name', 'email']),
+    Sort::make('created_at', 'desc'),
+    Sortables::make(['name', 'created_at']),
+    Pagination::make(25),
 );
 ```
 
-```php
-use Gcego\Data\Filters\Filter;
-use Gcego\Data\Pagination\Paginate;
-use Gcego\Data\Sorting\Sort;
-
-new Source(
-    Subject::class,
-
-    new Filter('is_published', true),
-    new Sort('name', 'asc'),
-    new Paginate(25),
-);
-```
-
-```php
-use Gcego\Data\Query\Query;
-
-new Source(
-    Subject::class,
-
-    new Query(
-        fn ($query) => $query
-            ->where('is_published', true)
-            ->with('topics'),
-    ),
-);
-```
-
-A `Source` is a definition only. Constructing one never touches the database.
-Queries run when you execute it:
+A source is a definition only; defining it never touches the database. The
+`Data` facade (auto-aliased, backed by the `Gcego\Data\DataManager`
+singleton) executes it:
 
 ```php
 use Gcego\Data\Facades\Data;
 
-Route::get('/subjects', fn (Request $request) => Data::query($source, $request));
-Route::get('/subjects/{id}', fn (string $id) => Data::findOrFail($source, $id));
+Route::get('/employees', fn (Request $request) => Data::query($employees, $request));
+Route::get('/employees/{id}', fn (string $id) => Data::findOrFail($employees, $id));
+Route::post('/employees', fn (Request $request) => response()->json(Data::create($employees, $request), 201));
 ```
 
-The `Data` facade (auto-aliased) proxies the `Gcego\Data\DataManager`
-singleton, which you can also inject.
-
-`GET /subjects?filter[level]=2&search=bio&sort=-name&page=2&per_page=50&include=topics`
-returns JSON. Invalid input is rejected with **400**, a missing or
-out-of-scope record with **404**, and an unauthorized read with **403**
-(see `tests/Feature/HttpEndpointTest.php`).
+`GET /employees?filter[age][gte]=30&search=ann&sort=-created_at&page=2&per_page=50`
+returns JSON. Invalid input is **400** (**422** for writes), a missing or
+out-of-scope record **404**, an unauthorized call **403**.
 
 ## Requirements
 
-- PHP 8.3+, Laravel 13 (`illuminate/database`, `pagination`, `auth`, `http`).
-- `gcego/core` ^1.0, its only GCEGO dependency. gcego/data is the shared
-  data engine every other GCEGO package builds on, whatever the domain
-  (school, hospital, business, government, e-commerce).
+- PHP 8.3+, Laravel 13 (`illuminate/database`, `pagination`, `auth`, `http`, `validation`).
+- `gcego/core` ^1.0: the only GCEGO dependency. gcego/data does not depend on
+  registry, blueprints, components, runtime or any UI package.
 
 ## Installation
 
@@ -84,48 +67,45 @@ composer require gcego/data
 php artisan vendor:publish --tag=gcego-data-config   # optional
 ```
 
-The service provider is auto-discovered. It is the `gcego/data` package of
-gcego/core, with capabilities `data`, `data.eloquent`, `data.query` and
-`data.collection`.
+The service provider is auto-discovered; it is the `gcego/data` package of
+gcego/core.
 
-## Authorization: required before data is returned
+## Declaring sources
 
-Every read is authorized, and authorization fails closed:
-
-- **Eloquent sources** use the model's policy: `viewAny` for listings and
-  `view` for each resolved record. A model without a policy is denied.
-- **Query-builder and collection sources** check the `gcego-data.query` Gate
-  ability.
-- **Trusted code without a user** (jobs, console commands) passes
-  `QueryContext::system()`.
-
-See [security](docs/security.md).
-
-## What a source can declare
-
-| Need | Declaration | Request parameter |
+| Need | Definition | Request |
 | --- | --- | --- |
-| Mandatory condition | `new Filter('is_published', true)`, `new Query(fn ($q) => ...)` | none: cannot be removed |
-| User filtering | `new Filterable('level', [FilterOperator::GreaterThanOrEqual], ValueType::Integer)` | `filter[level][gte]=2` |
-| Search | `new Search('name', 'code', 'topics.name')` | `search=bio` |
-| Default order | `new Sort('name')`, `Sort::desc('created_at')` | none |
-| User sorting | `new Sortable('name', ['newest' => 'created_at'])` | `sort=-newest,name` |
-| Pagination | `new Paginate(25)`, `Paginate::simple(50)`, `Paginate::cursor(50)` | `page`, `per_page`, `cursor` |
-| Eager loading | `new With('topics')` | none |
-| Optional includes | `new Includable('topics.lessons')` | `include=topics.lessons` |
-| Text, enum, relation filters | `Filterable::text('name')`, `Filterable::enum('status', Status::class)`, `Filterable::relation('topics')` | `filter[name][contains]=alg` |
-| Custom filters and operators | `new CustomFilter('overdue', fn ($q, bool $v) => ...)`, `new Filterable('tags', new JsonContains)` | `filter[overdue]=1` |
-| Relationship aggregates | `RelationAggregate::count('topics')`, `RelationAggregate::sum('fees', 'amount')->optional()` | `include=fees_sum_amount` |
-| Output shape | `Transform::only('id', 'name')`, `Transform::map([...])`, `Transform::resource(SubjectResource::class)` | none |
-| Writes | `new Writable(['name' => 'required\|string'])`, `new BeforeSave(fn (...) => ...)` | `Data::create/update/delete()` |
-| Tenant isolation | `new TenantScoped('company_id')`, or models implementing `BelongsToTenant` | none: enforced |
-| Field security | `FieldAccess::hidden('ssn')`, `FieldAccess::ability('salary', read: 'viewSalary')` | none: enforced |
-| Caching | `new Cached(ttl: 300)` on a named source | none |
-| Execution limits | `new Limits(timeoutMs: 2000, maxOffset: 10000)` | none |
+| Origin | `Model::make()`, `DatabaseTable::make()`, `BuilderFactory::make()`, `Items::make()`, `Provider::make()` | |
+| Mandatory conditions | `Constraints::make([Filter::make(...), Query::make(fn ($q) => ...)])` | cannot be removed |
+| User filters | `Filterables::make([Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make()])])` | `filter[age][gte]=30` |
+| Custom filters and operators | `CustomFilter::make('overdue', fn ($q, bool $v) => ..., [Boolean::make()])`, `Contracts\Operator` | `filter[overdue]=1` |
+| Search | `Search::make(['name', 'department.name'])` | `search=ann` |
+| Ordering | `Sort::make('created_at', 'desc')`, `Sortables::make(['name', 'newest' => 'created_at'])` | `sort=-newest,name` |
+| Pagination | `Pagination::make(25)`, `Pagination::simple(50)`, `Pagination::cursor(50)` | `page`, `per_page`, `cursor` |
+| Relationships | `Relations::make([...])`, `Includables::make([...])`, `Aggregates::make([RelationAggregate::count('reports')])` | `include=department` |
+| Output shape | `Transform::only([...])`, `Transform::map([...])`, `Transform::resource(...)` | |
+| Writes | `Writable::make(['name' => 'required\|string'])`, `BeforeSave::make(...)` | `Data::create/update/delete()` |
+| Tenant isolation | `TenantScoped::make('company_id')`, or models implementing `BelongsToTenant` | enforced |
+| Field security | `FieldSecurity::make([FieldAccess::hidden('ssn'), FieldAccess::ability('salary', read: 'viewSalary')])` | enforced |
+| Caching | `Cached::make(ttl: 300)` (named sources) | |
+| Execution limits | `Limits::make(timeoutMs: 2000, maxOffset: 10000)` | |
 
-Providers: Eloquent models (`new Source(Model::class)`), tables and query
-builders (`Source::table()`, `Source::builder()`), and in-memory collections
-(`Source::collection()`).
+Class-based sources implement `Contracts\SourceProvider` and can be passed
+by class name: `Data::query(EmployeesSource::class, $request)`.
+
+## Security model
+
+- **Fail-closed authorization:** model policies (`viewAny`, `view`, `create`,
+  `update`, `delete`, `restore`, `forceDelete`) or the `gcego-data.query`
+  Gate ability; missing policies deny. Trusted code without a user passes
+  `QueryContext::system()`.
+- **Tenant isolation** before any other condition, also for related records
+  and cached results; no tenant means 403.
+- **Allowlisted input only:** filter keys and operators, sort keys, includes;
+  every value cast and bound; bounded page sizes, offsets, search and lists.
+- **No leaks:** field-level security, generic public error messages, no SQL
+  values outside debug mode.
+
+See [security](docs/security.md) and [tenancy](docs/tenancy.md).
 
 ## Documentation
 
@@ -137,7 +117,7 @@ builders (`Source::table()`, `Source::builder()`), and in-memory collections
 - [Searching](docs/searching.md)
 - [Sorting](docs/sorting.md)
 - [Pagination](docs/pagination.md)
-- [Relationship aggregates and conditions](docs/relationships.md)
+- [Relationships](docs/relationships.md)
 - [Mutations](docs/mutations.md)
 - [Transactions](docs/transactions.md)
 - [Query caching](docs/caching.md)
@@ -146,6 +126,7 @@ builders (`Source::table()`, `Source::builder()`), and in-memory collections
 - [Performance](docs/performance.md)
 - [Extensibility](docs/extensibility.md)
 - [API reference](docs/api-reference.md)
+- [Migration guide](docs/migration.md)
 
 ## Development
 

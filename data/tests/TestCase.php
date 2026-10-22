@@ -128,6 +128,14 @@ abstract class TestCase extends Orchestra
             $table->timestamps();
         });
 
+        Schema::create('beds', static function (Table $table): void {
+            $table->id();
+            $table->foreignId('ward_id');
+            $table->unsignedInteger('hospital_id');
+            $table->string('label');
+            $table->timestamps();
+        });
+
         Schema::create('courses', static function (Table $table): void {
             $table->string('code')->primary();
             $table->string('title');
