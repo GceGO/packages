@@ -6,7 +6,7 @@ use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Properties\Property;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\ContainerRenderer;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Permissions\Permission;
@@ -42,7 +42,7 @@ beforeEach(function (): void {
 
 function dashboard(RenderMode $mode = RenderMode::Static): string
 {
-    return (string) preg_replace('/\s+/', ' ', app(RenderEngine::class)->renderAuthorized('blueprint:dashboard', $mode)->toHtml());
+    return (string) preg_replace('/\s+/', ' ', Rendering::renderAuthorized('blueprint:dashboard', $mode)->toHtml());
 }
 
 it('renders widgets embedded in a registered blueprint, inheriting its requirements', function (): void {

@@ -20,7 +20,7 @@ use Gcego\Navigation\Tests\Fixtures\Models\Student;
 use Gcego\Navigation\Tests\Fixtures\Providers\EveryNavigationContributor;
 use Gcego\Navigation\Tests\Fixtures\Providers\ReportsContributor;
 use Gcego\Registry\Registry;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Tables\Columns\Text;
@@ -44,7 +44,7 @@ it('renders inside layouts and blueprints through the runtime', function (): voi
         new Navigation('crumbs', new Property(Navigation::Display, 'breadcrumbs'), new Item(new Property(Item::Name, 'list'), new Property(Item::Label, 'All students'), new Property(Item::Route, 'admin.students.index'))),
     ));
     onPage('/admin/students');
-    $html = squish(app(RenderEngine::class)->renderAuthorized('blueprint:students')->toHtml());
+    $html = squish(Rendering::renderAuthorized('blueprint:students')->toHtml());
 
     expect($html)->toMatch('/<aside id="[^"]+" aria-label="Menu"[^>]*>\s*<nav id="[^"]+" aria-label="Students menu"/')
         ->and($html)->toMatch('/<a href="\/admin\/students"[^>]*aria-current="page"/')

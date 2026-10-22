@@ -8,7 +8,7 @@ use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Rendering\Context\RenderMode;
 use Gcego\Rendering\Diagnostics\RenderingInspector;
 use Gcego\Rendering\Exceptions\RendererNotFoundException;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Testing\Assertions\Verifier;
 use Gcego\Testing\Support\Reports;
@@ -17,7 +17,7 @@ use Throwable;
 
 /**
  * Rendering through gcego/runtime: renderer resolution, rendered markup
- * and failures. render() uses RenderEngine::render() (no authorization), and
+ * and failures. render() uses Rendering::render() (no authorization), and
  * renderAuthorized() the same path as <x-gcego-rendering::render>.
  */
 final class RuntimeTestable extends Testable
@@ -33,14 +33,14 @@ final class RuntimeTestable extends Testable
      */
     public function render(ComponentInterface|string $target, RenderMode $mode = RenderMode::Static, ?string $panel = null, ?string $theme = null, int $headingLevel = 1, array $metadata = [], array $state = []): HtmlTestable
     {
-        $html = $this->runtime()->render($target, $mode, null, $panel, $theme, $headingLevel, $metadata, $state)->toHtml();
+        $html = Rendering::render($target, $mode, null, $panel, $theme, $headingLevel, $metadata, $state)->toHtml();
 
         return new HtmlTestable($this->verifier, $html, 'rendered component');
     }
 
     public function renderAuthorized(string $identifier, ?string $panel = null, ?string $theme = null): HtmlTestable
     {
-        return new HtmlTestable($this->verifier, $this->runtime()->renderAuthorized($identifier, panel: $panel, theme: $theme)->toHtml(), 'rendered definition');
+        return new HtmlTestable($this->verifier, Rendering::renderAuthorized($identifier, panel: $panel, theme: $theme)->toHtml(), 'rendered definition');
     }
 
     /**
@@ -84,7 +84,7 @@ final class RuntimeTestable extends Testable
      */
     public function assertRenderFails(ComponentInterface|string $target, string $exception = RendererNotFoundException::class, ?string $message = null): self
     {
-        $thrown = $this->caught(fn () => $this->runtime()->render($target)->toHtml());
+        $thrown = $this->caught(fn () => Rendering::render($target)->toHtml());
         $match = $this->verifier->rootOf($thrown, $exception);
 
         return $this->check($match !== null && ($message === null || str_contains($match->getMessage(), $message)), sprintf('assertRenderFails(%s, %s)', is_string($target) ? $target : $target::class, $exception), sprintf('Expected rendering to fail with [%s].', $exception), ['exception' => $exception, 'message' => $message], ['exception' => $this->describe($thrown)]);
@@ -100,10 +100,5 @@ final class RuntimeTestable extends Testable
     protected function subject(): string
     {
         return 'runtime';
-    }
-
-    private function runtime(): RenderEngine
-    {
-        return $this->container->make(RenderEngine::class);
     }
 }

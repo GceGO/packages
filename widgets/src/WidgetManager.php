@@ -9,7 +9,7 @@ use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Data\DataManager;
 use Gcego\Registry\Contracts\RegistryInterface;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\SecurityManager;
 use Gcego\Widgets\Data\WidgetDataContext;
 use Gcego\Widgets\Data\WidgetDataResolver;
@@ -172,7 +172,7 @@ final readonly class WidgetManager
     public function renderWidget(string $identity, Widget $widget, WidgetState $state, string|int|null $record = null, ?string $hostId = null, bool $live = false, ?ComponentInterface $owner = null, ?string $path = null): HtmlString
     {
         $frame = new WidgetRenderFrame($identity, $owner ?? $widget, $state, $record, $hostId ?? 'gcego-widget-'.substr(hash('sha256', $identity.'|'.$path), 0, 8), $live, base: $owner === null ? null : $path);
-        $html = $this->container->make(WidgetRenderContext::class)->run($frame, fn (): string => $this->container->make(RenderEngine::class)->render($widget, $live ? RenderMode::Livewire : RenderMode::Static, identity: $identity)->toHtml());
+        $html = $this->container->make(WidgetRenderContext::class)->run($frame, fn (): string => Rendering::render($widget, $live ? RenderMode::Livewire : RenderMode::Static, identity: $identity)->toHtml());
 
         return new HtmlString($html);
     }

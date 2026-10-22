@@ -36,35 +36,6 @@
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../core",
-            "options": {
-                "versions": {
-                    "gcego/core": "1.2.0"
-                }
-            }
-        },
-        {
-            "type": "path",
-            "url": "../blueprints",
-            "options": {
-                "versions": {
-                    "gcego/blueprints": "1.0.0"
-                }
-            }
-        },
-        {
-            "type": "path",
-            "url": "../registry",
-            "options": {
-                "versions": {
-                    "gcego/registry": "1.2.0"
-                }
-            }
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Gcego\\Runtime\\": "src/"

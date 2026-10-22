@@ -18,7 +18,7 @@ use Gcego\Forms\Rendering\FormRenderContext;
 use Gcego\Forms\Rendering\FormRenderFrame;
 use Gcego\Forms\State\FormState;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\Authorization\AuthorizationDecision;
 use Gcego\Security\Authorization\DenialReason;
 use Gcego\Security\Records\RecordAuthorizer;
@@ -84,7 +84,7 @@ final readonly class FormInputResolver implements InputResolver, RendersInput
             $formState = new FormState($state);
             $frame = new FormRenderFrame($schema, $formState, $forms->access($schema, $model), $prefix, $errors, model: $action->model(), live: $forms->livePaths($schema, $formState));
 
-            return $this->container->make(FormRenderContext::class)->run($frame, fn (): string => $this->container->make(RenderEngine::class)->render($form, RenderMode::Livewire, identity: $action->definition)->toHtml());
+            return $this->container->make(FormRenderContext::class)->run($frame, fn (): string => Rendering::render($form, RenderMode::Livewire, identity: $action->definition)->toHtml());
         });
     }
 

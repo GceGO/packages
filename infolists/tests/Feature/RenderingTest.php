@@ -16,7 +16,7 @@ use Gcego\Infolists\Tests\Fixtures\Models\Subject;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Context\RenderMode;
 use Gcego\Rendering\Exceptions\RenderException;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\Requirements\Ability;
 use Illuminate\Support\Facades\Blade;
 
@@ -98,9 +98,9 @@ it('applies styling slots and instance Tailwind overrides', function (): void {
 });
 
 it('renders statically inside a blueprint render and mounts Livewire in Livewire mode', function (): void {
-    $static = app(RenderEngine::class)->render(Blueprints::minimal(), identity: 'blueprint:minimal', metadata: ['record' => $this->world['subject']->id])->toHtml();
-    $live = app(RenderEngine::class)->render(Blueprints::minimal(), RenderMode::Livewire, identity: 'blueprint:minimal', metadata: ['record' => $this->world['subject']->id])->toHtml();
-    $none = app(RenderEngine::class)->render(Blueprints::minimal(), identity: 'blueprint:minimal')->toHtml();
+    $static = Rendering::render(Blueprints::minimal(), identity: 'blueprint:minimal', metadata: ['record' => $this->world['subject']->id])->toHtml();
+    $live = Rendering::render(Blueprints::minimal(), RenderMode::Livewire, identity: 'blueprint:minimal', metadata: ['record' => $this->world['subject']->id])->toHtml();
+    $none = Rendering::render(Blueprints::minimal(), identity: 'blueprint:minimal')->toHtml();
 
     expect($static)->toContain('Algebra')
         ->and($static)->not->toContain('wire:id')
@@ -110,7 +110,7 @@ it('renders statically inside a blueprint render and mounts Livewire in Livewire
 });
 
 it('refuses to render a bare infolist without a trusted record', function (): void {
-    expect(fn () => app(RenderEngine::class)->render(new Infolist(new Text('name')))->toHtml())->toThrow(RenderException::class, 'renders a record of a registered blueprint');
+    expect(fn () => Rendering::render(new Infolist(new Text('name')))->toHtml())->toThrow(RenderException::class, 'renders a record of a registered blueprint');
 });
 
 it('renders through the anonymous Blade component without Livewire', function (): void {

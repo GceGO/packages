@@ -14,7 +14,7 @@ use Gcego\Components\Properties\Property;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Context\RenderContext;
 use Gcego\Rendering\Contracts\StylingResolver;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Styling\NullStylingResolver;
 use Gcego\Runtime\Livewire\BlueprintHost;
 use Illuminate\Support\Facades\Blade;
@@ -40,7 +40,7 @@ it('respects a resolver bound by the application', function (): void {
 });
 
 it('styles the runtime built-in blueprint markup', function (): void {
-    $html = app(RenderEngine::class)->render(new Blueprint('subjects', new Property(Blueprint::Description, 'Manage subjects')))->toHtml();
+    $html = Rendering::render(new Blueprint('subjects', new Property(Blueprint::Description, 'Manage subjects')))->toHtml();
 
     expect($html)->toContain('class="flex flex-col gap-6"')
         ->and($html)->toContain('class="flex flex-wrap items-start justify-between gap-4"')
@@ -49,7 +49,7 @@ it('styles the runtime built-in blueprint markup', function (): void {
 });
 
 it('renders component slots, nested components and instance styling', function (): void {
-    $html = app(RenderEngine::class)->render(new Blueprint(
+    $html = Rendering::render(new Blueprint(
         'dashboard',
         new Tailwind('gap-10'),
         new ExampleCard('Enrolments', new Tailwind(new Slot(Tailwind::Body, ['grid', 'md:grid-cols-2']))),
@@ -67,13 +67,13 @@ it('never renders a Tailwind node as a child', function (): void {
     $card = new ExampleCard('A', new Tailwind('p-2'));
 
     expect($card->childCount())->toBe(0)
-        ->and(app(RenderEngine::class)->render($card)->toHtml())->not->toContain('slots');
+        ->and(Rendering::render($card)->toHtml())->not->toContain('slots');
 });
 
 it('escapes resolved classes in attributes', function (): void {
     $card = new ExampleCard('A', new Tailwind("data-[x='1']:p-4"));
 
-    expect(app(RenderEngine::class)->render($card)->toHtml())->toContain('data-[x=&#039;1&#039;]:p-4');
+    expect(Rendering::render($card)->toHtml())->toContain('data-[x=&#039;1&#039;]:p-4');
 });
 
 it('merges with Blade attribute bags without duplicating the class attribute', function (): void {

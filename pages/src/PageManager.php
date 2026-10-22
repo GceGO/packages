@@ -19,7 +19,7 @@ use Gcego\Pages\Routing\PageRouteRegistrar;
 use Gcego\Pages\Routing\PageRouteResolver;
 use Gcego\Registry\Index\DefinitionDescriptor;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
@@ -98,7 +98,7 @@ final readonly class PageManager
         $lifecycle = $this->container->make(PageLifecycle::class);
         $lifecycle->fire(PageStage::Rendering, $context->identity, $context->page, $context);
 
-        $html = $this->container->make(PageRenderContext::class)->run($context, fn (): string => $this->container->make(RenderEngine::class)->render(
+        $html = $this->container->make(PageRenderContext::class)->run($context, fn (): string => Rendering::render(
             $context->state->apply($context->page),
             $live ? RenderMode::Livewire : RenderMode::Static,
             identity: $context->identity,

@@ -2,7 +2,10 @@
 
 All classes live under `Gcego\Runtime`.
 
-## `Runtime` (final readonly)
+## `Runtime` (final readonly, implements `Contracts\RuntimeInterface`)
+
+Also available as the facade `Facades\Runtime` (alias `\Runtime`), which
+resolves `RuntimeInterface` and mocks it with `shouldReceive()`.
 
 | Method | Notes |
 | --- | --- |
@@ -14,6 +17,7 @@ All classes live under `Gcego\Runtime`.
 
 | Interface | Methods |
 | --- | --- |
+| `Contracts\RuntimeInterface` | `execute()`, `attempt()`, `contexts()` |
 | `Contracts\OperationHandler` | `handle(ExecutionRequest): mixed` |
 | `Contracts\ActionHandler`, `QueryHandler`, `FormSubmissionHandler` | category contracts (extend `OperationHandler`) |
 | `Contracts\ValidatesOperation` | `rules(ExecutionRequest): array` |
@@ -88,7 +92,7 @@ are `HandlerRegistrationException`, configuration errors
 `RuntimeServiceProvider` (implements `Gcego\Core\Contracts\PackageInterface` and `Bootable`; requires `gcego/core`, `gcego/registry`, `gcego/blueprints`; capabilities `runtime`, `runtime.execution`):
 
 - publish tag `gcego-runtime-config`;
-- singletons `Runtime`, `RuntimeConfig`, `HandlerRegistry`, `ExecutionPipeline`,
+- singletons `Runtime` (aliased as `RuntimeInterface`), `RuntimeConfig`, `HandlerRegistry`, `ExecutionPipeline`,
   `ExecutionKernel`, `ExecutionContextFactory`, `ExecutionAuthorizer`,
   `TenantResolver`, `PanelResolver`, `DefinitionResolver`, `FailureTranslator`;
   scoped `ExecutionScope`;
