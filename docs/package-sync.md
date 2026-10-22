@@ -13,15 +13,15 @@ Run from anywhere inside this repository:
 # Preview all configured packages without accessing or changing GitHub:
 python3 scripts/sync-packages.py
 
-# Preview just registry:
-python3 scripts/sync-packages.py registry
+# Preview just core:
+python3 scripts/sync-packages.py core
 
 # Authenticate once, then publish a reviewable sync PR:
 gh auth login
-python3 scripts/sync-packages.py --pull-request registry
+python3 scripts/sync-packages.py --pull-request core
 
 # Publish directly, when your credentials may push to the protected branch:
-python3 scripts/sync-packages.py --push registry
+python3 scripts/sync-packages.py --push core
 ```
 
 The script defaults to a dry run. Publishing requires a clean working tree and
@@ -61,3 +61,10 @@ GitHub rejects direct publication and the workflow reports the failure.
 A dedicated GitHub App with short-lived installation tokens is preferable for a
 long-running publishing service. Replace the PAT step with App-token generation
 and pass its token as `GH_TOKEN` when you provision the App.
+
+## Packages with their own repository
+
+`registry/` is developed in its own repository (`gcego/registry`) and is not
+tracked or synced here: the monorepo ignores the folder, so commit and push
+from inside `registry/` itself. Other packages keep using their local copy
+through Composer path repositories (`../registry`).

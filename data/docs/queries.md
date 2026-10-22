@@ -1,78 +1,76 @@
 # Queries and the pipeline
 
+Definitions never execute themselves; `DataManager` (the `Data` facade) does.
+
 ## Executing
 
 ```php
-$data = app(DataManager::class);
+$page = Data::query($source);                                   // defaults, current user
+$page = Data::query($source, $request);                         // the request's query string
+$page = Data::query(EmployeesSource::class, $request);          // a SourceProvider
+$page = Data::query($source, ['filter' => ['age' => ['gte' => '18']], 'sort' => '-created_at']);
+$page = Data::query($source, QueryInput::fromRequest($request, 'employees'));   // ?employees[filter][...]
+$page = Data::query($source, context: QueryContext::for($user)->constrain(new DepartmentScope($id)));
+$page = Data::query($source, context: QueryContext::system());   // jobs/console: no authorization
 
-$page = $data->query($source);                                   // defaults, current user
-$page = $data->query($source, $request);                         // Illuminate\Http\Request query string
-$page = $data->query($source, ['filter' => ['level' => '2'], 'sort' => '-name']);
-$page = $data->query($source, QueryInput::fromRequest($request, 'subjects'));   // ?subjects[filter][...]
-$page = $data->query($source, context: QueryContext::for($user)->constrain(new InstitutionDataScope($id)));
-$page = $data->query($source, context: QueryContext::system());   // jobs/console: no authorization
+$employee = Data::findOrFail($source, $id);                     // scoped, authorized record
+$total = Data::aggregate($source, new Aggregation(AggregateFunction::Sum, 'salary'));
 ```
 
-## Order of operations
+## Stages
 
-1. **Prepare:** compile the source and prepare the provider. Definition errors
-   surface here, before any I/O.
-2. **Authorize:** `DataAuthorizer::authorize(ViewAny)`.
-3. **Validate input:** `QueryInput` becomes a `QueryPlan`; see
-   [filtering](filtering.md), [sorting](sorting.md) and
-   [pagination](pagination.md).
-4. **Base query:** Eloquent builders include global scopes.
-5. **Mandatory constraints**, in this order:
-   1. the source's `Query` nodes;
-   2. registered scopes (`DataManager::scope()`);
-   3. `QueryContext` constraints;
-   4. fixed `Filter` nodes.
-6. **Request filters:** one nested AND group.
-7. **Search:** one nested AND group per term.
-8. **Ordering:** requested or default sorts, then the unique key.
-9. **Eager loading:** `With` and requested `Includable` relations.
-10. **Pagination:** this executes the query (count and select, select only, or
-    cursor).
-11. **Results:** `Transform` nodes run, and you get a `DataResult`.
+1. **Declaration:** `Source::define(...)` (no I/O).
+2. **Validation:** definitions validate themselves; `SourceCompiler`
+   validates references.
+3. **Compilation:** one `SourceDefinition`, cached per `Source` instance; the
+   provider prepares it (relation paths, capabilities).
+4. **Authorization:** `DataAuthorizer::authorize(ViewAny)`, before any query.
+5. **Input:** `QueryInput` becomes a `QueryPlan` through the allowlists; fields
+   the caller may not read are removed from it.
+6. **Scope enforcement**, in order: the tenant scope, `Constraints` queries,
+   registered scopes (`Data::scope()`), `QueryContext` constraints, then
+   `Constraints` filters.
+7. **Execution:** request filters (one nested AND group), search (one group
+   per term), ordering with the unique key, eager loading and aggregates,
+   pagination, under the statement timeout. Or the result cache answers.
+8. **Transformation:** per record, unreadable fields are removed, lazy loading
+   is guarded, then `Transform` runs; a `DataResult` is returned.
 
 ## Trusted constraints
 
 ```php
-new Query(fn (Builder $query) => $query->where('is_published', true)->with('topics'));
-new Query(new PublishedOnly);              // a QueryConstraint class
+Constraints::make([
+    Query::make(fn (Builder $query) => $query->where('is_active', true)),
+    Query::make(new ActiveOnly),                 // a QueryConstraint
+]);
 ```
 
-- **Arguments:** callbacks receive the builder (or, for collection sources, the
-  collection) and the `SourceDefinition`.
+- **Arguments:** the builder (or, for collections, the collection) and the
+  `SourceDefinition`.
 - **Return value:** builder constraints must change and return *the builder
-  they receive*. Returning a different builder is rejected, because it would
-  discard earlier scopes.
+  they receive*; a different builder is rejected, because it would discard
+  earlier scopes.
 - **Isolation:** each constraint's where clauses are grouped, so an `orWhere`
-  inside one constraint can never widen another:
-  `(earlier scopes) AND (is_published = 1 OR ...)`.
+  inside one can never widen another.
 
 ## Results
 
-`DataResult`:
-
-- **`items()`:** models, arrays or items, after transforms.
-- **`collection()`:** the same items as a collection.
-- **`paginator()`:** the Laravel paginator, for `links()`.
-- **`pagination`:** a `PaginationResult` (mode, perPage, count, hasMorePages,
-  currentPage, total, lastPage, from, to, nextCursor, previousCursor).
-- **`applied`:** the request keys that took effect.
-- **`durationMs`:** how long the provider took.
-- **Serialization:** it is `Arrayable` and `JsonSerializable` as
-  `{data, pagination}`. Models serialize through their own `toArray()`.
+`DataResult`: `items()`, `collection()`, `paginator()`, `pagination`
+(`PaginationResult`), `applied`, `durationMs`, `cache`, `profile`, `meta()`;
+`Arrayable` and `JsonSerializable` as `{data, pagination}`.
 
 ## Transformations
 
 ```php
-new Transform(fn (Subject $subject) => ['id' => $subject->id, 'label' => $subject->code.' '.$subject->name]);
-new Transform(new SubjectSummary);         // RecordTransformer
-Transform::only('id', 'name', 'code');     // reads toArray(): $hidden attributes never appear
+Transform::only(['id', 'name', 'email']);
+Transform::except(['internal_notes']);
+Transform::map(['id', 'full_name' => 'name', 'reports' => fn (Employee $e) => $e->reports_count]);
+Transform::resource(EmployeeResource::class);
+Transform::make(fn (Employee $e) => [...]);      // or a RecordTransformer
 ```
 
-Transforms are trusted server-side code, applied to listings and to resolved
-records. Presentation formatting (table cells, form fields) belongs in the UI
-packages.
+Transforms run after authorization, tenant scoping and field security, for
+every caller (cached or not), so they cannot expose what the caller may not
+see: `only()`, `except()` and `map()` read models through `toArray()`, after
+unreadable fields were removed. A closure that lazy loads a relation leaves
+gcego/data's control; eager load it instead.

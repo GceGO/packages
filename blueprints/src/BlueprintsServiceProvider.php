@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Gcego\Blueprints;
 
+use Gcego\Blueprints\Contracts\BlueprintResolver;
 use Gcego\Blueprints\Registry\BlueprintKind;
 use Gcego\Blueprints\Resolution\ReferenceResolver;
+use Gcego\Blueprints\Resolution\RegistryBlueprintResolver;
 use Gcego\Blueprints\Validation\BlueprintValidator;
 use Gcego\Blueprints\Validation\ReferenceRules;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
+use Gcego\Registry\Contracts\RegistryInterface;
 use Gcego\Registry\Kinds\DefinitionKinds;
 use Gcego\Registry\RegistryConfig;
 use Illuminate\Contracts\Config\Repository;
@@ -51,6 +54,9 @@ final class BlueprintsServiceProvider extends ServiceProvider implements Package
         ));
 
         $this->app->singleton(BlueprintKind::class, static fn (Application $app): BlueprintKind => new BlueprintKind($app->make(BlueprintValidator::class)));
+
+        // Backs the Blueprints facade; resolving it discovers nothing until a lookup.
+        $this->app->singleton(BlueprintResolver::class, static fn (Application $app): BlueprintResolver => new RegistryBlueprintResolver($app->make(RegistryInterface::class)));
 
         // After resolution, not now: the registry provider may register after this one.
         $this->callAfterResolving(DefinitionKinds::class, function (DefinitionKinds $kinds): void {

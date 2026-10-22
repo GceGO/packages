@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Search;
 
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Contracts\SearchStrategy;
-use Gcego\Data\Definition\SourceDefinition;
 use Gcego\Data\Support\Columns;
-use Illuminate\Database\Connection;
+use Gcego\Data\Support\Like;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Query\Expression;
 
 /**
  * The default search: case-insensitive substring matching with LIKE.
@@ -28,7 +26,7 @@ use Illuminate\Database\Query\Expression;
  */
 final class LikeSearch implements SearchStrategy
 {
-    public const string Escape = '!';
+    public const string Escape = Like::Escape;
 
     public function apply(EloquentBuilder|QueryBuilder $query, array $fields, array $terms, SourceDefinition $source): void
     {
@@ -37,7 +35,7 @@ final class LikeSearch implements SearchStrategy
 
             $query->where(static function (EloquentBuilder|QueryBuilder $group) use ($fields, $pattern): void {
                 foreach ($fields as $field) {
-                    Columns::where($group, $field, static fn (EloquentBuilder|QueryBuilder $target, string $column) => self::like($target, $column, $pattern), 'or');
+                    Columns::where($group, $field, static fn (EloquentBuilder|QueryBuilder $target, string $column) => Like::where($target, $column, $pattern), 'or');
                 }
             });
         }
@@ -45,22 +43,6 @@ final class LikeSearch implements SearchStrategy
 
     public static function escape(string $term): string
     {
-        return str_replace([self::Escape, '%', '_'], [self::Escape.self::Escape, self::Escape.'%', self::Escape.'_'], $term);
-    }
-
-    /**
-     * @param  EloquentBuilder<Model>|QueryBuilder  $query
-     */
-    private static function like(EloquentBuilder|QueryBuilder $query, string $column, string $pattern): void
-    {
-        $base = $query instanceof EloquentBuilder ? $query->getQuery() : $query;
-        $connection = $base->getConnection();
-        $operator = $connection instanceof Connection && $connection->getDriverName() === 'pgsql' ? 'ilike' : 'like';
-
-        // whereLike() cannot add an ESCAPE clause, and SQLite has no default escape character.
-        // The SQL is not a literal only because the column is: a trusted Search field that
-        // passed FieldName::Pattern and is wrapped by the grammar. The term is a binding.
-        $sql = sprintf("%s %s ? escape '%s'", $base->getGrammar()->wrap($column), $operator, self::Escape);
-        $query->whereRaw(new Expression($sql), [$pattern]); // @phpstan-ignore argument.type
+        return Like::escape($term);
     }
 }

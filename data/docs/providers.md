@@ -1,62 +1,53 @@
 # Providers
 
-## Eloquent (`eloquent`)
+| | Eloquent (`Model`) | Query builder (`DatabaseTable`, `BuilderFactory`) | Collection (`Items`) |
+| --- | --- | --- | --- |
+| Records | models | arrays | the items |
+| Authorization | model policies | `gcego-data.query` ability | `gcego-data.query` ability |
+| Global scopes, soft deletes | applied | not applicable | not applicable |
+| Relations, relation filters and search, aggregates | yes | no | no |
+| Text, range and list filters | SQL | SQL | in PHP, same semantics |
+| Pagination | pages, simple, cursor | pages, simple, cursor | pages, simple |
+| Writes | yes | tables only | no |
+| Hidden attributes | `$hidden`, `FieldSecurity` | select columns, `FieldSecurity` | `FieldSecurity` |
 
-`new Source(Subject::class)`
+## Eloquent
 
-- **Base query:** `$model->newQuery()`. Global scopes (tenancy, soft deletes,
-  custom scopes) always apply; nothing removes them automatically. Opt in
-  explicitly, in trusted code:
-  `new Query(fn ($q) => $q->withTrashed())`.
-- **Connection:** the model's own, unless `Source::Connection` is set.
-- **Keys:** read from the model.
-  - Integer keys accept digits only.
-  - `HasUuids` and `HasUlids` models validate keys with the model's own rule.
-  - String keys are any non-empty string up to 255 characters.
-  - Malformed keys are "not found" without a query.
-- **Records:** model instances. `$hidden`, `$visible`, casts and accessors apply
-  when serialized.
-- **Relation paths:** `topics.name` in a filter or search means "has a related
-  topic whose name matches" (`whereHas`), so the relation's own scopes apply.
-- **Columns:** no column selection (`Source::Columns` is rejected). Use
-  `$hidden` or `Transform::only()`.
+`Model::make(Employee::class)`
 
-## Query builder (`query`)
+- **Base query:** `$model->newQuery()`; global scopes always apply. Opt out
+  explicitly in trusted code: `Query::make(fn ($q) => $q->withTrashed())`.
+- **Connection:** the model's, unless `Connection::make()` is declared.
+- **Keys:** integer keys accept digits only; `HasUuids`/`HasUlids` keys use
+  the model's rule; string keys any non-empty string up to 255 characters.
+  Malformed keys are "not found" without a query.
+- **Relation paths:** `department.name` means "has a related department whose
+  name matches" (`whereHas` per level, tenant-scoped for tenant-owned models).
+- **Columns:** no column selection; use `$hidden`, `FieldSecurity` or
+  `Transform`.
 
-`Source::table('subjects')` or `Source::builder(fn () => DB::table(...))`.
+## Query builder
 
-- **Factory:** it is trusted code, called once per execution, and its bindings
-  are kept. It must return an `Illuminate\Database\Query\Builder`; an
-  Eloquent builder is rejected, so use a model source with a `Query` node.
-- **Rows:** associative arrays.
-- **Not available:** models, global scopes, casts, `$hidden` and relationships.
-  **Select only what you mean to expose** (`Source::Columns` or `select()`).
-- **Fields:** used as written (`name`, `subjects.name`).
-- **Key:** `Source::Key`, default `id`. It is used for lookups and as the
-  final ordering.
+`DatabaseTable::make('report_rows')` or `BuilderFactory::make(fn () => DB::table(...))`.
 
-| | Eloquent `Builder` | Query `Builder` |
-| --- | --- | --- |
-| Records | models | arrays |
-| Global scopes, soft deletes | applied | not applicable |
-| Relationships, `topics.name` paths | yes | no; dotted names are `table.column` |
-| Hidden attributes | `$hidden` | select columns explicitly |
+- **Factory:** trusted code, called per execution. It must return an
+  `Illuminate\Database\Query\Builder`; an Eloquent builder is rejected (use a
+  model source with `Constraints::make([Query::make(...)])`).
+- **No models:** no global scopes, casts, `$hidden` or relationships. **Select
+  only what callers may see** (`Columns::make([...])` or `select()`).
+- **Key:** `Key::make('code')`, default `id`.
+- **Writes:** table sources only; builder factories are read-only.
 
-## Collection (`collection`)
+## Collection
 
-`Source::collection(fn () => [...])` or `Source::collection($items)`.
+`Items::make(fn () => [...])` or `Items::make($items)`.
 
-- **Items:** arrays or objects, read with `data_get()`. The original collection
-  is never modified.
-- **Evaluation:** filters, search, sorting and pagination run in PHP over
-  **all** items on every call. Use it for small, bounded data (settings, terms,
-  enums, data already fetched), not large tables.
-- **Comparison:** numbers numerically, booleans as booleans, everything else as
-  case-sensitive strings.
-- **Search:** case-insensitive.
-- **Sorting:** stable.
-- **Not supported:** cursor pagination and relationships, both rejected when
-  the source is prepared.
+- **Evaluation:** every call loads every item (at most
+  `performance.collection_max_items`, 10,000); keep it small and bounded.
+- **Comparison:** numbers numerically, booleans as booleans, otherwise
+  strings; text operators and search are case-insensitive.
+- **Not supported:** cursor pagination, relationships, relation filters,
+  aggregates and writes; rejected when the source is prepared.
 
 ## Custom providers
 
@@ -67,18 +58,17 @@ final class ReportProvider implements DataProvider, ResolvesRecords
 
     public function fetch(SourceDefinition $source, QueryPlan $plan, array $constraints): AbstractPaginator|AbstractCursorPaginator { /* ... */ }
 
-    public function find(SourceDefinition $source, string|int $key, array $constraints, array $includes = []): mixed { /* ... */ }
+    public function find(SourceDefinition $source, string|int $key, array $constraints, array $includes = [], array $aggregates = []): mixed { /* ... */ }
 }
 
-// A service provider's register() or boot():
-$this->app->make(DataManager::class)->provider('reports', ReportProvider::class);
+Data::provider('reports', ReportProvider::class);       // a service provider's register() or boot()
 
-new Source(new Property(Source::Provider, 'reports'), new Paginate(20));
+Source::define(Provider::make('reports'), Pagination::make(20));
 ```
 
-- **Contract:** apply `$constraints` first. They are mandatory, and the order
-  is documented on `DataProvider`.
-- **Request input:** use only the `QueryPlan`, never raw input.
-- **State:** stay stateless, because providers are shared singletons.
-- **Capabilities:** implement only the ones you support. The pipeline rejects
-  cursor pagination, for example, when `SupportsCursorPagination` is missing.
+- **Contract:** apply `$constraints` first (they include the tenant scope);
+  use only the `QueryPlan`, never raw input; stay stateless (providers are
+  shared singletons); bind every value.
+- **Capabilities:** implement only what you support (`ResolvesRecords`,
+  `SupportsCursorPagination`, `SupportsAggregation`, `SupportsMutations`,
+  `SupportsRelationships`, `InspectsQueries`); the pipeline rejects the rest.

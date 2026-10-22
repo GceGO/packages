@@ -4,12 +4,21 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Contracts;
 
-use Gcego\Components\Contracts\ConfigurationNode;
-
 /**
- * A configuration node accepted by Source (Filter, Sort, Paginate, Query, ...).
+ * A top-level source definition, passed to Source::define(): Name, Model,
+ * Filterables, Search, Sort, Pagination, ... (Gcego\Data\Definitions).
  *
- * Packages may implement it for their own source options; the compiler
- * keeps unknown implementations in SourceDefinition::$extensions.
+ * Other packages implement it for their own source options; each class may
+ * appear once per source, and the compiler keeps unknown implementations in
+ * SourceDefinition::$extensions. Implementations must be immutable.
  */
-interface SourceConfiguration extends ConfigurationNode {}
+interface SourceConfiguration
+{
+    /**
+     * A plain description for diagnostics and caching. It must never contain
+     * closures, credentials or other server-side secrets.
+     *
+     * @return array<string, mixed>
+     */
+    public function normalize(): array;
+}

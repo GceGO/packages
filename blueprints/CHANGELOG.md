@@ -3,7 +3,7 @@
 All notable changes to `gcego/blueprints` are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
-## [0.2.0] - 2026-10-21
+## [1.0.0] - 2026-10-21
 
 Requires `gcego/core` ^1.0 and `gcego/registry` ^1.1 (class entrypoints and shared-folder attribution), both from Packagist.
 
@@ -24,6 +24,7 @@ Requires `gcego/core` ^1.0 and `gcego/registry` ^1.1 (class entrypoints and shar
 - `BlueprintsServiceProvider` (a gcego/core package, capability `blueprints`) and `config/gcego-blueprints.php` (`kind`, `validate_references`).
 - `ReferenceRules`, `Rules\ClassExists`, `Rules\ImplementsContract`; opt-in derived definitions through `BlueprintDeriver`.
 - `InvalidDefinitionException`, `DefinitionRegistrationException`, `Naming::isClassName()` and `Naming::isDescription()`.
+- `Facades\Blueprints` (`has()`, `resolve()`, `names()`, `all()`), backed by `Resolution\RegistryBlueprintResolver`, which `BlueprintsServiceProvider` binds to the `BlueprintResolver` contract.
 
 ### Removed
 

@@ -1,79 +1,114 @@
 # Sources
 
-## Forms
+A source is declared once with `Source::define()` and typed definition
+objects, the same convention as `Blueprint::define()` in gcego/blueprints.
 
 ```php
-new Source(Subject::class);                                    // Eloquent (shorthand)
-Source::model(Subject::class, new Paginate(10));
-Source::table('report_rows', new Sortable('total'));           // query builder over a table
-Source::builder(fn () => DB::table('enrolments')->join(...)->select(...), new Property(Source::Key, 'enrolments.id'));
-Source::collection(fn () => config('school.terms'));           // in-memory items
-```
+use Gcego\Data\Definitions\{Constraints, Filterables, Model, Name, Pagination, Search, Sort, Sortables};
+use Gcego\Data\Filters\{Filter, Filterable};
+use Gcego\Data\Filters\Operators\{Between, Equal, GreaterThan, GreaterThanOrEqual, In, LessThan};
+use Gcego\Data\Filters\Types\{Date, Decimal, Integer, StringType};
+use Gcego\Data\Source;
 
-The provider is inferred: a model means `eloquent`, items mean `collection`,
-and a table or builder means `query`. Set `Source::Provider` to use a custom
-provider (see [providers](providers.md)).
-
-## Properties
-
-Every setting has a Property form, using the gcego/components property
-system. Property and node forms are equivalent. Declaring one setting twice
-(both forms, or two `Paginate` nodes) is an error, never a silent override.
-
-| Constant | Value | Equivalent node |
-| --- | --- | --- |
-| `Source::Model` | model class (the positional shorthand) | |
-| `Source::Provider` | provider name | |
-| `Source::Table`, `Source::Connection` | table, connection name | |
-| `Source::Key` | unique key for query/collection sources (default `id`) | |
-| `Source::Columns` | selected columns (query sources) | |
-| `Source::Builder`, `Source::Items` | `new Callback(fn () => ...)` | |
-| `Source::Query` | `new Callback(fn ($query) => ...)` | `new Query(...)` |
-| `Source::Filters` | `['is_published' => true, 'level' => [1, 2]]` | `Filter` (lists become `in`) |
-| `Source::Search` | `['name', 'code']` | `new Search(...)` |
-| `Source::Sort` | `['-level', 'name']` | `Sort` nodes |
-| `Source::Pagination` | `25` | `new Paginate(25)` |
-| `Source::Relationships` | `['topics']` | `new With(...)` |
-| `Component::Name` | name used in errors, diagnostics and the query-builder ability | |
-
-```php
-new Source(
-    new Property(Source::Model, Subject::class),
-    new Property(Source::Pagination, 25),
-    new Property(Source::Sort, ['-level', 'name']),
+return Source::define(
+    Name::make('employees'),
+    Model::make(Employee::class),
+    Constraints::make([
+        Filter::make('is_active', true),
+    ]),
+    Filterables::make([
+        Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make(), LessThan::make()]),
+        Filterable::make('salary', [Decimal::make(), GreaterThan::make(), Between::make()]),
+        Filterable::make('status', [StringType::make(), Equal::make(), In::make()]),
+        Filterable::make('created_at', [Date::make(), Between::make()]),
+    ]),
+    Search::make(['name', 'email']),
+    Sort::make('created_at', 'desc'),
+    Sortables::make(['name', 'created_at']),
+    Pagination::make(25),
 );
 ```
 
-## Validation
+## Origins
 
-- **Construction** only checks structure, like every component.
-- **On first use** the source is validated in full, and `InvalidSourceException`
-  names every problem:
-  - a missing class, or one that isn't a `Model`;
-  - none or several origins;
-  - invalid properties;
-  - duplicate settings;
-  - unknown relations.
-- **Inspection:** `$blueprint->validate()` and `DataManager::inspect($source)`
-  report the same problems without throwing.
+Exactly one is required:
 
-## Names
+| Definition | Provider | Records |
+| --- | --- | --- |
+| `Model::make(Employee::class)` | `eloquent` | models |
+| `DatabaseTable::make('report_rows')` | `query` | arrays |
+| `BuilderFactory::make(fn () => DB::table(...)->join(...))` | `query` (read-only) | arrays |
+| `Items::make(fn () => config('hospital.wards'))` | `collection` | the items |
+| `Provider::make('reports')` | a custom provider | provider-defined |
 
-The default name is the snake-case plural of the model (`subjects`), or the
-table name, `collection` or `query`. Override it with
-`new Property(Component::Name, 'catalogue')`.
+`Connection::make('archive')` chooses a connection. Table, builder and
+collection sources may declare `Key::make('code')` (default `id`) and table
+or builder sources `Columns::make([...])`.
 
-## In blueprints
+## Definitions
+
+| Definition | Purpose |
+| --- | --- |
+| `Name::make('employees')` | name in errors, diagnostics, the Gate ability and cache keys (default: the model's snake-case plural or the table) |
+| `Constraints::make([Filter::make(...), Query::make(...)])` | trusted, mandatory conditions ([queries](queries.md)) |
+| `Filterables::make([Filterable::make(...), CustomFilter::make(...)])` | request filters ([filtering](filtering.md)) |
+| `Search::make([...])` | searchable fields ([searching](searching.md)) |
+| `Sort::make(...)`, `Sortables::make([...])` | default and request ordering ([sorting](sorting.md)) |
+| `Pagination::make(25)` | paging ([pagination](pagination.md)) |
+| `Relations::make([...])`, `Includables::make([...])`, `Aggregates::make([...])` | relationships ([relationships](relationships.md)) |
+| `Transform::only([...])` | output shape ([queries](queries.md#transformations)) |
+| `Writable::make([...])`, `BeforeSave::make(...)` | writes ([mutations](mutations.md)) |
+| `TenantScoped::make('company_id')` | tenant isolation ([tenancy](tenancy.md)) |
+| `FieldSecurity::make([FieldAccess::...])` | field-level security ([security](security.md)) |
+| `Cached::make(ttl: 300)` | result caching ([caching](caching.md)) |
+| `Limits::make(...)` | execution limits ([performance](performance.md)) |
+
+## Rules
+
+- **Definition time** (`Source::define()`): each definition class at most
+  once; exactly one origin; every definition validates its own arguments
+  (field names, operators against value types, relation depth, page sizes).
+  Problems throw `InvalidSourceException` at once.
+- **Compile time** (first use, or `Data::inspect()`): the model class must
+  exist and be an Eloquent model, cross-definition rules (a writable tenant
+  column, a cached source without a name, Columns on a model source), and the
+  provider's checks (relation paths exist, cursor ordering).
+- **No I/O:** defining or compiling never queries the database; model classes
+  are autoloaded only when compiled.
+- **Immutable:** `$source->with(Pagination::make(50))` and
+  `$source->without(Search::class)` return copies.
+- **Closures** (`Query::make`, `BuilderFactory`, `Items`, relation
+  constraints, `Transform::make`, `BeforeSave`) are trusted application code.
+  `normalize()`, diagnostics and cache keys never contain them.
+
+## Class-based sources
 
 ```php
-new Blueprint('subjects', new Source(Subject::class), /* table, form, ... */);
+final class EmployeesSource implements SourceProvider
+{
+    public function __construct(private CompanySettings $settings) {}
 
-$source = app(DataManager::class)->sourceOf($blueprint);   // $blueprint->part('source')
+    public function source(): Source
+    {
+        return Source::define(
+            Name::make('employees'),
+            Model::make(Employee::class),
+            Pagination::make($this->settings->pageSize()),
+        );
+    }
+}
+
+Data::query(EmployeesSource::class, $request);   // resolved through the container
 ```
 
-A blueprint has at most one source.
+Every `Data` method accepts a `Source`, a `SourceProvider` instance or a
+`SourceProvider` class name (checked before the container instantiates it).
+`source()` must stay pure: no queries, and no per-request state that should
+be a `QueryContext` constraint.
 
-- **Registry:** gcego/registry stores only scalar metadata, so callbacks never
-  reach the manifest. This is tested with `gcego:registry-cache`.
-- **Runtime:** when gcego/runtime is installed, the Source part renders as
-  nothing.
+## Caching definitions
+
+Sources are PHP values built at runtime: they are not serialized into cache
+files. What can be cached is the *result* of a query (`Cached`, see
+[caching](caching.md)). Closures are rebuilt naturally because the source is
+rebuilt from code (a `SourceProvider` or a definition file) on each request.

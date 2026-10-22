@@ -4,172 +4,154 @@ declare(strict_types=1);
 
 namespace Gcego\Data;
 
-use Closure;
-use Gcego\Blueprints\BlueprintRole;
-use Gcego\Blueprints\Contracts\BlueprintPart;
-use Gcego\Components\Component;
-use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Components\Contracts\ConfigurationNode;
-use Gcego\Components\Properties\Property;
-use Gcego\Components\Schema\ComponentDefinition;
-use Gcego\Components\Schema\PropertyDefinition;
-use Gcego\Components\Schema\Type;
 use Gcego\Data\Contracts\SourceConfiguration;
-use Gcego\Data\Support\Callback;
-use Gcego\Data\Support\FieldName;
-use Illuminate\Database\Eloquent\Model;
+use Gcego\Data\Definitions\BuilderFactory;
+use Gcego\Data\Definitions\DatabaseTable;
+use Gcego\Data\Definitions\Items;
+use Gcego\Data\Definitions\Model;
+use Gcego\Data\Definitions\Name;
+use Gcego\Data\Definitions\Provider;
+use Gcego\Data\Exceptions\InvalidSourceException;
 
 /**
- * A declarative data-source definition, and the "source" part of a blueprint.
+ * A declarative, immutable data-source definition:
  *
- *     new Source(Subject::class);
- *
- *     new Source(new Property(Source::Model, Subject::class), new Property(Source::Pagination, 25));
- *
- *     new Source(
- *         Subject::class,
- *         new Filter('is_published', true),
- *         new Sort('name', 'asc'),
- *         new Paginate(25),
+ *     return Source::define(
+ *         Name::make('employees'),
+ *         Model::make(Employee::class),
+ *         Constraints::make([Filter::make('is_active', true)]),
+ *         Filterables::make([
+ *             Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make(), LessThan::make()]),
+ *             Filterable::make('status', [StringType::make(), Equal::make(), In::make()]),
+ *         ]),
+ *         Search::make(['name', 'email']),
+ *         Sort::make('created_at', 'desc'),
+ *         Sortables::make(['name', 'created_at']),
+ *         Pagination::make(25),
  *     );
  *
- *     Source::table('report_rows', new Sortable('total'));
- *     Source::collection(fn () => config('school.terms'));
- *
- * A Source only describes data. Constructing one never touches the database;
- * queries run when DataManager (or a package built on it) executes it.
- * Like every component it is immutable.
+ * Each definition class may appear once. Exactly one origin is required:
+ * Model, DatabaseTable, BuilderFactory or Items (or a custom Provider).
+ * Defining a source never touches the database or autoloads model classes;
+ * SourceCompiler checks references when the source is first used, and
+ * DataManager executes it.
  */
-final class Source extends Component implements BlueprintPart
+final class Source
 {
-    /** Eloquent model class (the positional shorthand). */
-    public const string Model = 'model';
-
-    /** Provider name: "eloquent", "query", "collection" or a registered custom provider. Inferred when omitted. */
-    public const string Provider = 'provider';
-
-    /** Database table of a query-builder source. */
-    public const string Table = 'table';
-
-    /** Database connection name. Eloquent sources default to the model's connection. */
-    public const string Connection = 'connection';
-
-    /** Unique key of a query-builder or collection source (default "id"). Eloquent uses the model's key. */
-    public const string Key = 'key';
-
-    /** Columns selected by a query-builder source (default all). */
-    public const string Columns = 'columns';
-
-    /** Trusted factory (Callback) returning a query builder, for query-builder sources. */
-    public const string Builder = 'builder';
-
-    /** Trusted factory (Callback) returning the items of a collection source. */
-    public const string Items = 'items';
-
-    /** Trusted constraint (Callback), equivalent to a Query node. */
-    public const string Query = 'query';
-
-    /** Fixed equality conditions: ['is_published' => true], equivalent to Filter nodes. */
-    public const string Filters = 'filters';
-
-    /** Searchable fields, equivalent to a Search node. */
-    public const string Search = 'search';
-
-    /** Default ordering: ['name', '-created_at'], equivalent to Sort nodes. */
-    public const string Sort = 'sort';
-
-    /** Page size, equivalent to new Paginate($size). */
-    public const string Pagination = 'pagination';
-
-    /** Always eager-loaded relations, equivalent to a With node. */
-    public const string Relationships = 'relationships';
+    /** @var list<class-string<SourceConfiguration>> */
+    public const array Origins = [Model::class, DatabaseTable::class, BuilderFactory::class, Items::class];
 
     /**
-     * @param  class-string<Model>  $model
+     * @param  array<class-string<SourceConfiguration>, SourceConfiguration>  $definitions
      */
-    public static function model(string $model, Property|ConfigurationNode ...$items): self
-    {
-        return new self($model, ...$items);
-    }
+    private function __construct(private readonly array $definitions) {}
 
-    public static function table(string $table, Property|ConfigurationNode ...$items): self
+    /**
+     * @throws InvalidSourceException for duplicate definitions, a missing origin or several origins.
+     */
+    public static function define(SourceConfiguration ...$definitions): self
     {
-        return new self(new Property(self::Table, $table), ...$items);
+        $byClass = [];
+
+        foreach ($definitions as $definition) {
+            $class = $definition::class;
+
+            if (isset($byClass[$class])) {
+                throw InvalidSourceException::invalidDefinition('Source', sprintf('%s is declared twice.', class_basename($class)));
+            }
+
+            $byClass[$class] = $definition;
+        }
+
+        $origins = array_values(array_filter(self::Origins, static fn (string $origin): bool => isset($byClass[$origin])));
+
+        if (count($origins) > 1) {
+            throw InvalidSourceException::invalidDefinition('Source', sprintf('declare only one of Model, DatabaseTable, BuilderFactory or Items (found %s).', implode(', ', array_map(class_basename(...), $origins))));
+        }
+
+        if ($origins === [] && ! isset($byClass[Provider::class])) {
+            throw InvalidSourceException::invalidDefinition('Source', 'declare where the data comes from: Model::make(...), DatabaseTable::make(...), BuilderFactory::make(...), Items::make(...) or a custom Provider::make(...).');
+        }
+
+        return new self($byClass);
     }
 
     /**
-     * A query-builder source from a trusted factory, called for every execution:
+     * A copy with these definitions added or replaced (one per class).
      *
-     *     Source::builder(fn () => DB::table('enrolments')->join(...)->select(...), new Property(Source::Key, 'enrolments.id'))
+     * @throws InvalidSourceException
      */
-    public static function builder(Closure $factory, Property|ConfigurationNode ...$items): self
+    public function with(SourceConfiguration ...$definitions): self
     {
-        return new self(new Property(self::Builder, new Callback($factory)), ...$items);
+        $replaced = array_map(static fn (SourceConfiguration $definition): string => $definition::class, $definitions);
+
+        return self::define(...array_values(array_diff_key($this->definitions, array_flip($replaced))), ...$definitions);
     }
 
     /**
-     * An in-memory source. Suitable for small, bounded datasets: every execution loads all items.
+     * A copy without these definition classes.
      *
-     * @param  Closure(): iterable<mixed>|iterable<mixed>  $items
+     * @param  class-string<SourceConfiguration>  ...$classes
+     *
+     * @throws InvalidSourceException
      */
-    public static function collection(Closure|iterable $items, Property|ConfigurationNode ...$configuration): self
+    public function without(string ...$classes): self
     {
-        $factory = $items instanceof Closure ? $items : static fn (): iterable => $items;
-
-        return new self(new Property(self::Items, new Callback($factory)), ...$configuration);
-    }
-
-    public function blueprintRole(): BlueprintRole
-    {
-        return BlueprintRole::single(BlueprintRole::Source);
-    }
-
-    protected static function defineSchema(): ComponentDefinition
-    {
-        $field = static fn (mixed $value): bool => is_string($value) && FieldName::isValid($value);
-        $fields = static fn (mixed $value): bool => is_array($value) && $value !== [] && array_filter($value, static fn (mixed $item): bool => ! $field($item)) === [];
-
-        return parent::defineSchema()
-            ->withType('data.source')
-            ->withProperties(
-                new PropertyDefinition(self::Model, Type::classString(Model::class), description: 'Eloquent model class.'),
-                new PropertyDefinition(self::Provider, Type::string(), rule: static fn (mixed $value): bool => is_string($value) && preg_match('/^[a-z][a-z0-9_.-]{0,63}$/', $value) === 1, ruleDescription: 'provider name'),
-                new PropertyDefinition(self::Table, Type::string(), rule: $field, ruleDescription: 'table name'),
-                new PropertyDefinition(self::Connection, Type::string(), rule: static fn (mixed $value): bool => is_string($value) && $value !== '', ruleDescription: 'connection name'),
-                new PropertyDefinition(self::Key, Type::string(), rule: $field, ruleDescription: 'column name'),
-                new PropertyDefinition(self::Columns, Type::list(), rule: $fields, ruleDescription: 'non-empty list of column names'),
-                new PropertyDefinition(self::Builder, Type::instanceOf(Callback::class)),
-                new PropertyDefinition(self::Items, Type::instanceOf(Callback::class)),
-                new PropertyDefinition(self::Query, Type::instanceOf(Callback::class)),
-                new PropertyDefinition(self::Filters, Type::array(), rule: static fn (mixed $value): bool => is_array($value) && $value !== [] && ! array_is_list($value), ruleDescription: 'map of field => value'),
-                new PropertyDefinition(self::Search, Type::list(), rule: $fields, ruleDescription: 'non-empty list of field names'),
-                new PropertyDefinition(self::Sort, Type::list(), rule: static fn (mixed $value): bool => is_array($value) && $value !== [] && array_filter($value, static fn (mixed $item): bool => ! is_string($item) || ! $field(ltrim($item, '-'))) === [], ruleDescription: 'list of fields, "-" prefix for descending'),
-                new PropertyDefinition(self::Pagination, Type::int(), rule: static fn (mixed $value): bool => is_int($value) && $value >= 1, ruleDescription: 'positive page size'),
-                new PropertyDefinition(self::Relationships, Type::list(), rule: $fields, ruleDescription: 'non-empty list of relation paths'),
-            )
-            ->withoutChildren()
-            ->withAllowedConfigurations([SourceConfiguration::class])
-            ->withConstraint(static function (ComponentInterface $source): ?string {
-                if (! $source instanceof self) {
-                    return null;
-                }
-
-                $origins = array_values(array_filter([self::Model, self::Table, self::Builder, self::Items], $source->has(...)));
-                $custom = $source->has(self::Provider) && ! in_array($source->get(self::Provider), ['eloquent', 'query', 'collection'], true);
-
-                return match (true) {
-                    count($origins) > 1 => sprintf('declare only one of model, table, builder or items (found %s).', implode(', ', $origins)),
-                    $origins === [] && ! $custom => 'declare a model class (new Source(Subject::class)), a table, a builder or items.',
-                    default => null,
-                };
-            });
+        return self::define(...array_values(array_diff_key($this->definitions, array_flip($classes))));
     }
 
     /**
-     * @return list<string>
+     * The definition of this class, if declared.
+     *
+     * @template T of SourceConfiguration
+     *
+     * @param  class-string<T>  $class
+     * @return T|null
      */
-    protected static function shorthand(): array
+    public function get(string $class): ?SourceConfiguration
     {
-        return [self::Model];
+        $definition = $this->definitions[$class] ?? null;
+
+        return $definition instanceof $class ? $definition : null;
+    }
+
+    /**
+     * @param  class-string<SourceConfiguration>  $class
+     */
+    public function has(string $class): bool
+    {
+        return isset($this->definitions[$class]);
+    }
+
+    /**
+     * @return list<SourceConfiguration> In declaration order.
+     */
+    public function definitions(): array
+    {
+        return array_values($this->definitions);
+    }
+
+    /**
+     * The declared Name, if any (SourceDefinition::$name always has one).
+     */
+    public function name(): ?string
+    {
+        return $this->get(Name::class)?->value;
+    }
+
+    /**
+     * A plain description without closures, safe for diagnostics and caches.
+     *
+     * @return array{definitions: array<string, array<string, mixed>>}
+     */
+    public function normalize(): array
+    {
+        $normalized = [];
+
+        foreach ($this->definitions as $class => $definition) {
+            $normalized[$class] = $definition->normalize();
+        }
+
+        return ['definitions' => $normalized];
     }
 }

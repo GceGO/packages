@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Query;
 
+use Gcego\Data\Compilation\SourceDefinition;
+use Gcego\Data\Contracts\FilterValueType;
+use Gcego\Data\Contracts\Operator;
 use Gcego\Data\DataConfig;
-use Gcego\Data\Definition\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidFilterException;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Exceptions\InvalidSortException;
+use Gcego\Data\Filters\CustomFilter;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\Filterable;
-use Gcego\Data\Filters\FilterOperator;
+use Gcego\Data\Filters\Types\StringType;
 use Gcego\Data\Pagination\PaginationMode;
-use Gcego\Data\Sorting\Sort;
+use Gcego\Data\Relationships\RelationAggregate;
 use Gcego\Data\Sorting\SortDirection;
 
 /**
@@ -22,9 +25,10 @@ use Gcego\Data\Sorting\SortDirection;
  * - Filters: the key must be Filterable, the operator allowed, the value valid
  *   for its type (and options); the column comes from the definition.
  * - Search: trimmed, length- and term-limited.
- * - Sort: keys must be Sortable; defaults apply when none are requested.
+ * - Sort: keys must be in Sortables; defaults apply when none are requested.
  * - Pagination: positive page, page size capped by the source and the configuration.
- * - Includes: exact allowlisted relation paths.
+ * - Includes: exact allowlisted relation paths and optional relation aggregate aliases.
+ * - Limits: offset pagination stops at the configured maximum offset.
  *
  * Unknown keys are rejected in strict mode (the default) and ignored otherwise.
  * Invalid values are always rejected.
@@ -38,9 +42,9 @@ final readonly class QueryResolver
      */
     public function resolve(SourceDefinition $source, QueryInput $input): QueryPlan
     {
-        [$filters, $appliedFilters] = $this->filters($source, $input);
+        [$filters, $customFilters, $appliedFilters] = $this->filters($source, $input);
+        [$includes, $aggregates] = $this->includes($source, $input);
         [$sorts, $appliedSorts] = $this->sorts($source, $input);
-        $includes = $this->includes($source, $input);
         $pagination = $source->pagination;
         $limit = min($pagination->max ?? $this->config->maxPerPage, $this->config->maxPerPage);
         $perPage = min($input->perPage ?? $pagination->perPage ?? $this->config->defaultPerPage, $limit);
@@ -55,6 +59,21 @@ final readonly class QueryResolver
             throw InvalidQueryException::invalid('page', 'is out of range.');
         }
 
+        $maxOffset = $source->limits->maxOffset ?? $this->config->maxOffset;
+
+        if ($pagination->mode !== PaginationMode::Cursor && $maxOffset !== null && ($page - 1) * $perPage > $maxOffset) {
+            throw InvalidQueryException::invalid('page', sprintf('is beyond the deepest page this source serves (offset %d); narrow the results with filters or search.', $maxOffset));
+        }
+
+        // Sorting by an optional aggregate computes it.
+        foreach ($sorts as ['column' => $column]) {
+            $aggregate = $source->aggregates[$column] ?? null;
+
+            if ($aggregate !== null && ! in_array($aggregate, $aggregates, true)) {
+                $aggregates[] = $aggregate;
+            }
+        }
+
         return new QueryPlan(
             filters: $filters,
             terms: $this->terms($source, $input),
@@ -64,62 +83,82 @@ final readonly class QueryResolver
             perPage: $perPage,
             page: $pagination->mode === PaginationMode::Cursor ? 1 : $page,
             cursor: $input->cursor,
-            applied: ['filter' => $appliedFilters, 'sort' => $appliedSorts, 'include' => array_keys($includes)],
+            applied: ['filter' => $appliedFilters, 'sort' => $appliedSorts, 'include' => [...array_keys($includes), ...array_values(array_map(static fn (RelationAggregate $aggregate): string => $aggregate->alias, array_filter($aggregates, static fn (RelationAggregate $aggregate): bool => $aggregate->optional)))]],
+            customFilters: $customFilters,
+            aggregates: $aggregates,
+            timeoutMs: $source->limits->timeoutMs ?? $this->config->timeoutMs,
+            maxItems: $source->limits->maxItems ?? $this->config->collectionMaxItems,
         );
     }
 
     /**
-     * @return array{0: list<Filter>, 1: list<string>}
+     * @return array{0: list<Filter>, 1: list<array{filter: CustomFilter, value: scalar|list<scalar>}>, 2: list<string>}
      */
     private function filters(SourceDefinition $source, QueryInput $input): array
     {
         $filters = [];
+        $custom = [];
         $applied = [];
 
         foreach ($input->filters as $key => $operators) {
             $filterable = $source->filterables[$key] ?? null;
+            $customFilter = $source->customFilters[$key] ?? null;
 
-            if ($filterable === null) {
+            if ($filterable === null && $customFilter === null) {
                 if ($this->config->strict) {
-                    throw InvalidFilterException::unknownField($key, array_keys($source->filterables));
+                    throw InvalidFilterException::unknownField($key, [...array_keys($source->filterables), ...array_keys($source->customFilters)]);
                 }
 
                 continue;
             }
 
             foreach ($operators as $name => $value) {
-                $operator = FilterOperator::tryFrom($name);
+                if ($customFilter !== null) {
+                    $operator = $customFilter->operator($name) ?? throw InvalidFilterException::unsupportedOperator($key, $name, $customFilter->operatorNames());
 
-                if ($operator === null || ! $filterable->allows($operator)) {
-                    throw InvalidFilterException::unsupportedOperator($key, $name, array_map(static fn (FilterOperator $allowed): string => $allowed->value, $filterable->operators));
-                }
-
-                // An empty value (?filter[status]=) means "no filter", as forms submit it for "All".
-                if ($value === '' || $value === null || $value === []) {
-                    if ($operator->arity() !== 0) {
+                    if ($value === '' || $value === null || $value === []) {
                         continue;
                     }
+
+                    $cast = $this->cast($key, $customFilter->type, $customFilter->options, $operator, $value);
+
+                    if ($cast === null) {
+                        continue;
+                    }
+
+                    $custom[] = ['filter' => $customFilter, 'value' => $cast];
+                    $applied[] = $key;
+
+                    continue;
                 }
 
-                $filters[] = new Filter($filterable->column, $this->value($filterable, $operator, $value), $operator);
+                /** @var Filterable $filterable */
+                $operator = $filterable->operator($name) ?? throw InvalidFilterException::unsupportedOperator($key, $name, $filterable->operatorNames());
+
+                // An empty value (?filter[status]=) means "no filter", as forms submit it for "All".
+                if (($value === '' || $value === null || $value === []) && $operator->arity() !== 0) {
+                    continue;
+                }
+
+                $type = $filterable->type ?? StringType::make();
+                $filters[] = Filter::trusted($filterable->column, $this->cast($key, $type, $filterable->options, $operator, $value), $operator, $type);
                 $applied[] = $key;
             }
         }
 
-        return [$filters, array_values(array_unique($applied))];
+        return [$filters, $custom, array_values(array_unique($applied))];
     }
 
     /**
+     * @param  list<string|int|float|bool>  $options
      * @return string|int|float|bool|list<string|int|float|bool>|null
      */
-    private function value(Filterable $filterable, FilterOperator $operator, mixed $value): mixed
+    private function cast(string $key, FilterValueType $type, array $options, Operator $operator, mixed $value): string|int|float|bool|array|null
     {
-        $key = $filterable->key;
-
         if ($operator->arity() === 0) {
             return in_array($value, [null, '', true, 1, '1', 'true'], true)
                 ? null
-                : throw InvalidFilterException::invalidValue($key, sprintf('%s takes no value (use 1 or true).', $operator->value));
+                : throw InvalidFilterException::invalidValue($key, sprintf('%s takes no value (use 1 or true).', $operator->name()));
         }
 
         if (! is_array($value) && ! is_scalar($value)) {
@@ -129,11 +168,11 @@ final readonly class QueryResolver
         $values = is_array($value) ? $value : ($operator->arity() === 1 ? [$value] : explode(',', (string) $value));
 
         if ($operator->arity() === 1 && count($values) !== 1) {
-            throw InvalidFilterException::invalidValue($key, sprintf('%s takes a single value.', $operator->value));
+            throw InvalidFilterException::invalidValue($key, sprintf('%s takes a single value.', $operator->name()));
         }
 
-        if ($operator === FilterOperator::Between && count($values) !== 2) {
-            throw InvalidFilterException::invalidValue($key, 'between takes exactly two values.');
+        if ($operator->arity() === 2 && count($values) !== 2) {
+            throw InvalidFilterException::invalidValue($key, sprintf('%s takes exactly two values.', $operator->name()));
         }
 
         if ($values === [] || count($values) > $this->config->filterMaxValues) {
@@ -143,9 +182,9 @@ final readonly class QueryResolver
         $cast = [];
 
         foreach ($values as $item) {
-            $item = $filterable->type->cast($key, $item);
+            $item = $type->cast($key, $item);
 
-            if ($filterable->options !== [] && ! in_array($item, $filterable->options, true)) {
+            if ($options !== [] && ! in_array($item, $options, true)) {
                 throw InvalidFilterException::invalidValue($key, 'is not one of the allowed options.');
             }
 
@@ -217,9 +256,8 @@ final readonly class QueryResolver
         }
 
         if ($sorts === []) {
-            foreach ($source->sorts as $sort) {
-                /** @var Sort $sort */
-                $sorts[$sort->field] ??= ['column' => $sort->field, 'direction' => $sort->direction];
+            foreach ($source->sorts as ['field' => $field, 'direction' => $direction]) {
+                $sorts[$field] ??= ['column' => $field, 'direction' => $direction];
             }
         }
 
@@ -227,16 +265,27 @@ final readonly class QueryResolver
     }
 
     /**
-     * @return array<string, \Closure|null>
+     * @return array{0: array<string, \Closure|null>, 1: list<RelationAggregate>}
      */
     private function includes(SourceDefinition $source, QueryInput $input): array
     {
         $includes = [];
+        $aggregates = $source->defaultAggregates();
 
         foreach ($input->includes as $include) {
+            $aggregate = $source->aggregates[$include] ?? null;
+
+            if ($aggregate !== null && $aggregate->optional) {
+                $aggregates[] = $aggregate;
+
+                continue;
+            }
+
             if (! array_key_exists($include, $source->includables)) {
                 if ($this->config->strict) {
-                    throw InvalidQueryException::unknownInclude($include, array_keys($source->includables));
+                    $optional = array_keys(array_filter($source->aggregates, static fn (RelationAggregate $aggregate): bool => $aggregate->optional));
+
+                    throw InvalidQueryException::unknownInclude($include, [...array_keys($source->includables), ...$optional]);
                 }
 
                 continue;
@@ -245,6 +294,6 @@ final readonly class QueryResolver
             $includes[$include] = $source->includables[$include];
         }
 
-        return $includes;
+        return [$includes, $aggregates];
     }
 }

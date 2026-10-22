@@ -6,10 +6,13 @@ namespace Gcego\Data;
 
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
+use Gcego\Data\Caching\QueryCache;
+use Gcego\Data\Compilation\SourceCompiler;
 use Gcego\Data\Contracts\DataAuthorizer;
-use Gcego\Data\Definition\SourceCompiler;
+use Gcego\Data\Contracts\TenantResolver;
 use Gcego\Data\Diagnostics\QueryInspector;
-use Gcego\Data\Integration\SourceRenderer;
+use Gcego\Data\Mutations\MutationPipeline;
+use Gcego\Data\Performance\Profiler;
 use Gcego\Data\Providers\CollectionProvider;
 use Gcego\Data\Providers\EloquentProvider;
 use Gcego\Data\Providers\ProviderRegistry;
@@ -17,12 +20,17 @@ use Gcego\Data\Providers\QueryBuilderProvider;
 use Gcego\Data\Query\QueryPipeline;
 use Gcego\Data\Query\QueryResolver;
 use Gcego\Data\Records\RecordResolver;
+use Gcego\Data\Security\FieldGuard;
 use Gcego\Data\Security\GateDataAuthorizer;
 use Gcego\Data\Security\ScopeRegistry;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Data\Tenancy\NullTenantResolver;
+use Gcego\Data\Tenancy\TenantGuard;
+use Gcego\Data\Transactions\TransactionManager;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -31,6 +39,9 @@ use Illuminate\Support\ServiceProvider;
  * Registers the data services as singletons that hold only registrations
  * (providers, scopes) and definition caches, never request data. Nothing
  * touches the database during registration or boot.
+ *
+ * gcego/core is its only GCEGO dependency: every other package builds on
+ * DataManager (or the Data facade) to read application data.
  */
 final class DataServiceProvider extends ServiceProvider implements PackageInterface
 {
@@ -61,8 +72,15 @@ final class DataServiceProvider extends ServiceProvider implements PackageInterf
             return $providers;
         });
 
+        $this->app->singletonIf(TenantResolver::class, NullTenantResolver::class);
+        $this->app->singleton(TenantGuard::class);
+        $this->app->singleton(FieldGuard::class);
+        $this->app->singleton(QueryCache::class);
+        $this->app->singleton(Profiler::class);
+        $this->app->singleton(TransactionManager::class);
         $this->app->singleton(QueryPipeline::class);
         $this->app->singleton(RecordResolver::class);
+        $this->app->singleton(MutationPipeline::class);
         $this->app->singleton(QueryInspector::class, static fn (Application $app): QueryInspector => new QueryInspector(
             $app->make(SourceCompiler::class),
             $app->make(ProviderRegistry::class),
@@ -71,17 +89,47 @@ final class DataServiceProvider extends ServiceProvider implements PackageInterf
             $app->make(DataConfig::class),
             $app->make(Gate::class),
             (bool) $app->make(Repository::class)->get('app.debug', false),
+            $app->make(TenantGuard::class),
+            $app,
         ));
         $this->app->singleton(DataManager::class);
     }
 
     public function boot(): void
     {
-        $this->publishes([dirname(__DIR__).'/config/gcego-data.php' => $this->app->configPath('gcego-data.php')], 'gcego-data-config');
-
-        if (class_exists(RendererRegistry::class) && $this->app->bound(RendererRegistry::class)) {
-            $this->app->make(RendererRegistry::class)->register(Source::class, SourceRenderer::class);
+        if ($this->app->runningInConsole()) {
+            $this->publishes([dirname(__DIR__).'/config/gcego-data.php' => $this->app->configPath('gcego-data.php')], 'gcego-data-config');
         }
+
+        $this->invalidateCacheOnModelEvents();
+    }
+
+    /**
+     * Cached results of a model become stale when any instance is written,
+     * also outside gcego/data. Invalidated after the write's transaction commits.
+     */
+    private function invalidateCacheOnModelEvents(): void
+    {
+        $config = $this->app->make(DataConfig::class);
+
+        if (! $config->cacheEnabled || ! $config->cacheInvalidateOnModelEvents) {
+            return;
+        }
+
+        $this->app->make(Dispatcher::class)->listen(
+            ['eloquent.saved: *', 'eloquent.deleted: *', 'eloquent.restored: *', 'eloquent.forceDeleted: *'],
+            function (string $event, array $payload): void {
+                $model = $payload[0] ?? null;
+
+                if (! $model instanceof Model) {
+                    return;
+                }
+
+                $class = $model::class;
+                $invalidate = fn () => $this->app->make(QueryCache::class)->invalidate($class);
+                $model->getConnection()->afterCommit($invalidate);
+            },
+        );
     }
 
     public function descriptor(): PackageDescriptor
@@ -89,9 +137,8 @@ final class DataServiceProvider extends ServiceProvider implements PackageInterf
         return new PackageDescriptor(
             'gcego/data',
             requires: ['gcego/core'],
-            optional: ['gcego/runtime'],
-            capabilities: ['data', 'data.eloquent', 'data.query', 'data.collection'],
-            description: 'Declarative data sources with secure filtering, searching, sorting, pagination and scoped record resolution.',
+            capabilities: ['data', 'data.eloquent', 'data.query', 'data.collection', 'data.mutations', 'data.transactions', 'data.cache', 'data.tenancy'],
+            description: 'Universal data access and query engine: secure, tenant-aware reads and writes over declarative sources.',
         );
     }
 }

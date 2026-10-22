@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Tests;
 
-use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Data\Tests\Fixtures\Models\Subject;
+use Gcego\Data\Tests\Fixtures\Models\Ward;
 use Gcego\Data\Tests\Fixtures\Policies\SubjectPolicy;
+use Gcego\Data\Tests\Fixtures\Policies\WardPolicy;
 use Gcego\Data\Tests\Fixtures\Tenancy;
-use Gcego\Registry\RegistryServiceProvider;
-use Gcego\Runtime\RuntimeServiceProvider;
 use Illuminate\Database\Schema\Blueprint as Table;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
-use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
@@ -53,16 +51,12 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
-        $app->register(ComponentServiceProvider::class);
-
-        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, DataServiceProvider::class];
+        return [GcegoServiceProvider::class, DataServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
     {
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('k', 32)));
-        $app['config']->set('gcego-registry.discovery.enabled', false);
-        $app['config']->set('gcego-registry.cache.enabled', false);
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]);
         $app['config']->set('database.connections.archive', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']);
@@ -73,6 +67,7 @@ abstract class TestCase extends Orchestra
         }
 
         Gate::policy(Subject::class, SubjectPolicy::class);
+        Gate::policy(Ward::class, WardPolicy::class);
     }
 
     private function createSchema(): void
@@ -122,6 +117,22 @@ abstract class TestCase extends Orchestra
         Schema::create('enrolments', static function (Table $table): void {
             $table->ulid('id')->primary();
             $table->string('status');
+            $table->timestamps();
+        });
+
+        Schema::create('wards', static function (Table $table): void {
+            $table->id();
+            $table->unsignedInteger('hospital_id');
+            $table->string('name');
+            $table->integer('beds')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('beds', static function (Table $table): void {
+            $table->id();
+            $table->foreignId('ward_id');
+            $table->unsignedInteger('hospital_id');
+            $table->string('label');
             $table->timestamps();
         });
 

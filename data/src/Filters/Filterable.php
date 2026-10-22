@@ -4,88 +4,99 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Filters;
 
-use BackedEnum;
-use Gcego\Data\Contracts\SourceConfiguration;
-use Gcego\Data\Exceptions\InvalidFilterException;
+use Gcego\Data\Contracts\FilterValueType;
+use Gcego\Data\Contracts\Operator;
+use Gcego\Data\Contracts\RelationOperator;
 use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Support\FieldName;
 
 /**
- * Allows request input to filter one field:
+ * A filter the request may apply, listed in Filterables::make([...]):
  *
- *     new Filterable('status', options: ['draft', 'published'])
- *     new Filterable('score', [FilterOperator::GreaterThanOrEqual, FilterOperator::LessThanOrEqual], ValueType::Integer)
- *     new Filterable('subject', column: 'subject_id', type: ValueType::Integer)
- *     new Filterable('topic', column: 'topics.name')   // Eloquent: whereHas('topics')
+ *     Filterable::make('age', [Integer::make(), GreaterThanOrEqual::make(), LessThan::make()])
+ *     Filterable::make('status', [Enum::make(EmployeeStatus::class), Equal::make(), In::make()])
+ *     Filterable::make('name', [StringType::make(), Contains::make(), StartsWith::make()])
+ *     Filterable::make('department', [StringType::make(), Column::make('department.name')])
+ *     Filterable::make('reports', [Has::make(), DoesntHave::make()])            // related records
+ *     Filterable::make('age', [Integer::make()])                               // Equal only
  *
- * The request names the key ("status"); the column comes only from this
- * trusted definition. Values are validated and cast with $type, restricted to
- * $options when given, and always bound as parameters.
+ * The configuration list holds exactly one value type (relation filters take
+ * none), the permitted operators (Equal when none are listed; never every
+ * operator), and optionally Options, Label and Column. Every operator must
+ * apply to the value type. The request names the key; the column comes only
+ * from this definition, and request values are validated and cast by the
+ * type, restricted to the options, and always bound.
  */
-final readonly class Filterable implements SourceConfiguration
+final readonly class Filterable
 {
     public const string KeyPattern = '/^[a-z][a-z0-9_]{0,63}(?:\.[a-z][a-z0-9_]{0,63}){0,3}$/';
 
     /**
-     * @var list<FilterOperator>
+     * @param  list<Operator>  $operators
+     * @param  list<string|int|float|bool>  $options
      */
-    public array $operators;
-
-    public string $column;
+    private function __construct(
+        public string $key,
+        public ?FilterValueType $type,
+        public array $operators,
+        public string $column,
+        public array $options,
+        public ?string $label,
+    ) {}
 
     /**
-     * @var list<string|int|float|bool>
-     */
-    public array $options;
-
-    /**
-     * @param  FilterOperator|list<FilterOperator>  $operators
-     * @param  list<scalar|BackedEnum>  $options  Allowed values (after casting). Empty allows any valid value.
+     * @param  list<FilterValueType|Operator|FilterOption>  $configuration
      *
      * @throws InvalidSourceException
      */
-    public function __construct(
-        public string $key,
-        FilterOperator|array $operators = [FilterOperator::Equals, FilterOperator::In],
-        public ValueType $type = ValueType::String,
-        ?string $column = null,
-        array $options = [],
-        public ?string $label = null,
-    ) {
+    public static function make(string $key, array $configuration): self
+    {
         if (preg_match(self::KeyPattern, $key) !== 1) {
             throw InvalidSourceException::invalidDefinition('Filterable "'.mb_substr($key, 0, 64).'"', 'keys use lowercase letters, digits and "_", separated by ".".');
         }
 
-        $operators = $operators instanceof FilterOperator ? [$operators] : $operators;
+        $parsed = FilterConfiguration::parse('Filterable "'.$key.'"', $key, $configuration);
 
-        if ($operators === [] || array_filter($operators, static fn (mixed $operator): bool => ! $operator instanceof FilterOperator) !== []) {
-            throw InvalidSourceException::invalidDefinition('Filterable "'.$key.'"', 'operators must be a non-empty list of FilterOperator cases.');
-        }
-
-        $this->operators = array_values(array_unique($operators, SORT_REGULAR));
-        $this->column = FieldName::assert('Filterable', $column ?? $key);
-        try {
-            $this->options = array_map(static fn (mixed $option): string|int|float|bool => $type->cast($key, $option), array_values($options));
-        } catch (InvalidFilterException) {
-            throw InvalidSourceException::invalidDefinition('Filterable "'.$key.'"', sprintf('every option must be a valid %s.', $type->describe()));
-        }
-    }
-
-    public function allows(FilterOperator $operator): bool
-    {
-        return in_array($operator, $this->operators, true);
+        return new self($key, $parsed->type, $parsed->operators, FieldName::assert('Filterable', $parsed->column ?? $key), $parsed->options, $parsed->label);
     }
 
     /**
-     * @return array{key: string, column: string, type: string, operators: list<string>, options: list<string|int|float|bool>, label: string|null}
+     * The permitted operator with this request name, or null.
+     */
+    public function operator(string $name): ?Operator
+    {
+        foreach ($this->operators as $operator) {
+            if ($operator->name() === $name) {
+                return $operator;
+            }
+        }
+
+        return null;
+    }
+
+    public function isRelation(): bool
+    {
+        return $this->operators[0] instanceof RelationOperator;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function operatorNames(): array
+    {
+        return array_map(static fn (Operator $operator): string => $operator->name(), $this->operators);
+    }
+
+    /**
+     * @return array{key: string, column: string, type: string|null, operators: list<string>, options: list<string|int|float|bool>, label: string|null}
      */
     public function normalize(): array
     {
         return [
             'key' => $this->key,
             'column' => $this->column,
-            'type' => $this->type->value,
-            'operators' => array_map(static fn (FilterOperator $operator): string => $operator->value, $this->operators),
+            'type' => $this->type?->name(),
+            'operators' => $this->operatorNames(),
             'options' => $this->options,
             'label' => $this->label,
         ];
