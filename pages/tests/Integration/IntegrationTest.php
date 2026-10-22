@@ -20,7 +20,7 @@ use Gcego\Pages\Tests\Fixtures\Definitions;
 use Gcego\Registry\Kinds\DefinitionKinds;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Exceptions\RenderException;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Exceptions\AccessDeniedException;
 use Gcego\Security\Requirements\Authenticated;
@@ -67,10 +67,10 @@ it('renders a page through gcego/runtime by identity, authorizing it first', fun
     $world = world();
     actAs($world['reader']);
 
-    expect(squish(app(RenderEngine::class)->render('page:about')->toHtml()))->toContain('About GCEGO</h1>');
+    expect(squish(Rendering::render('page:about')->toHtml()))->toContain('About GCEGO</h1>');
 
     try {
-        app(RenderEngine::class)->render('page:reports-overview')->toHtml();
+        Rendering::render('page:reports-overview')->toHtml();
         $denied = null;
     } catch (RenderException $exception) {
         $denied = $exception->getPrevious();
@@ -84,7 +84,7 @@ it('refuses to render a page without its registry identity', function (): void {
     actAs(world()['admin']);
 
     try {
-        app(RenderEngine::class)->render(Definitions::about())->toHtml();
+        Rendering::render(Definitions::about())->toHtml();
         $failure = null;
     } catch (RenderException $exception) {
         $failure = $exception->getPrevious();

@@ -32,7 +32,7 @@ use Gcego\Forms\Schema\FormSchema;
 use Gcego\Forms\State\FormState;
 use Gcego\Forms\State\StatePath;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\Authorization\AuthorizationDecision;
 use Gcego\Security\Authorization\DenialReason;
 use Gcego\Security\Records\RecordAuthorizer;
@@ -287,7 +287,7 @@ final class FormHost extends Component
         $state = new FormState($this->data);
         $live = $forms->evaluating($model, fn (): array => $forms->livePaths($schema, $state), $this->operation());
         $frame = new FormRenderFrame($schema, $state, $forms->access($schema, $model), 'data', $errors, step: $this->step, model: $this->sourceModel(), idPrefix: is_string($id = $this->getId()) ? $id : null, live: $live);
-        $content = $forms->evaluating($model, fn (): string => app(FormRenderContext::class)->run($frame, fn (): string => app(RenderEngine::class)->render($form, RenderMode::Livewire, identity: $this->definition)->toHtml()), $this->operation());
+        $content = $forms->evaluating($model, fn (): string => app(FormRenderContext::class)->run($frame, fn (): string => Rendering::render($form, RenderMode::Livewire, identity: $this->definition)->toHtml()), $this->operation());
 
         foreach ($errors as $path => $messages) {
             $entry = $this->entryFor($schema, $path);

@@ -19,7 +19,7 @@ use Gcego\Navigation\Tree\NavigationTree;
 use Gcego\Navigation\Tree\NavigationTreeBuilder;
 use Gcego\Registry\Contracts\RegistryInterface;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\HtmlString;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -148,7 +148,7 @@ final class NavigationManager
             throw InvalidNavigationException::invalid('Display "'.$display.'"', 'use one of '.implode(', ', Navigation::Displays).'.');
         }
 
-        return new HtmlString($this->container->make(RenderEngine::class)->render(
+        return new HtmlString(Rendering::render(
             $navigation,
             RenderMode::Static,
             identity: $identity,

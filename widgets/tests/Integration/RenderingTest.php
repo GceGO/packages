@@ -7,7 +7,7 @@ use Gcego\Chroma\Slot;
 use Gcego\Chroma\Tailwind;
 use Gcego\Rendering\Context\RenderMode;
 use Gcego\Rendering\Exceptions\RenderException;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Widgets\Statistics\Stat;
 use Gcego\Widgets\Tests\Fixtures\Models\ActivityLog;
 use Gcego\Widgets\Tests\Fixtures\Models\Student;
@@ -123,14 +123,14 @@ it('lists recent records of a blueprint and composes infolists and tables', func
 });
 
 it('renders registered widgets through the runtime, statically or through Livewire', function (): void {
-    $static = app(RenderEngine::class)->render(widgets()->resolve('total_students'), identity: 'widget:total_students')->toHtml();
-    $live = app(RenderEngine::class)->render(widgets()->resolve('enrolment'), RenderMode::Livewire, identity: 'widget:enrolment')->toHtml();
-    $staticLiveCapable = app(RenderEngine::class)->render(widgets()->resolve('total_students'), RenderMode::Livewire, identity: 'widget:total_students')->toHtml();
+    $static = Rendering::render(widgets()->resolve('total_students'), identity: 'widget:total_students')->toHtml();
+    $live = Rendering::render(widgets()->resolve('enrolment'), RenderMode::Livewire, identity: 'widget:enrolment')->toHtml();
+    $staticLiveCapable = Rendering::render(widgets()->resolve('total_students'), RenderMode::Livewire, identity: 'widget:total_students')->toHtml();
 
     expect($static)->toContain('<data value="4">')
         ->and($live)->toContain('wire:name="gcego-widget"')
         ->and($staticLiveCapable)->not->toContain('wire:name="gcego-widget"')
-        ->and(fn () => app(RenderEngine::class)->render(new Stat('Loose', 1))->toHtml())->toThrow(RenderException::class, 'registry identity');
+        ->and(fn () => Rendering::render(new Stat('Loose', 1))->toHtml())->toThrow(RenderException::class, 'registry identity');
 });
 
 it('renders through the anonymous Blade component', function (): void {

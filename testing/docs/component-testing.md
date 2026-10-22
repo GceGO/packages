@@ -73,7 +73,7 @@ GcegoTest::runtime()->assertRendererFor(new Component, ContainerRenderer::class)
 ```
 
 - **Rendering**:
-  - `render()` uses `RenderEngine::render()`, which does no authorization.
+  - `render()` uses `Rendering::render()`, which does no authorization.
   - `renderAuthorized('blueprint:subjects')` is the `<x-gcego-rendering::render>` path: it authorizes first.
   - Both return an [HTML testable](#html).
 - **Renderers**:

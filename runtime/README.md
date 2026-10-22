@@ -7,9 +7,9 @@ validation, standardized results and diagnostics.
 
 ```php
 use Gcego\Runtime\Execution\Operation;
-use Gcego\Runtime\Runtime;
+use Gcego\Runtime\Facades\Runtime;      // auto-aliased as \Runtime
 
-$result = app(Runtime::class)->execute(
+$result = Runtime::execute(
     Operation::action('archive-subject')->on('blueprint:subjects')->with(['record' => 5]),
 );                                   // runs as the signed-in user, tenant and panel
 

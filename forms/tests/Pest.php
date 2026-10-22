@@ -13,7 +13,7 @@ use Gcego\Forms\Tests\Fixtures\Models\Subject;
 use Gcego\Forms\Tests\Fixtures\Models\Tag;
 use Gcego\Forms\Tests\Fixtures\Models\User;
 use Gcego\Forms\Tests\TestCase;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\SecurityManager;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Application;
@@ -121,5 +121,5 @@ function choiceField(string $path): ChoiceField
  */
 function html(Form $form): string
 {
-    return (string) preg_replace('/\s+/', ' ', app(RenderEngine::class)->render($form)->toHtml());
+    return (string) preg_replace('/\s+/', ' ', Rendering::render($form)->toHtml());
 }

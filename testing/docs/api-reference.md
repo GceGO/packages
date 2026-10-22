@@ -376,7 +376,7 @@ Assertions about a gcego/data result: the rows a source or a table returned for 
 
 ### `Testables\RuntimeTestable`
 
-Rendering through gcego/runtime: renderer resolution, rendered markup and failures. render() uses RenderEngine::render() (no authorization), and renderAuthorized() the same path as <x-gcego-rendering::render>.
+Rendering through gcego/runtime: renderer resolution, rendered markup and failures. render() uses Rendering::render() (no authorization), and renderAuthorized() the same path as <x-gcego-rendering::render>.
 
 - `render(ComponentInterface|string $target, RenderMode $mode = RenderMode, ?string $panel = null, ?string $theme = null, int $headingLevel = 1, array $metadata = [], array $state = []): HtmlTestable`
 - `renderAuthorized(string $identifier, ?string $panel = null, ?string $theme = null): HtmlTestable`

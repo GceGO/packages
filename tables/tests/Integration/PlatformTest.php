@@ -12,7 +12,7 @@ use Gcego\Data\Support\Callback;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Context\RenderMode;
 use Gcego\Rendering\Exceptions\RenderException;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Tables\Columns\Text;
@@ -50,14 +50,14 @@ it('lets instance Tailwind slots restyle the table', function (): void {
 });
 
 it('mounts the Livewire host when a blueprint renders through the runtime', function (): void {
-    $html = app(RenderEngine::class)->render(Blueprints::simple(), RenderMode::Livewire, identity: 'blueprint:simple')->toHtml();
+    $html = Rendering::render(Blueprints::simple(), RenderMode::Livewire, identity: 'blueprint:simple')->toHtml();
 
     expect($html)->toContain('wire:name="gcego-table"')
         ->and($html)->toContain('Algebra');
 });
 
 it('refuses to render a bare table without a trusted source', function (): void {
-    expect(fn () => app(RenderEngine::class)->render(new Table(new Text('name')))->toHtml())->toThrow(RenderException::class, 'renders inside a registered blueprint');
+    expect(fn () => Rendering::render(new Table(new Text('name')))->toHtml())->toThrow(RenderException::class, 'renders inside a registered blueprint');
 });
 
 it('registers services and constructs tables without queries', function (): void {

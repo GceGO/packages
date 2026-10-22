@@ -27,7 +27,7 @@ use Gcego\Core\Gcego;
 use Gcego\Data\Source;
 use Gcego\Luminaries\Facades\Luminaries;
 use Gcego\Registry\Registry;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Runtime\Livewire\BlueprintHost;
 use Gcego\Security\Requirements\PublicAccess;
@@ -42,7 +42,7 @@ beforeEach(function (): void {
 it('renders actions of registered blueprints through the runtime', function (): void {
     actAs($this->world['admin']);
 
-    $html = app(RenderEngine::class)->render('blueprint:subjects', metadata: ['record' => $this->world['subjects']['algebra']->id])->toHtml();
+    $html = Rendering::render('blueprint:subjects', metadata: ['record' => $this->world['subjects']['algebra']->id])->toHtml();
 
     expect($html)->toContain('data-gcego-actions="blueprint:subjects"')
         ->and($html)->toContain('data-gcego-action="delete"')
@@ -53,7 +53,7 @@ it('renders actions of registered blueprints through the runtime', function (): 
 it('renders nothing for blueprints without a registry identity', function (): void {
     actAs($this->world['admin']);
 
-    expect(app(RenderEngine::class)->render(Blueprints::subjects())->toHtml())->not->toContain('data-gcego-action=');
+    expect(Rendering::render(Blueprints::subjects())->toHtml())->not->toContain('data-gcego-action=');
 });
 
 it('styles actions through gcego/chroma, with intent and Tailwind overrides', function (): void {

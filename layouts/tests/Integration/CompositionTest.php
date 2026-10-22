@@ -10,7 +10,7 @@ use Gcego\Layouts\Tests\Fixtures\Models\Student;
 use Gcego\Layouts\Tests\Fixtures\Policies\Denying;
 use Gcego\Registry\Registry;
 use Gcego\Rendering\Context\RenderMode;
-use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Facades\Rendering;
 use Gcego\Security\Permissions\Permission;
 use Gcego\Widgets\Data\Aggregate;
 use Gcego\Widgets\Statistics\Stat;
@@ -24,7 +24,7 @@ beforeEach(function (): void {
 
 function students(RenderMode $mode = RenderMode::Livewire, string|int|null $record = 1): string
 {
-    return squish(app(RenderEngine::class)->renderAuthorized('blueprint:students', $mode, metadata: $record === null ? [] : ['record' => $record])->toHtml());
+    return squish(Rendering::renderAuthorized('blueprint:students', $mode, metadata: $record === null ? [] : ['record' => $record])->toHtml());
 }
 
 it('renders a registered dashboard of widgets in sections, grids and tabs', function (): void {
