@@ -129,7 +129,7 @@ final class TestingManager
 
     public function runtime(): RuntimeTestable
     {
-        $this->needs('Gcego\Runtime\Runtime', 'gcego/runtime', 'GcegoTest::runtime()');
+        $this->needs('Gcego\Rendering\RenderEngine', 'gcego/rendering', 'GcegoTest::runtime()');
 
         return new RuntimeTestable($this->verifier, $this->container);
     }

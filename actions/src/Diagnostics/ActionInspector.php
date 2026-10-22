@@ -9,7 +9,7 @@ use Gcego\Actions\Input\InputResolvers;
 use Gcego\Actions\Input\RulesInputResolver;
 use Gcego\Actions\Resolution\ActionResolver;
 use Gcego\Actions\Resolution\ResolvedAction;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Contracts\Requirement;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\SoftDeletes;

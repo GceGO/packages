@@ -31,7 +31,7 @@
         "gcego/layouts": "^0.1",
         "gcego/navigation": "^0.1",
         "gcego/registry": "^0.1",
-        "gcego/runtime": "^0.1",
+        "gcego/rendering": "^0.1",
         "gcego/security": "^0.1",
         "gcego/chroma": "^0.1",
         "gcego/tables": "^0.1",
@@ -91,7 +91,7 @@
             "url": "../runtime",
             "options": {
                 "versions": {
-                    "gcego/runtime": "0.1.0"
+                    "gcego/runtime": "0.2.0"
                 }
             }
         },
@@ -200,6 +200,15 @@
             "options": {
                 "versions": {
                     "gcego/swatches": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../rendering",
+            "options": {
+                "versions": {
+                    "gcego/rendering": "0.1.0"
                 }
             }
         }

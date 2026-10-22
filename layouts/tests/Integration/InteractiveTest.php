@@ -11,7 +11,7 @@ use Gcego\Layouts\Components\Section;
 use Gcego\Layouts\Components\Stack;
 use Gcego\Layouts\Components\Tab;
 use Gcego\Layouts\Components\Tabs;
-use Gcego\Runtime\Rendering\RenderMode;
+use Gcego\Rendering\Context\RenderMode;
 use Gcego\Security\Permissions\Permission;
 use Illuminate\Support\Facades\Process;
 

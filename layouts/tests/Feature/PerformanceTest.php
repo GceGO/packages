@@ -13,7 +13,7 @@ use Gcego\Layouts\Layout;
 use Gcego\Layouts\Responsive\ColumnSpan;
 use Gcego\Layouts\Tests\Fixtures\Models\Student;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Widgets\Statistics\Stat;
 
@@ -50,7 +50,7 @@ it('renders large and deeply nested layouts with bounded markup', function (): v
 
     $baseline = new Component(...array_map(static fn (int $i): Component => $plain($i), range(1, 288)));
     [$largeMs, $largeHtml] = timed(fn (): string => render($large));
-    [$baselineMs, $baselineHtml] = timed(fn (): string => squish(app(Runtime::class)->render($baseline)->toHtml()));
+    [$baselineMs, $baselineHtml] = timed(fn (): string => squish(app(RenderEngine::class)->render($baseline)->toHtml()));
     [$deepMs, $deepHtml] = timed(fn (): string => render($deep));
 
     app(Registry::class)->register(new Layout('stats', new Ability('viewAny', Student::class), new Grid(new Columns(4), ...array_map(static fn (int $i): Stat => new Stat(new Property(Stat::Name, 's'.$i), new Property(Stat::Label, 'Stat '.$i), new Property(Stat::Value, $i), new ColumnSpan($i % 5 === 0 ? 2 : 1)), range(1, 40)))));

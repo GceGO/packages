@@ -51,7 +51,7 @@ All classes live under `Gcego\Chroma`.
 | `Presets\PresetRegistry` | `register()`, `has()`, `get()`, `ids()`, `all()`, `version()`, `static withDefaults()` |
 | `Slots\SlotDefinition` | `name`, `preset`, `classes`, `description` |
 | `Slots\SlotRegistry` | `register()`, `override()`, `for()`, `overridesFor()`, `registrations()`, `version()` |
-| `Slots\SlotResolver` (`Gcego\Runtime\Contracts\StylingResolver`) | `classes(component, slot, RenderContext)`, `resolve(component, slot, ?theme): ClassList` |
+| `Slots\SlotResolver` (`Gcego\Rendering\Contracts\StylingResolver`) | `classes(component, slot, RenderContext)`, `resolve(component, slot, ?theme): ClassList` |
 
 ## Diagnostics
 

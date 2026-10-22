@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Chroma\Tests;
 
+use Gcego\Blueprints\BlueprintsServiceProvider;
 use Gcego\Chroma\ChromaManager;
 use Gcego\Chroma\ChromaServiceProvider;
 use Gcego\Chroma\Slots\SlotDefinition;
@@ -13,7 +14,8 @@ use Gcego\Chroma\Tests\Fixtures\ExampleCard;
 use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
+use Gcego\Rendering\RenderingServiceProvider;
 use Gcego\Runtime\RuntimeServiceProvider;
 use Illuminate\Foundation\Application;
 use Livewire\LivewireServiceProvider;
@@ -50,7 +52,7 @@ abstract class TestCase extends Orchestra
     {
         $app->register(ComponentServiceProvider::class);
 
-        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class];
+        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, BlueprintsServiceProvider::class, RuntimeServiceProvider::class, RenderingServiceProvider::class, ChromaServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void

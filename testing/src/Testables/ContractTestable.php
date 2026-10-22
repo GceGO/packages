@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Gcego\Testing\Testables;
 
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Runtime\Contracts\RendererInterface;
-use Gcego\Runtime\Contracts\StylingResolver;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Contracts\RendererInterface;
+use Gcego\Rendering\Contracts\StylingResolver;
 use Gcego\Security\Authorization\AuthorizationContext;
 use Gcego\Security\Contracts\PermissionProvider;
 use Gcego\Security\Contracts\TenantResolver;

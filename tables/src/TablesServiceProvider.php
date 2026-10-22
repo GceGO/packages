@@ -9,7 +9,7 @@ use Gcego\Chroma\Slots\SlotDefinition;
 use Gcego\Chroma\Tailwind;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Tables\Actions\TableActions;
 use Gcego\Tables\Columns\Column;
 use Gcego\Tables\Contracts\PreferenceStore;
@@ -120,7 +120,7 @@ final class TablesServiceProvider extends ServiceProvider implements PackageInte
     {
         return new PackageDescriptor(
             'gcego/tables',
-            requires: ['gcego/core', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions'],
+            requires: ['gcego/core', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions'],
             capabilities: ['tables', 'tables.livewire', 'tables.preferences', 'tables.saved-views', 'tables.export'],
             description: 'Declarative data tables with search, filters, sorting, pagination, selection, actions, preferences and saved views.',
         );

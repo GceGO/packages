@@ -10,9 +10,9 @@ use Gcego\Infolists\Layout\Split;
 use Gcego\Infolists\Layout\Tab;
 use Gcego\Infolists\Layout\Tabs;
 use Gcego\Infolists\Presets\InfolistPresets;
-use Gcego\Runtime\Blade\BladeRenderer;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Rendering\RenderResult;
+use Gcego\Rendering\Blade\BladeRenderer;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Output\RenderResult;
 use Gcego\Security\SecurityManager;
 use Gcego\Tables\Support\Icons;
 

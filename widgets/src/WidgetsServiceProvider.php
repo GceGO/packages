@@ -10,7 +10,7 @@ use Gcego\Chroma\Tailwind;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
 use Gcego\Registry\Kinds\DefinitionKinds;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Widgets\Charts\ChartAdapters;
 use Gcego\Widgets\Charts\ChartDataNormalizer;
 use Gcego\Widgets\Charts\ChartJsAdapter;
@@ -109,7 +109,7 @@ final class WidgetsServiceProvider extends ServiceProvider implements PackageInt
     {
         return new PackageDescriptor(
             'gcego/widgets',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/tables', 'gcego/infolists'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/tables', 'gcego/infolists'],
             capabilities: ['widgets', 'widgets.charts', 'widgets.livewire', 'widgets.aggregation', 'widgets.cache'],
             description: 'Dashboard widgets: KPIs with trends, charts, progress, goals, activity, record summaries and table widgets.',
         );

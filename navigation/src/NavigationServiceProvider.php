@@ -24,7 +24,7 @@ use Gcego\Navigation\Resolution\NavigationResolver;
 use Gcego\Navigation\Resolution\RouteResolver;
 use Gcego\Navigation\Resolution\VisibilityResolver;
 use Gcego\Registry\Kinds\DefinitionKinds;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Authorization\AuthorizationEngine;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Config\Repository;
@@ -109,7 +109,7 @@ final class NavigationServiceProvider extends ServiceProvider implements Package
     {
         return new PackageDescriptor(
             'gcego/navigation',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/security', 'gcego/data', 'gcego/tables'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/security', 'gcego/data', 'gcego/tables'],
             optional: ['gcego/layouts'],
             capabilities: ['navigation', 'navigation.breadcrumbs', 'navigation.badges', 'navigation.contributions'],
             description: 'Declarative navigation: sidebar, top and mobile menus, breadcrumbs, active states, badges and permission-aware visibility.',

@@ -19,7 +19,7 @@ use Gcego\Layouts\Configuration\Gap;
 use Gcego\Layouts\Presets\LayoutPresets;
 use Gcego\Layouts\Rendering\LayoutView;
 use Gcego\Layouts\Responsive\Visibility;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Tables\Support\Icons;
 use Illuminate\Support\Str;

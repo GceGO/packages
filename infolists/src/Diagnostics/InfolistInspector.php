@@ -15,7 +15,7 @@ use Gcego\Infolists\Infolist;
 use Gcego\Infolists\InfolistManager;
 use Gcego\Infolists\Layout\LayoutComponent;
 use Gcego\Infolists\Schema\SchemaCompiler;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Contracts\Requirement;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Model;

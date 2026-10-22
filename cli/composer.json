@@ -25,6 +25,7 @@
         "gcego/components": "^0.1",
         "gcego/core": "^0.1",
         "gcego/registry": "^0.1",
+        "gcego/rendering": "^0.1",
         "gcego/studio": "^0.1",
         "illuminate/console": "^13.0",
         "illuminate/contracts": "^13.0",
@@ -85,7 +86,7 @@
             "url": "../runtime",
             "options": {
                 "versions": {
-                    "gcego/runtime": "0.1.0"
+                    "gcego/runtime": "0.2.0"
                 }
             }
         },
@@ -284,6 +285,15 @@
             "options": {
                 "versions": {
                     "gcego/swatches": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../rendering",
+            "options": {
+                "versions": {
+                    "gcego/rendering": "0.1.0"
                 }
             }
         }

@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Properties\Property;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Rendering\ContainerRenderer;
-use Gcego\Runtime\Rendering\RendererRegistry;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Renderers\ContainerRenderer;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Permissions\Permission;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Widgets\Charts\LineChart;
@@ -42,7 +42,7 @@ beforeEach(function (): void {
 
 function dashboard(RenderMode $mode = RenderMode::Static): string
 {
-    return (string) preg_replace('/\s+/', ' ', app(Runtime::class)->renderAuthorized('blueprint:dashboard', $mode)->toHtml());
+    return (string) preg_replace('/\s+/', ' ', app(RenderEngine::class)->renderAuthorized('blueprint:dashboard', $mode)->toHtml());
 }
 
 it('renders widgets embedded in a registered blueprint, inheriting its requirements', function (): void {

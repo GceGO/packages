@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Gcego\Security\Tests;
 
+use Gcego\Blueprints\BlueprintsServiceProvider;
 use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
 use Gcego\Data\DataServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
+use Gcego\Rendering\RenderingServiceProvider;
 use Gcego\Runtime\RuntimeServiceProvider;
 use Gcego\Security\SecurityServiceProvider;
 use Gcego\Security\Tests\Fixtures\InstitutionTenantResolver;
@@ -54,7 +56,7 @@ abstract class TestCase extends Orchestra
     {
         $app->register(ComponentServiceProvider::class);
 
-        return [LivewireServiceProvider::class, PermissionServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class];
+        return [LivewireServiceProvider::class, PermissionServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, BlueprintsServiceProvider::class, RuntimeServiceProvider::class, RenderingServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void

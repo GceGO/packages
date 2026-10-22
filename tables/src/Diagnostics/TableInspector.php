@@ -11,7 +11,7 @@ use Gcego\Data\DataManager;
 use Gcego\Data\Pagination\PaginationMode;
 use Gcego\Data\Relationships\RelationPathValidator;
 use Gcego\Data\Support\Callback;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Tables\Filters\SelectFilter;
 use Gcego\Tables\Query\ColumnAccess;

@@ -20,7 +20,7 @@ use Gcego\Infolists\Rendering\EntryRenderer;
 use Gcego\Infolists\Rendering\InfolistRenderContext;
 use Gcego\Infolists\Rendering\InfolistRenderer;
 use Gcego\Infolists\Rendering\LayoutRenderer;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Blade;
@@ -102,7 +102,7 @@ final class InfolistsServiceProvider extends ServiceProvider implements PackageI
     {
         return new PackageDescriptor(
             'gcego/infolists',
-            requires: ['gcego/core', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/tables'],
+            requires: ['gcego/core', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/tables'],
             capabilities: ['infolists', 'infolists.livewire', 'infolists.relationships', 'infolists.authorization'],
             description: 'Declarative, authorized record details with entries, relationships and layouts.',
         );

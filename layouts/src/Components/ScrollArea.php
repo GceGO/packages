@@ -8,7 +8,7 @@ use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Layouts\LayoutComponent;
 use Gcego\Layouts\Presets\LayoutPresets;
 use Gcego\Layouts\Rendering\LayoutView;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 
 /**
  * A region that scrolls natively when its content is larger than it:

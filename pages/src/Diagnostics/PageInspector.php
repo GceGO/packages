@@ -19,7 +19,7 @@ use Gcego\Pages\Registry\PageDefinitions;
 use Gcego\Pages\Routing\PageRouteDefinition;
 use Gcego\Pages\Routing\PageRouteResolver;
 use Gcego\Pages\Types\FormPage;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Tables\Table;
 use Gcego\Widgets\Widget;

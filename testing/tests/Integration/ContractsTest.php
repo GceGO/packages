@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Gcego\Chroma\Slots\SlotResolver;
 use Gcego\Components\Component;
-use Gcego\Runtime\Rendering\ContainerRenderer;
+use Gcego\Rendering\Renderers\ContainerRenderer;
 use Gcego\Security\Authorization\AuthorizationContext;
 use Gcego\Security\Permissions\GatePermissionProvider;
 use Gcego\Security\Tenancy\Tenant;

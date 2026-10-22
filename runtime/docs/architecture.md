@@ -3,91 +3,94 @@
 ## Responsibilities
 
 ```text
-gcego/registry   name → definition     ("blueprint:subjects" → Blueprint object)
-gcego/runtime    component → renderer  (ExampleTable → TableRenderer → Blade view)
+gcego/core        packages, lifecycle, extensions, diagnostics
+gcego/registry    name -> definition      ("blueprint:subjects" -> Blueprint)
+gcego/blueprints  the blueprint definition (references to tables, forms, actions, ...)
+gcego/runtime     operation -> handler    (Operation::action('archive') -> ActionHandler)
+gcego/rendering   component -> renderer   (built on runtime; declares the "render" category)
 ```
 
-The runtime resolves definitions through the registry, validates them through
-`gcego/components` and `gcego/blueprints`, picks renderers, and produces Blade
-output, either statically or inside a Livewire host. It does not discover
-definitions, compose blueprints, query data, style components or authorize
-users.
+The runtime executes. It doesn't render, discover definitions, compose
+blueprints, query data or decide permissions. Those come in through contracts
+that other packages implement.
 
-## Lifecycle of a render
+## Dependency rules
 
 ```text
-Runtime::render($target)
-  1. resolve      string → RenderException for non-identifiers → Registry::descriptor() → Registry::get()
-  2. authorize    (public entry points only) RenderAuthorizer, on the descriptor, before loading
-  3. validate     assertValid(): component schema + blueprint composition (memoized by components)
-  4. context      RenderContext::root(): occurrence path, identity, mode, locale, panel, theme, heading level, state
-  5. render       ComponentRenderer: depth and cycle guards → RendererRegistry → renderer->render()
-  6. output       lazy RenderResult; Blade views render when printed; children render where placed
+gcego/runtime  ──requires──>  gcego/core, gcego/registry, gcego/blueprints
+gcego/rendering ─requires──>  gcego/runtime, gcego/components   (declares "render")
+gcego/security ──requires──>  gcego/runtime   (binds ExecutionAuthorizer, TenantResolver)
+gcego/actions, gcego/forms, gcego/data adapters ──register──>  handlers
 ```
 
-Laravel's lifecycle is untouched: views come from the view factory, errors go
-to the exception handler, and authorization uses the Gate. The runtime holds no
-lifecycle state of its own. `gcego/core` only records that the package booted.
+- The only GCEGO dependencies are Core, Registry and Blueprints, and the
+  only other dependencies are Laravel components. A test asserts this for
+  `composer.json` (require and require-dev) and for every `src/` import.
+- Security depends on runtime, so runtime only defines authorizer contracts;
+  calling Security directly would create a cycle.
+- Data integrates through `QueryHandler` adapters that the data package or the
+  application registers, usually from a Core extension (`ExecutionExtension`).
 
-## Key types
+## The 15 subsystems
 
-| Type | Role |
-| --- | --- |
-| `Runtime` | entry point; stateless singleton |
-| `RendererRegistry` | component class/interface → renderer, with precedence and override policy |
-| `ComponentRenderer` | renders one occurrence; guards; error boundary; `children()` |
-| `RenderContext` | immutable per-render data for one occurrence |
-| `RenderResult` | lazy, `Htmlable` output with an explicit escaping policy |
-| `Children` | a parent's children, rendered lazily where the template prints them |
-| `BladeRenderer` | base class for view-backed renderers |
-| `BlueprintRenderer`, `ContainerRenderer` | built-in renderers |
-| `BlueprintHost` | the Livewire component |
-| `StateCoordinator`, `StatePath` | GCEGO structure on top of Livewire state |
-| `RenderAuthorizer` / `GateRenderAuthorizer` | authorization boundary |
-| `StylingResolver` / `NullStylingResolver`, `StyleSlots` | styling boundary |
-| `RuntimeInspector` | diagnostics |
+| # | Subsystem | Where |
+| --- | --- | --- |
+| 1 | Execution kernel | `Runtime::execute()` / `attempt()` → `Execution\ExecutionKernel` |
+| 2 | Definition resolver | `Execution\DefinitionResolver`, `ExecutionTarget` (registry + blueprints) |
+| 3 | Execution context | `Context\ExecutionContext`, `ExecutionContextFactory`, `TenantReference`, `RequestMetadata` |
+| 4 | Request dispatcher | `HandlerRegistry::for()`: exact (type, name), then the category handler |
+| 5 | Execution pipeline | `Execution\ExecutionPipeline`: resolve → authorize → handler → authorize → validate → execute |
+| 6 | Handler registry | `Execution\HandlerRegistry`: typed categories, conflicts, overrides |
+| 7 | Lifecycle manager | `ObservesLifecycle` hooks, `OperationExecuting/Executed/Failed` events, Core `Bootable` |
+| 8 | Authorization integration | `ExecutionAuthorizer` (Gate default), `AuthorizesOperation` |
+| 9 | Data integration | `QueryHandler` contract; adapters registered by consumers |
+| 10 | Extension system | categories, handlers, middleware; `Extensions\ExecutionExtension` on Core's extension manager |
+| 11 | Result management | `Execution\ExecutionResult`, `ResultStatus` |
+| 12 | Exception handling | `FailureTranslator`, `ExecutionException` + `ErrorCategory`, HTTP rendering |
+| 13 | Context isolation | `ExecutionScope` (scoped binding): nesting, subject switching, depth |
+| 14 | Diagnostics | `ExecutionTrace`, `RuntimeInspector`, `ExecutionHealthCheck` in `gcego:diagnose` |
+| 15 | Laravel integration | `RuntimeServiceProvider`: container, config, views, Core package |
 
-### Decisions and deviations from the plan
+## Lifecycle of an execution
 
-- **`Runtime` absorbs `RuntimeManager`, `RenderPipeline` and `RuntimeLifecycle`.**
-  The lifecycle is six ordered steps in two classes, and separate classes would
-  only forward calls.
-- **No `RendererResolver` contract.** `RendererRegistry` is the resolver;
-  replace it in the container if needed.
-- **No `Renderable` contract.** Components stay declarative and never render
-  themselves.
-- **No `ComponentHost`, `LivewireComponentResolver`, `ComponentState` or
-  `StateStore`.** One host (`BlueprintHost`) covers registered blueprints.
-  Livewire's public properties are the state store, and `StateCoordinator`
-  adds only the GCEGO structure. Hosting other definition kinds can be added
-  when a package needs it.
-- **No Alpine.js code.** Built-in markup needs none: the error details use
-  native `<details>`. Livewire ships Alpine, and the application's build owns
-  any extra Alpine. Interactive behaviour belongs to feature packages.
-- **Added `RendererConflictException`.** Conflicting renderer registrations
-  needed a distinct, actionable error.
-- **Authorization failures** are Laravel's `AuthorizationException` (HTTP 403),
-  not a new exception type.
-- **`testbench.yaml`** boots the package for Larastan, so namespaced package
-  views are known during static analysis.
+```text
+Runtime::execute($operation, ?$context)
+  0. context    given, inherited from the running operation, or ExecutionContextFactory::current()
+  1. available  gcego/core must have booted (else ErrorCategory::Unavailable)
+  2. scope      ExecutionScope::enter(): depth limit, no subject switching
+  3. resolve    target identifier -> registry descriptor (nothing loaded yet)
+  4. authorize  ExecutionAuthorizer on the descriptor; any failure denies
+  5. handler    HandlerRegistry: (type, name), else (type, *)
+  6. authorize  handler's AuthorizesOperation, if any
+  7. validate   handler's ValidatesOperation rules -> only validated input reaches it
+  8. execute    before() -> middleware -> handle() -> succeeded()/failed()
+  9. result     ExecutionResult with an ExecutionTrace; or an ExecutionException with a category
+```
 
-## Occurrence identity
+## Decisions and changes in 0.2
 
-Every occurrence has the deterministic path from `gcego/components`
-(`subjects.table.#0`). The context derives from it:
-
-- `domId()`: a stable, unique HTML id;
-- `statePath()`: the Livewire state bucket;
-- `data-*` markers in built-in templates.
-
-One component instance used twice gets two paths, and therefore two ids and
-two state buckets.
+- **Rendering moved to gcego/rendering.** The renderer registry, Blade
+  renderers, render context and results, styling, state, the render
+  authorizer, views and `<x-...::render>` moved, together with the
+  gcego/components dependency. The runtime no longer declares a `render`
+  category; gcego/rendering declares it (`RenderEngine::operation()`).
+- **Blueprints are references, not components** (gcego/blueprints 1.0).
+  Operations target blueprints through `ExecutionTarget::blueprint()`.
+- **No Livewire dependency.** The Livewire `BlueprintHost` was removed.
+- **Authorization can't be configured away.** Middleware is the configurable
+  part of the pipeline, and it always runs after authorization and validation.
+- **Default deny everywhere.** No handler opts out of authorization; the
+  authorizer decides (guests included).
+- **One exception hierarchy with categories** rather than one class per HTTP
+  code. Each category maps to a status and a public message.
 
 ## Long-running workers
 
-`Runtime`, `RendererRegistry` (bindings plus memoized renderer instances),
-`ComponentRenderer` and `StateCoordinator` are singletons holding only
-framework-wide data. Renderers must be stateless. Contexts and results are
-created per render and never stored. A test confirms no `Request` is reachable
-from the shared services after handling requests, and that memory does not
-grow across repeated renders.
+`Runtime`, `ExecutionKernel`, `ExecutionPipeline`, `HandlerRegistry` and
+`ExecutionContextFactory` are
+singletons that hold only framework-wide data. `ExecutionScope` is a scoped
+binding that Laravel discards between requests and jobs, and the kernel resolves it
+per call. Contexts, requests, traces and results are per-execution objects.
+Tests assert that no `Request`, user or `ExecutionScope` is reachable from
+the runtime's singletons after requests, and that memory doesn't grow across
+repeated executions.

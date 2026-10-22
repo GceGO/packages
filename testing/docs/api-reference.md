@@ -376,14 +376,14 @@ Assertions about a gcego/data result: the rows a source or a table returned for 
 
 ### `Testables\RuntimeTestable`
 
-Rendering through gcego/runtime: renderer resolution, rendered markup and failures. render() uses Runtime::render() (no authorization), and renderAuthorized() the same path as <x-gcego-runtime::render>.
+Rendering through gcego/runtime: renderer resolution, rendered markup and failures. render() uses RenderEngine::render() (no authorization), and renderAuthorized() the same path as <x-gcego-rendering::render>.
 
 - `render(ComponentInterface|string $target, RenderMode $mode = RenderMode, ?string $panel = null, ?string $theme = null, int $headingLevel = 1, array $metadata = [], array $state = []): HtmlTestable`
 - `renderAuthorized(string $identifier, ?string $panel = null, ?string $theme = null): HtmlTestable`
 - `assertRendererFor(ComponentInterface $component, string $renderer): RuntimeTestable`
 - `assertMissingRenderer(ComponentInterface $tree, ?string $class = null): RuntimeTestable`
 - `assertRenderable(ComponentInterface $tree): RuntimeTestable`
-- `assertRenderFails(ComponentInterface|string $target, string $exception = 'Gcego\Runtime\Exceptions\RendererNotFoundException', ?string $message = null): RuntimeTestable`
+- `assertRenderFails(ComponentInterface|string $target, string $exception = 'Gcego\Rendering\Exceptions\RendererNotFoundException', ?string $message = null): RuntimeTestable`
 - `assertHealthy(ComponentInterface|string|null $target = null): RuntimeTestable`
 
 ### `Testables\SecurityTestable`

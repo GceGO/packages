@@ -1,0 +1,8 @@
+# Used by Larastan (and `vendor/bin/testbench`) to boot the package with its providers,
+# so namespaced package views ("gcego-rendering::...") are known during static analysis.
+providers:
+  - Gcego\Core\GcegoServiceProvider
+  - Gcego\Registry\RegistryServiceProvider
+  - Gcego\Blueprints\BlueprintsServiceProvider
+  - Gcego\Runtime\RuntimeServiceProvider
+  - Gcego\Rendering\RenderingServiceProvider

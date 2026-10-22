@@ -12,7 +12,7 @@ use Gcego\Navigation\Navigation;
 use Gcego\Navigation\NavigationConfig;
 use Gcego\Navigation\NavigationManager;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Exceptions\RenderException;
+use Gcego\Rendering\Exceptions\RenderException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 

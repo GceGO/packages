@@ -29,7 +29,7 @@ use Gcego\Pages\Rendering\PageRenderer;
 use Gcego\Pages\Routing\PageRouteRegistrar;
 use Gcego\Pages\Routing\PageRouteResolver;
 use Gcego\Registry\Kinds\DefinitionKinds;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Foundation\CachesRoutes;
@@ -106,7 +106,7 @@ final class PagesServiceProvider extends ServiceProvider implements PackageInter
     {
         return new PackageDescriptor(
             'gcego/pages',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/tables', 'gcego/infolists', 'gcego/widgets', 'gcego/layouts', 'gcego/navigation'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/tables', 'gcego/infolists', 'gcego/widgets', 'gcego/layouts', 'gcego/navigation'],
             capabilities: ['pages', 'pages.routing', 'pages.records', 'pages.livewire', 'pages.navigation'],
             description: 'Declarative pages: index, create, edit, view, dashboard and custom pages with routes, lifecycle, authorization, headers, breadcrumbs and one Livewire host.',
         );
