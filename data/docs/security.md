@@ -2,7 +2,8 @@
 
 ## 1. Authorization fails closed
 
-Every `DataManager::query()` and `find()` authorizes before data is returned.
+Every read authorizes before data is returned, and every write before it changes anything
+(see [mutations](mutations.md) for `create`, `update`, `delete`, `restore`, `forceDelete`).
 
 | Source | Listing | One record |
 | --- | --- | --- |
@@ -13,7 +14,7 @@ Every `DataManager::query()` and `find()` authorizes before data is returned.
   guests (unless the policy accepts a nullable user).
 - **Errors:** denial throws `AuthorizationException` (403), raised before any
   listing query runs.
-- **No implicit permission:** a registered Source or Blueprint is not
+- **No implicit permission:** a declared Source is not
   permission to read.
 - **System code:** trusted code without a user (queued jobs, console commands)
   passes `QueryContext::system()`. This skips authorization only; scopes still
@@ -95,9 +96,8 @@ these.
 - **Models** serialize through `toArray()`, so `$hidden` applies.
   `Transform::only()` cannot select hidden attributes.
 - **Query-builder sources** have no `$hidden`: select only safe columns.
-- **Callbacks** are `RuntimeValue`s or configuration-node closures. They never
-  reach normalized definitions, registry manifests, Livewire state or
-  diagnostics.
+- **Callbacks** are `Callback` property values or configuration-node closures.
+  They never reach normalized definitions, caches or diagnostics.
 - **Diagnostics:** `explain()` returns SQL and the *number* of bindings.
   Values are included only with `includeBindings: true` **and** `app.debug`.
   Nothing is logged.
@@ -112,3 +112,27 @@ gcego/data only reads:
 
 Mutations belong to gcego/actions and gcego/forms, which should resolve their
 target with `findOrFail()`.
+
+## Field-level security
+
+```php
+FieldAccess::hidden('password_hash');                         // never read or written through gcego/data
+FieldAccess::readOnly('code');                                // readable, never writable
+FieldAccess::ability('salary', read: 'viewSalary', write: 'updateSalary');
+new FieldAccess('diagnosis', read: fn (?User $user, ?Patient $patient) => $user?->treats($patient) ?? false);
+```
+
+- **Reads:** an unreadable field is removed from every returned record (models
+  lose the attribute, so neither serialization nor a transform can reach it).
+- **No leaks through queries:** a user cannot filter or sort by a field they
+  may not read (400), search skips it, and aggregating it is 403.
+- **Writes:** writing a field the user may not write is 403.
+- Listings evaluate rules once against the model class; record operations
+  against the record. System contexts are bound only by `false` rules.
+
+## Tenant isolation
+
+Tenant-scoped sources are limited to the current tenant before any other
+constraint, fail closed without a tenant, and stamp the tenant on create.
+See [tenancy](tenancy.md).
+

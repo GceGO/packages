@@ -7,18 +7,19 @@
      new Filter(...), new Filterable(...),        │
      new Search(...), new Sort(...), ...)         ├─ SourceCompiler ─► SourceDefinition (cached per Source)
         │                                         ├─ ProviderRegistry ─► provider->prepare()   (no DB)
-        │  part of a Blueprint                    ├─ DataAuthorizer::authorize(ViewAny)        (no DB)
+        │  declared by any package                ├─ DataAuthorizer::authorize(ViewAny)        (no DB)
         ▼                                         ├─ QueryResolver: QueryInput ─► QueryPlan    (allowlists)
- gcego/registry stores scalars only               ├─ constraints = Query nodes + ScopeRegistry + QueryContext
- (callbacks never reach manifests)                ├─ provider->fetch(definition, plan, constraints)
+ never queries while declared                     ├─ constraints = Query nodes + ScopeRegistry + QueryContext
+ (callbacks never reach caches)                   ├─ provider->fetch(definition, plan, constraints)
                                                   └─ Transform nodes ─► DataResult
 ```
 
 ## Definitions versus execution
 
-- **`Source`:** a `gcego/components` component, and the `source` part of a
-  blueprint. It is immutable and describes data without reading it.
-  - Constructing, validating, normalizing, registering or rendering a Source
+- **`Source`:** an immutable value object that describes data without
+  reading it. Any package can declare one and execute it through
+  `DataManager` (or the `Data` facade).
+  - Constructing, validating, normalizing or registering a Source
     never queries.
   - Tests assert zero queries for each of these, and that no database
     connection is opened at boot.
@@ -57,10 +58,21 @@ with clear errors.
 | relationships | yes | no | no |
 | cursor pagination | yes | yes | no |
 | explain | yes | yes | no |
+| aggregation | yes | yes | yes (in memory) |
+| relationship aggregates, relation filters | yes | no | no |
+| mutations | yes | table sources | no |
+
+## Writes
+
+`MutationPipeline` runs every write in a transaction: lock the record inside
+the source's scope, authorize, allowlist and validate input, run `BeforeSave`,
+stamp the tenant, write, re-check the scope, then invalidate the cache and
+dispatch events after commit. See [mutations](mutations.md) and
+[transactions](transactions.md).
 
 ## Authorization boundary
 
-`DataAuthorizer` runs before any query. Registering a Source or a Blueprint
+`DataAuthorizer` runs before any query or write. Declaring a Source
 grants nothing. The default `GateDataAuthorizer` uses model policies and fails
 closed. `gcego/security` can bind its own implementation; see
 [security](security.md).
@@ -73,10 +85,12 @@ closed. `gcego/security` can bind its own implementation; see
   `DataManager::query()`, and renders `DataResult::items()` with
   `$pagination`.
 - **gcego/forms and gcego/actions:** resolve the record being edited or acted
-  on with `DataManager::find()`/`findOrFail()`, so a known key never bypasses
-  the source's scope. Writes stay in those packages: gcego/data never
-  mass-assigns or mutates.
-- **gcego/security:** binds `DataAuthorizer` and registers tenant constraints
-  with `DataManager::scope()` or `QueryContext::constrain()`.
+  on with `DataManager::find()`/`findOrFail()`, and save through
+  `Data::create()`/`update()`/`delete()`, so validation, authorization,
+  tenancy and cache invalidation are never re-implemented. gcego/data never
+  mass-assigns: only `Writable` fields are written.
+- **gcego/security:** binds `DataAuthorizer`, and tenancy packages bind
+  `TenantResolver`; further constraints go through `DataManager::scope()` or
+  `QueryContext::constrain()`.
 - **Package-specific options:** packages implement `SourceConfiguration`;
   unknown nodes are kept in `SourceDefinition::$extensions`.

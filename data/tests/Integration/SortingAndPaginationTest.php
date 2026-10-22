@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Properties\Property;
 use Gcego\Data\Contracts\DataProvider;
 use Gcego\Data\DataManager;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Exceptions\InvalidSortException;
 use Gcego\Data\Exceptions\InvalidSourceException;
@@ -13,6 +12,7 @@ use Gcego\Data\Exceptions\UnsupportedProviderException;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Pagination\Paginate;
 use Gcego\Data\Pagination\PaginationMode;
+use Gcego\Data\Property;
 use Gcego\Data\Query\QueryPlan;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Sorting\Sortable;

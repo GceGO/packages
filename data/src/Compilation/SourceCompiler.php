@@ -2,24 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Definition;
+namespace Gcego\Data\Compilation;
 
-use Gcego\Components\Validation\ValidationError;
+use Gcego\Data\Caching\Cached;
 use Gcego\Data\Contracts\SourceConfiguration;
 use Gcego\Data\Exceptions\InvalidSourceException;
+use Gcego\Data\Filters\CustomFilter;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Filters\FilterOperator;
+use Gcego\Data\Mutations\BeforeSave;
+use Gcego\Data\Mutations\Writable;
 use Gcego\Data\Pagination\Paginate;
+use Gcego\Data\Performance\Limits;
 use Gcego\Data\Query\Query;
 use Gcego\Data\Relationships\Includable;
+use Gcego\Data\Relationships\RelationAggregate;
 use Gcego\Data\Relationships\With;
 use Gcego\Data\Search\Search;
+use Gcego\Data\Security\FieldAccess;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Sorting\Sortable;
 use Gcego\Data\Sorting\SortDirection;
 use Gcego\Data\Source;
 use Gcego\Data\Support\Callback;
+use Gcego\Data\Tenancy\TenantScoped;
 use Gcego\Data\Transform\Transform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -56,10 +63,10 @@ final class SourceCompiler
     private function build(Source $source): SourceDefinition
     {
         $name = $this->name($source);
-        $result = $source->validate();
+        $errors = $source->validate();
 
-        if (! $result->isValid()) {
-            throw InvalidSourceException::invalid($name, implode(' ', array_map(static fn (ValidationError $error): string => $error->message.($error->expected !== null ? ' Expected: '.$error->expected.'.' : ''), $result->errors())));
+        if ($errors !== []) {
+            throw InvalidSourceException::invalid($name, implode(' ', $errors));
         }
 
         $constraints = [];
@@ -73,6 +80,15 @@ final class SourceCompiler
         $includables = [];
         $transforms = [];
         $extensions = [];
+        $customFilters = [];
+        $aggregates = [];
+        $tenant = null;
+        $fieldAccess = [];
+        $writable = null;
+        $beforeSave = [];
+        $cache = null;
+        $limits = null;
+        $once = static fn (string $what): never => throw InvalidSourceException::invalid($name, sprintf('declare %s once.', $what));
 
         $query = $source->get(Source::Query);
 
@@ -135,10 +151,26 @@ final class SourceCompiler
                 $node instanceof With => $with = array_merge($with, $node->relations),
                 $node instanceof Includable => $includables = array_merge($includables, $node->relations),
                 $node instanceof Transform => $transforms[] = $node,
+                $node instanceof CustomFilter => isset($customFilters[$node->key])
+                    ? throw InvalidSourceException::invalid($name, sprintf('custom filter key "%s" is declared twice.', $node->key))
+                    : $customFilters[$node->key] = $node,
+                $node instanceof RelationAggregate => isset($aggregates[$node->alias])
+                    ? throw InvalidSourceException::invalid($name, sprintf('the relation aggregate alias "%s" is declared twice.', $node->alias))
+                    : $aggregates[$node->alias] = $node,
+                $node instanceof TenantScoped => $tenant === null ? $tenant = $node : $once('TenantScoped'),
+                $node instanceof FieldAccess => isset($fieldAccess[$node->field])
+                    ? throw InvalidSourceException::invalid($name, sprintf('field access for "%s" is declared twice.', $node->field))
+                    : $fieldAccess[$node->field] = $node,
+                $node instanceof Writable => $writable === null ? $writable = $node : $once('Writable'),
+                $node instanceof BeforeSave => $beforeSave[] = $node,
+                $node instanceof Cached => $cache === null ? $cache = $node : $once('Cached'),
+                $node instanceof Limits => $limits === null ? $limits = $node : $once('Limits'),
                 $node instanceof SourceConfiguration => $extensions[] = $node,
                 default => null,
             };
         }
+
+        $this->check($name, $source, $filterables, $customFilters, $tenant, $writable, $cache);
 
         $builder = $source->get(Source::Builder);
         $items = $source->get(Source::Items);
@@ -169,7 +201,40 @@ final class SourceCompiler
             includables: $includables,
             transforms: $transforms,
             extensions: $extensions,
+            customFilters: $customFilters,
+            aggregates: $aggregates,
+            tenant: $tenant,
+            fieldAccess: $fieldAccess,
+            writable: $writable,
+            beforeSave: $beforeSave,
+            cache: $cache,
+            limits: $limits,
         );
+    }
+
+    /**
+     * Cross-node rules.
+     *
+     * @param  array<string, Filterable>  $filterables
+     * @param  array<string, CustomFilter>  $customFilters
+     *
+     * @throws InvalidSourceException
+     */
+    private function check(string $name, Source $source, array $filterables, array $customFilters, ?TenantScoped $tenant, ?Writable $writable, ?Cached $cache): void
+    {
+        $shared = array_intersect_key($filterables, $customFilters);
+
+        if ($shared !== []) {
+            throw InvalidSourceException::invalid($name, sprintf('filter key "%s" is declared by both a Filterable and a CustomFilter.', (string) array_key_first($shared)));
+        }
+
+        if ($tenant !== null && $writable !== null && array_key_exists($tenant->column, $writable->fields)) {
+            throw InvalidSourceException::invalid($name, sprintf('the tenant column "%s" cannot be writable; it is stamped from the current tenant.', $tenant->column));
+        }
+
+        if ($cache !== null && $source->name() === null) {
+            throw InvalidSourceException::invalid($name, 'cached sources need a unique name: ->named(\'...\') identifies them in cache keys.');
+        }
     }
 
     private function provider(Source $source): string

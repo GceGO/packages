@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-use Gcego\Blueprints\BlueprintRole;
-use Gcego\Components\Properties\Property;
-use Gcego\Data\Definition\SourceCompiler;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceCompiler;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Pagination\Paginate;
 use Gcego\Data\Pagination\PaginationMode;
+use Gcego\Data\Property;
 use Gcego\Data\Query\Query;
 use Gcego\Data\Relationships\With;
 use Gcego\Data\Search\Search;
@@ -94,10 +93,12 @@ it('is immutable and never queries the database while being defined', function (
     });
 
     expect($queries)->toBe([])
-        ->and($source->configurations()->has(Paginate::class))->toBeFalse()
-        ->and($copy->configurations()->has(Paginate::class))->toBeTrue()
-        ->and($source->configurations()->has(Filter::class))->toBeTrue()
-        ->and(fn () => $source->configurations()->first(Filter::class)->field = 'x')->toThrow(Error::class); // @phpstan-ignore property.readOnlyAssignOutOfClass
+        ->and($source->hasConfiguration(Paginate::class))->toBeFalse()
+        ->and($copy->hasConfiguration(Paginate::class))->toBeTrue()
+        ->and($source->hasConfiguration(Filter::class))->toBeTrue()
+        ->and($source->named('catalogue')->name())->toBe('catalogue')
+        ->and($source->name())->toBeNull()
+        ->and(fn () => $source->configuration(Filter::class)->field = 'x')->toThrow(Error::class); // @phpstan-ignore property.readOnlyAssignOutOfClass, property.nonObject
 });
 
 it('caches the compiled definition per source instance', function (): void {
@@ -114,11 +115,22 @@ it('normalizes without exposing callbacks', function (): void {
 
     expect($json)->toContain('"constraint":"closure"')
         ->and($json)->toContain('"relations":["topics"]')
-        ->and($json)->not->toContain('secret');
+        ->and($json)->not->toContain('secret')
+        ->and((string) json_encode(Source::builder(fn () => 'secret')->normalize()))->toContain('"builder":{"runtime"')->not->toContain('secret');
 });
 
-it('is the source part of a blueprint', function (): void {
-    expect((new Source(Subject::class))->blueprintRole())->toEqual(BlueprintRole::single(BlueprintRole::Source));
+it('rejects malformed declarations when constructed', function (Closure $declare, string $message): void {
+    expect($declare)->toThrow(InvalidSourceException::class, $message);
+})->with([
+    'duplicate property' => [fn () => new Source(Subject::class, new Property(Source::Model, Subject::class)), 'declared twice'],
+    'misplaced model' => [fn () => new Source(new Property(Source::Pagination, 5), Subject::class), 'only the first argument'],
+    'closure value' => [fn () => new Property(Source::Query, fn () => null), 'must be null, a scalar'],
+    'invalid key' => [fn () => new Property('bad key', 1), 'not a valid property key'],
+]);
+
+it('reports unknown properties and invalid names when compiled', function (): void {
+    expect(fn () => compile(new Source(Subject::class, new Property('colour', 'red'))))->toThrow(InvalidSourceException::class, 'Unknown property "colour"')
+        ->and(fn () => compile(new Source(Subject::class, new Property(Source::Name, 'Bad Name'))))->toThrow(InvalidSourceException::class, 'Invalid property "name"');
 });
 
 it('offers named constructors for every origin', function (): void {

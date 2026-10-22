@@ -49,8 +49,68 @@ return [
 
     'authorization' => [
         // Gate ability checked for query-builder and collection sources. Eloquent sources use the
-        // model's policy (viewAny for listing, view for one record). Undefined abilities deny.
+        // model's policies (viewAny, view, create, update, delete, restore, forceDelete).
+        // Undefined abilities deny.
         'ability' => 'gcego-data.query',
+    ],
+
+    'cache' => [
+        // Master switch for sources that declare new Cached(...). Off means every call reads fresh data.
+        'enabled' => true,
+
+        // Cache store for results (null: the default store). A store with atomic locks
+        // (redis, memcached, database, file, array) also prevents stampedes.
+        'store' => null,
+
+        // Prefix of every key gcego/data writes.
+        'prefix' => 'gcego-data',
+
+        // Invalidate cached results when any Eloquent model of their source (or of an
+        // eager-loaded relation) is saved, deleted or restored, also outside gcego/data.
+        'invalidate_on_model_events' => true,
+
+        // Seconds a cache miss holds its lock while it computes the result.
+        'lock_seconds' => 10,
+    ],
+
+    'transactions' => [
+        // Attempts for a write transaction that fails on a deadlock or serialization failure.
+        'attempts' => 3,
+
+        // Exponential backoff between attempts, with jitter (milliseconds).
+        'backoff_ms' => 50,
+        'max_backoff_ms' => 1000,
+    ],
+
+    'performance' => [
+        // Statement timeout for reads, in milliseconds (MySQL/MariaDB and PostgreSQL). Null: none.
+        'timeout_ms' => null,
+
+        // Deepest row offset page-number pagination may reach (null: unlimited). Deep
+        // offsets scan every skipped row; use filters or cursor pagination instead.
+        'max_offset' => 100000,
+
+        // Most items a collection source may load per call.
+        'collection_max_items' => 10000,
+
+        // Record executed statements (SQL and timing, never bindings) in every result.
+        // Per call: QueryContext::profiled().
+        'profile' => false,
+
+        // Calls slower than this are logged (warning) and dispatch SlowQueryDetected. Null: off.
+        'slow_query_ms' => 1000,
+
+        // A statement repeated this often in one profiled call is reported as a likely N+1.
+        'duplicate_query_threshold' => 5,
+
+        // Mark returned models so a lazy-loaded relation is a violation (Laravel's
+        // LazyLoadingViolationException, or your Model::handleLazyLoadingViolationUsing()).
+        'prevent_lazy_loading' => false,
+    ],
+
+    'events' => [
+        // Dispatch SourceQueried after every read (for auditing). Writes always dispatch events.
+        'reads' => false,
     ],
 
 ];

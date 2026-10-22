@@ -8,3 +8,7 @@ phpunit.xml
 phpstan.neon
 /.idea
 /.vscode
+
+# Kept local, not published
+/README.md
+/docs

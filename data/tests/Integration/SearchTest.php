@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Properties\Property;
 use Gcego\Data\DataManager;
 use Gcego\Data\Exceptions\InvalidQueryException;
+use Gcego\Data\Property;
 use Gcego\Data\Search\Search;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Source;

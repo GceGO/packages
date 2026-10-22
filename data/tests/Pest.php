@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\ComponentServiceProvider;
 use Gcego\Data\DataManager;
 use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Results\DataResult;
@@ -12,14 +11,7 @@ use Gcego\Data\Tests\Fixtures\Models\Subject;
 use Gcego\Data\Tests\Fixtures\Models\Topic;
 use Gcego\Data\Tests\TestCase;
 use Illuminate\Database\Events\QueryExecuted;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Facade;
-
-// Dataset declarations can construct components before the test application starts.
-$componentApp = new Application(dirname(__DIR__));
-Facade::setFacadeApplication($componentApp);
-$componentApp->register(ComponentServiceProvider::class);
 
 pest()->extend(TestCase::class)->in('Unit', 'Integration', 'Feature');
 

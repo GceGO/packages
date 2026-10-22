@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Gcego\Blueprints\Blueprint;
 use Gcego\Data\DataManager;
 use Gcego\Data\Exceptions\InvalidFilterException;
 use Gcego\Data\Exceptions\InvalidQueryException;
@@ -23,7 +22,6 @@ use Gcego\Data\Tests\Fixtures\Models\User;
 use Gcego\Data\Tests\Fixtures\Policies\SubjectPolicy;
 use Gcego\Data\Tests\Fixtures\Tenancy;
 use Gcego\Data\Transform\Transform;
-use Gcego\Registry\Registry;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 
@@ -64,14 +62,6 @@ it('checks the configured ability for query-builder and collection sources', fun
     expect(app(DataManager::class)->query(Source::table('subjects'), context: QueryContext::for($this->admin))->pagination->total)->toBe(6)
         ->and(fn () => app(DataManager::class)->query(Source::table('subjects'), context: QueryContext::for($this->teacher)))->toThrow(AuthorizationException::class)
         ->and(fn () => app(DataManager::class)->query(Source::collection([]), context: QueryContext::for($this->admin)))->toThrow(AuthorizationException::class);
-});
-
-it('never treats a registered source as permission', function (): void {
-    app(Registry::class)->register(new Blueprint('subjects', new Source(Subject::class)));
-    $source = app(DataManager::class)->sourceOf(app(Registry::class)->get('blueprint:subjects'));
-
-    expect($source)->toBeInstanceOf(Source::class)
-        ->and(fn () => app(DataManager::class)->query($source))->toThrow(AuthorizationException::class);
 });
 
 it('rejects injection through every request parameter', function (array $input, string $exception): void {

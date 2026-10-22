@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Properties\Property;
 use Gcego\Data\DataManager;
 use Gcego\Data\Exceptions\InvalidFilterException;
 use Gcego\Data\Exceptions\InvalidSourceException;
@@ -10,6 +9,7 @@ use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Pagination\Paginate;
+use Gcego\Data\Property;
 use Gcego\Data\Query\Query;
 use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Relationships\Includable;

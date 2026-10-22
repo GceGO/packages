@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Data\Contracts;
 
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Query\QueryPlan;

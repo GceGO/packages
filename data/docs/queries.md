@@ -3,7 +3,7 @@
 ## Executing
 
 ```php
-$data = app(DataManager::class);
+$data = app(DataManager::class);   // or the Data facade
 
 $page = $data->query($source);                                   // defaults, current user
 $page = $data->query($source, $request);                         // Illuminate\Http\Request query string

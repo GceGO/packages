@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Gcego\Components\Properties\Property;
 use Gcego\Data\DataManager;
 use Gcego\Data\Exceptions\InvalidSourceException;
 use Gcego\Data\Filters\Filter;
@@ -10,6 +9,7 @@ use Gcego\Data\Filters\Filterable;
 use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Filters\ValueType;
 use Gcego\Data\Pagination\Paginate;
+use Gcego\Data\Property;
 use Gcego\Data\Query\Query;
 use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Relationships\With;
@@ -76,7 +76,7 @@ it('filters, searches, sorts and paginates collections without changing them', f
         ['id' => 4, 'name' => 'Holiday', 'weeks' => 6, 'current' => false],
     ];
     $original = $items;
-    $source = Source::collection(fn () => new Collection($items), new Filterable('weeks', FilterOperator::cases(), ValueType::Integer), new Search('name'), new Sortable('weeks', 'name'), new Paginate(2));
+    $source = Source::collection(fn () => new Collection($items), new Filterable('weeks', FilterOperator::comparisons(), ValueType::Integer), new Search('name'), new Sortable('weeks', 'name'), new Paginate(2));
 
     expect(pluck(systemQuery($source, ['filter' => ['weeks' => ['gte' => '10']], 'sort' => '-weeks']), 'id'))->toBe([1, 3])
         ->and(systemQuery($source, ['filter' => ['weeks' => ['gte' => '10']], 'sort' => '-weeks'])->pagination->total)->toBe(3)

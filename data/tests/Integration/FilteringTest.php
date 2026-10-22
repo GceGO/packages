@@ -23,8 +23,8 @@ beforeEach(fn () => seedSubjects());
 function filterSources(): array
 {
     $nodes = [
-        new Filterable('level', FilterOperator::cases(), ValueType::Integer),
-        new Filterable('code', FilterOperator::cases()),
+        new Filterable('level', FilterOperator::comparisons(), ValueType::Integer),
+        new Filterable('code', FilterOperator::comparisons()),
         new Filterable('published', [FilterOperator::Equals], ValueType::Boolean, column: 'is_published'),
         new Sort('name'),
     ];

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Data\Tests\Fixtures;
 
 use Gcego\Data\Contracts\SearchStrategy;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceDefinition;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 

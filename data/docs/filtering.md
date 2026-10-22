@@ -42,6 +42,51 @@ The request names the **key**; the **column** comes only from the definition.
 | In, NotIn | `in`, `not_in` | 1 to `filters.max_values` (100) |
 | Between | `between` | exactly two (inclusive) |
 | Null, NotNull | `null`, `not_null` | none |
+| Contains, NotContains, StartsWith, EndsWith | `contains`, `not_contains`, `starts_with`, `ends_with` | one (strings only) |
+| Has, DoesntHave | `has`, `doesnt_have` | none (Eloquent relation paths only) |
+
+## Text, enum and relation filters
+
+```php
+Filterable::text('name');                              // contains, not_contains, starts_with, ends_with, eq, neq
+Filterable::enum('status', InvoiceStatus::class);      // only the enum's values: eq, neq, in, not_in
+Filterable::relation('topics');                        // ?filter[topics][has]=1, ?filter[topics][doesnt_have]=1
+new Filter('name', 'alg', FilterOperator::StartsWith); // fixed text condition
+new Filter('topics', operator: FilterOperator::DoesntHave);
+```
+
+Text operators are case-insensitive (ILIKE on PostgreSQL; MySQL/MariaDB
+follow the column collation) and match `%` and `_` in the value literally.
+FilterOperator::comparisons() lists the value-comparison operators only.
+
+## Custom operators and custom filters
+
+```php
+final readonly class JsonContains implements CustomOperator
+{
+    public function name(): string { return 'json_contains'; }
+    public function arity(): int { return 1; }
+    public function apply(EloquentBuilder|QueryBuilder $query, string $column, mixed $value): void
+    {
+        $query->whereJsonContains($column, $value);
+    }
+    public function matches(mixed $actual, mixed $value): bool
+    {
+        return is_array($actual) && in_array($value, $actual, true);
+    }
+}
+
+new Filterable('tags', [FilterOperator::Equals, new JsonContains]);   // ?filter[tags][json_contains]=php
+
+new CustomFilter('overdue', fn (Builder $query, bool $overdue) => $overdue
+    ? $query->where('due_at', '<', now())->whereNull('paid_at')
+    : $query, ValueType::Boolean);                                     // ?filter[overdue]=1
+```
+
+A custom operator receives a trusted column and a validated, cast value and
+must bind it. A custom filter's handler receives only the validated value
+(one value, or a list with `multiple: true`) inside the request filters' own
+AND group, so it can narrow but never widen the mandatory scope.
 
 **SQL semantics:** `neq` and `not_in` do not match NULL. A relation filter
 means "has at least one related record matching".

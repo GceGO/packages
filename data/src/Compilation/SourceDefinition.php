@@ -2,18 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Gcego\Data\Definition;
+namespace Gcego\Data\Compilation;
 
 use Closure;
 use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Contracts\RecordTransformer;
 use Gcego\Data\Contracts\SourceConfiguration;
+use Gcego\Data\Caching\Cached;
+use Gcego\Data\Filters\CustomFilter;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\Filterable;
+use Gcego\Data\Mutations\BeforeSave;
+use Gcego\Data\Mutations\Writable;
 use Gcego\Data\Pagination\Paginate;
+use Gcego\Data\Performance\Limits;
+use Gcego\Data\Relationships\RelationAggregate;
 use Gcego\Data\Search\Search;
+use Gcego\Data\Security\FieldAccess;
 use Gcego\Data\Sorting\Sort;
 use Gcego\Data\Source;
+use Gcego\Data\Tenancy\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -34,6 +42,10 @@ final readonly class SourceDefinition
      * @param  array<string, Closure|null>  $includables  Request include allowlist.
      * @param  list<RecordTransformer>  $transforms
      * @param  list<SourceConfiguration>  $extensions  Configuration nodes from other packages.
+     * @param  array<string, CustomFilter>  $customFilters  Request filters with custom logic, by key.
+     * @param  array<string, RelationAggregate>  $aggregates  Relationship aggregates by alias.
+     * @param  array<string, FieldAccess>  $fieldAccess  Field read/write rules by field.
+     * @param  list<BeforeSave>  $beforeSave
      */
     public function __construct(
         public string $name,
@@ -57,7 +69,25 @@ final readonly class SourceDefinition
         public array $includables = [],
         public array $transforms = [],
         public array $extensions = [],
+        public array $customFilters = [],
+        public array $aggregates = [],
+        public ?TenantScoped $tenant = null,
+        public array $fieldAccess = [],
+        public ?Writable $writable = null,
+        public array $beforeSave = [],
+        public ?Cached $cache = null,
+        public ?Limits $limits = null,
     ) {}
+
+    /**
+     * Always-computed relationship aggregates.
+     *
+     * @return list<RelationAggregate>
+     */
+    public function defaultAggregates(): array
+    {
+        return array_values(array_filter($this->aggregates, static fn (RelationAggregate $aggregate): bool => ! $aggregate->optional));
+    }
 
     /**
      * Configuration nodes of another package, by class.
@@ -88,7 +118,7 @@ final readonly class SourceDefinition
             'key' => $this->key,
             'columns' => $this->columns,
             'constraints' => count($this->constraints) + ($this->builder !== null ? 1 : 0),
-            'filters' => array_map(static fn (Filter $filter): array => ['field' => $filter->field, 'operator' => $filter->operator->value], $this->filters),
+            'filters' => array_map(static fn (Filter $filter): array => ['field' => $filter->field, 'operator' => $filter->operatorName()], $this->filters),
             'filterable' => array_map(static fn (Filterable $filterable): array => $filterable->normalize(), $this->filterables),
             'search' => $this->search?->normalize(),
             'sort' => array_map(static fn (Sort $sort): array => $sort->normalize(), $this->sorts),
@@ -97,6 +127,14 @@ final readonly class SourceDefinition
             'with' => array_keys($this->with),
             'includable' => array_keys($this->includables),
             'transforms' => count($this->transforms),
+            'custom_filters' => array_map(static fn (CustomFilter $filter): array => $filter->normalize(), $this->customFilters),
+            'aggregates' => array_map(static fn (RelationAggregate $aggregate): array => $aggregate->normalize(), $this->aggregates),
+            'tenant' => $this->tenant?->column,
+            'field_access' => array_map(static fn (FieldAccess $access): array => $access->normalize(), $this->fieldAccess),
+            'writable' => $this->writable?->normalize(),
+            'before_save' => count($this->beforeSave),
+            'cache' => $this->cache?->normalize(),
+            'limits' => $this->limits?->normalize(),
             'extensions' => array_map(static fn (SourceConfiguration $node): string => $node::class, $this->extensions),
         ];
     }

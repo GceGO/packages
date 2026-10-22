@@ -6,7 +6,7 @@ namespace Gcego\Data\Security;
 
 use Closure;
 use Gcego\Data\Contracts\QueryConstraint;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Query\Query;
 
 /**

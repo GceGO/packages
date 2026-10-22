@@ -5,42 +5,55 @@ declare(strict_types=1);
 namespace Gcego\Data;
 
 use Closure;
-use Gcego\Blueprints\BlueprintRole;
-use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Data\Aggregation\AggregateResult;
 use Gcego\Data\Aggregation\Aggregation;
+use Gcego\Data\Caching\QueryCache;
 use Gcego\Data\Contracts\DataProvider;
 use Gcego\Data\Contracts\QueryConstraint;
-use Gcego\Data\Definition\SourceCompiler;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceCompiler;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Diagnostics\DataReport;
 use Gcego\Data\Diagnostics\QueryInspector;
 use Gcego\Data\Exceptions\InvalidQueryException;
+use Gcego\Data\Exceptions\MissingTenantException;
+use Gcego\Data\Exceptions\MutationException;
 use Gcego\Data\Exceptions\RecordNotFoundException;
+use Gcego\Data\Mutations\MutationPipeline;
 use Gcego\Data\Providers\ProviderRegistry;
 use Gcego\Data\Query\QueryContext;
 use Gcego\Data\Query\QueryInput;
 use Gcego\Data\Query\QueryPipeline;
 use Gcego\Data\Records\RecordResolver;
 use Gcego\Data\Results\DataResult;
+use Gcego\Data\Results\MutationResult;
 use Gcego\Data\Results\RecordResult;
 use Gcego\Data\Security\ScopeRegistry;
+use Gcego\Data\Transactions\TransactionManager;
+use Gcego\Data\Transactions\TransactionOptions;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /**
- * The entry point of gcego/data (a container singleton; no facade).
+ * The entry point of gcego/data (a container singleton, also the Data facade):
+ * the one way every GCEGO package reads and writes application data.
  *
- *     $data = app(DataManager::class);
+ *     $page = Data::query(new Source(Subject::class), $request);            // authorized listing
+ *     $subject = Data::findOrFail($source, $id);                          // scoped, authorized lookup
+ *     $page = Data::query($source, ['search' => 'alg'], QueryContext::for($user)->constrain($scope));
  *
- *     $page = $data->query(new Source(Subject::class), $request);           // authorized listing
- *     $subject = $data->findOrFail($source, $id);                         // scoped, authorized lookup
- *     $page = $data->query($source, ['search' => 'alg'], QueryContext::for($user)->constrain($scope));
+ *     Data::create($source, $request->all());                             // validated, authorized, atomic
+ *     Data::update($source, $id, ['name' => 'Algebra II']);
+ *     Data::delete($source, $id);
+ *     Data::transaction(fn () => ...);                                    // several writes, all or nothing
  *
- * Every read is authorized (DataAuthorizer) unless the context is
- * QueryContext::system(). It holds no request state.
+ * Every read and write is authorized (DataAuthorizer) unless the context is
+ * QueryContext::system(), and limited to the current tenant for
+ * tenant-scoped sources. It holds no request state.
  */
 final readonly class DataManager
 {
@@ -51,6 +64,9 @@ final readonly class DataManager
         private ProviderRegistry $providers,
         private ScopeRegistry $scopes,
         private QueryInspector $inspector,
+        private MutationPipeline $mutations,
+        private TransactionManager $transactions,
+        private QueryCache $cache,
     ) {}
 
     /**
@@ -106,19 +122,124 @@ final readonly class DataManager
         return $this->find($source, $key, $context, $input)->orFail();
     }
 
-    public function definition(Source|SourceDefinition $source): SourceDefinition
+    /**
+     * Create a record from untrusted input (only Writable fields, validated).
+     *
+     * @param  Request|array<array-key, mixed>  $input
+     *
+     * @throws ValidationException|AuthorizationException|MutationException|MissingTenantException
+     */
+    public function create(Source|SourceDefinition $source, Request|array $input, ?QueryContext $context = null): MutationResult
     {
-        return $source instanceof SourceDefinition ? $source : $this->compiler->compile($source);
+        return $this->mutations->create($this->definition($source), self::attributes($input), $context ?? new QueryContext);
     }
 
     /**
-     * The blueprint's "source" part, if it has one.
+     * Update the record with this key, inside the source's scope, from untrusted input (partial).
+     *
+     * @param  Request|array<array-key, mixed>  $input
+     *
+     * @throws ValidationException|AuthorizationException|MutationException|RecordNotFoundException
      */
-    public function sourceOf(BlueprintInterface $blueprint): ?Source
+    public function update(Source|SourceDefinition $source, string|int $key, Request|array $input, ?QueryContext $context = null): MutationResult
     {
-        $part = $blueprint->part(BlueprintRole::Source);
+        return $this->mutations->update($this->definition($source), $key, self::attributes($input), $context ?? new QueryContext);
+    }
 
-        return $part instanceof Source ? $part : null;
+    /**
+     * Delete the record with this key (a soft delete for SoftDeletes models; $force deletes permanently).
+     *
+     * @throws AuthorizationException|MutationException|RecordNotFoundException
+     */
+    public function delete(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null, bool $force = false): MutationResult
+    {
+        return $this->mutations->delete($this->definition($source), $key, $context ?? new QueryContext, $force);
+    }
+
+    /**
+     * @throws AuthorizationException|MutationException|RecordNotFoundException
+     */
+    public function forceDelete(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null): MutationResult
+    {
+        return $this->delete($source, $key, $context, true);
+    }
+
+    /**
+     * Restore a soft-deleted record.
+     *
+     * @throws AuthorizationException|MutationException|RecordNotFoundException
+     */
+    public function restore(Source|SourceDefinition $source, string|int $key, ?QueryContext $context = null): MutationResult
+    {
+        return $this->mutations->restore($this->definition($source), $key, $context ?? new QueryContext);
+    }
+
+    /**
+     * Create several records atomically: all are created, or none.
+     *
+     * @param  list<Request|array<array-key, mixed>>  $inputs
+     * @return list<MutationResult>
+     */
+    public function createMany(Source|SourceDefinition $source, array $inputs, ?QueryContext $context = null): array
+    {
+        $definition = $this->definition($source);
+
+        return $this->mutations->batch($definition, fn (): array => array_map(fn (Request|array $input): MutationResult => $this->create($definition, $input, $context), array_values($inputs)));
+    }
+
+    /**
+     * Apply the same update to several records atomically (each one authorized and scoped).
+     *
+     * @param  list<string|int>  $keys
+     * @param  Request|array<array-key, mixed>  $input
+     * @return list<MutationResult>
+     */
+    public function updateMany(Source|SourceDefinition $source, array $keys, Request|array $input, ?QueryContext $context = null): array
+    {
+        $definition = $this->definition($source);
+
+        return $this->mutations->batch($definition, fn (): array => array_map(fn (string|int $key): MutationResult => $this->update($definition, $key, $input, $context), array_values($keys)));
+    }
+
+    /**
+     * Delete several records atomically (each one authorized and scoped).
+     *
+     * @param  list<string|int>  $keys
+     * @return list<MutationResult>
+     */
+    public function deleteMany(Source|SourceDefinition $source, array $keys, ?QueryContext $context = null, bool $force = false): array
+    {
+        $definition = $this->definition($source);
+
+        return $this->mutations->batch($definition, fn (): array => array_map(fn (string|int $key): MutationResult => $this->delete($definition, $key, $context, $force), array_values($keys)));
+    }
+
+    /**
+     * Run a unit of work atomically, with rollback and deadlock retries.
+     *
+     * @template T
+     *
+     * @param  Closure(ConnectionInterface): T  $callback
+     * @return T
+     */
+    public function transaction(Closure $callback, ?TransactionOptions $options = null): mixed
+    {
+        return $this->transactions->run($callback, $options);
+    }
+
+    /**
+     * Invalidate cached results that depend on a source, a model class or a "table:connection:name".
+     */
+    public function invalidate(Source|SourceDefinition|string ...$targets): void
+    {
+        foreach ($targets as $target) {
+            is_string($target) ? $this->cache->invalidate($target) : $this->cache->invalidateSource($this->definition($target));
+        }
+    }
+
+    public function definition(Source|SourceDefinition $source): SourceDefinition
+    {
+        return $source instanceof SourceDefinition ? $source : $this->compiler->compile($source);
     }
 
     /**
@@ -164,5 +285,14 @@ final readonly class DataManager
             is_array($input) => QueryInput::fromArray($input),
             default => QueryInput::none(),
         };
+    }
+
+    /**
+     * @param  Request|array<array-key, mixed>  $input
+     * @return array<array-key, mixed>
+     */
+    private static function attributes(Request|array $input): array
+    {
+        return $input instanceof Request ? $input->all() : $input;
     }
 }

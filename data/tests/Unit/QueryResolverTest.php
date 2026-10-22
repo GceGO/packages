@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Gcego\Data\DataConfig;
-use Gcego\Data\Definition\SourceCompiler;
+use Gcego\Data\Compilation\SourceCompiler;
 use Gcego\Data\Exceptions\InvalidFilterException;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Exceptions\InvalidSortException;
@@ -118,7 +118,8 @@ it('bounds pagination', function (): void {
         ->and(plan([], source: new Source(Subject::class))->perPage)->toBe(25)
         ->and(plan(['page' => 3])->page)->toBe(3)
         ->and(plan([], new DataConfig(defaultPerPage: 5, maxPerPage: 8), new Source(Subject::class, new Paginate(50)))->perPage)->toBe(8)
-        ->and(fn () => plan(['page' => 999999999], source: new Source(Subject::class, new Paginate(10))))->not->toThrow(InvalidQueryException::class)
+        ->and(fn () => plan(['page' => 999999999], new DataConfig(maxOffset: null), new Source(Subject::class, new Paginate(10))))->not->toThrow(InvalidQueryException::class)
+        ->and(fn () => plan(['page' => 10002], source: new Source(Subject::class, new Paginate(10))))->toThrow(InvalidQueryException::class, 'beyond the deepest page')
         ->and(fn () => plan(['cursor' => 'abc']))->toThrow(InvalidQueryException::class, 'not supported by this source');
 });
 
@@ -130,7 +131,7 @@ it('accepts only allowlisted includes', function (): void {
 
 it('validates its configuration', function (): void {
     expect(DataConfig::fromArray(require dirname(__DIR__, 2).'/config/gcego-data.php'))->toEqual(new DataConfig)
-        ->and(fn () => DataConfig::fromArray(['pagination' => ['max_per_page' => 0]]))->toThrow(InvalidSourceException::class, 'maxPerPage must be a positive integer')
+        ->and(fn () => DataConfig::fromArray(['pagination' => ['max_per_page' => 0]]))->toThrow(InvalidSourceException::class, 'pagination.max_per_page must be a positive integer')
         ->and(fn () => DataConfig::fromArray(['pagination' => ['default_per_page' => 50, 'max_per_page' => 10]]))->toThrow(InvalidSourceException::class, 'must not exceed')
         ->and(fn () => DataConfig::fromArray(['queries' => ['strict' => 'yes']]))->toThrow(InvalidSourceException::class, 'queries.strict must be a boolean');
 });

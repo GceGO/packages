@@ -8,18 +8,22 @@ use Gcego\Data\Aggregation\AggregateFunction;
 use Gcego\Data\Aggregation\AggregateResult;
 use Gcego\Data\Aggregation\Aggregation;
 use Gcego\Data\Aggregation\TimeBucket;
+use Gcego\Data\Contracts\CustomOperator;
 use Gcego\Data\Contracts\DataProvider;
 use Gcego\Data\Contracts\QueryConstraint;
 use Gcego\Data\Contracts\ResolvesRecords;
 use Gcego\Data\Contracts\SupportsAggregation;
 use Gcego\Data\DataConfig;
-use Gcego\Data\Definition\SourceDefinition;
+use Gcego\Data\Compilation\SourceDefinition;
 use Gcego\Data\Exceptions\InvalidSourceException;
+use Gcego\Data\Exceptions\LimitExceededException;
 use Gcego\Data\Filters\Filter;
 use Gcego\Data\Filters\FilterOperator;
 use Gcego\Data\Pagination\PaginationMode;
 use Gcego\Data\Query\QueryPlan;
 use Gcego\Data\Sorting\SortDirection;
+use Gcego\Data\Support\Like;
+use Gcego\Data\Support\Relations;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -34,8 +38,9 @@ use Traversable;
  * efficient for large tables. The original items are never modified.
  *
  * Comparison: numbers compare numerically, booleans as booleans, everything
- * else as strings (case-sensitive). Search is case-insensitive substring
- * matching. Cursor pagination and relationships are not supported.
+ * else as strings (case-sensitive); text operators and search are
+ * case-insensitive. Cursor pagination and relationships are not supported.
+ * A call loading more than the plan's maxItems fails (LimitExceededException).
  */
 final readonly class CollectionProvider implements DataProvider, ResolvesRecords, SupportsAggregation
 {
@@ -47,8 +52,8 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
             throw InvalidSourceException::invalid($source->name, 'collection sources need items: Source::collection(fn () => [...]).');
         }
 
-        if ($source->with !== [] || $source->includables !== []) {
-            throw InvalidSourceException::invalid($source->name, 'relationships need an Eloquent model source; collection sources cannot eager load.');
+        if ($source->with !== [] || $source->includables !== [] || $source->aggregates !== [] || Relations::declared($source)) {
+            throw InvalidSourceException::invalid($source->name, 'relationships need an Eloquent model source; collection sources cannot eager load, aggregate or filter by relations.');
         }
 
         if ($source->pagination->mode === PaginationMode::Cursor) {
@@ -164,14 +169,25 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
      */
     private function filtered(SourceDefinition $source, QueryPlan $plan, array $constraints): Collection
     {
-        $items = $this->constrained($source, $constraints);
+        $items = $this->constrained($source, $constraints, $plan->maxItems);
 
         if ($plan->filters !== []) {
             $items = $items->filter(fn (mixed $item): bool => $this->matchesAll($item, $plan->filters));
         }
 
-        if ($plan->terms !== [] && $source->search !== null) {
-            $fields = $source->search->fields;
+        foreach ($plan->customFilters as ['filter' => $filter, 'value' => $value]) {
+            $result = $filter->apply($items->values(), $value, $source);
+
+            if (! $result instanceof Collection) {
+                throw InvalidSourceException::invalid($source->name, sprintf('custom filter "%s" must return the filtered collection.', $filter->key));
+            }
+
+            $items = $result;
+        }
+
+        $fields = $plan->searchFields ?? $source->search->fields ?? [];
+
+        if ($plan->terms !== [] && $source->search !== null && $fields !== []) {
             $items = $items->filter(static function (mixed $item) use ($fields, $plan): bool {
                 foreach ($plan->terms as $term) {
                     $found = false;
@@ -198,18 +214,18 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
         return $items->values();
     }
 
-    public function find(SourceDefinition $source, string|int $key, array $constraints, array $includes = []): mixed
+    public function find(SourceDefinition $source, string|int $key, array $constraints, array $includes = [], array $aggregates = []): mixed
     {
         $field = $source->key ?? 'id';
 
-        return $this->constrained($source, $constraints)->first(static fn (mixed $item): bool => self::compare(data_get($item, $field), $key) === 0 && data_get($item, $field) !== null);
+        return $this->constrained($source, $constraints, $this->config->collectionMaxItems)->first(static fn (mixed $item): bool => self::compare(data_get($item, $field), $key) === 0 && data_get($item, $field) !== null);
     }
 
     /**
      * @param  list<QueryConstraint>  $constraints
      * @return Collection<int, mixed>
      */
-    private function constrained(SourceDefinition $source, array $constraints): Collection
+    private function constrained(SourceDefinition $source, array $constraints, ?int $maxItems = null): Collection
     {
         $raw = ($source->items ?? static fn (): array => [])();
 
@@ -218,6 +234,11 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
         }
 
         $items = new Collection($raw instanceof Traversable ? iterator_to_array($raw, false) : array_values($raw));
+        $maxItems ??= $source->limits->maxItems ?? $this->config->collectionMaxItems;
+
+        if ($items->count() > $maxItems) {
+            throw LimitExceededException::collectionItems($source->name, $maxItems);
+        }
 
         foreach ($constraints as $constraint) {
             $result = $constraint->apply($items, $source);
@@ -249,6 +270,13 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
     private static function matches(mixed $actual, Filter $filter): bool
     {
         $value = $filter->value;
+
+        if ($filter->operator instanceof CustomOperator) {
+            return $filter->operator->matches($actual, $value);
+        }
+
+        $text = is_scalar($value) ? (string) $value : '';
+
         $values = is_array($value) ? $value : [$value];
         $in = static fn (): bool => $actual !== null && array_filter($values, static fn (mixed $candidate): bool => self::compare($actual, $candidate) === 0) !== [];
 
@@ -264,6 +292,11 @@ final readonly class CollectionProvider implements DataProvider, ResolvesRecords
             FilterOperator::Between => $actual !== null && self::compare($actual, $values[0]) >= 0 && self::compare($actual, $values[1]) <= 0,
             FilterOperator::Null => $actual === null,
             FilterOperator::NotNull => $actual !== null,
+            FilterOperator::Contains => Like::matches($actual, $text, 'any'),
+            FilterOperator::NotContains => $actual !== null && ! Like::matches($actual, $text, 'any'),
+            FilterOperator::StartsWith => Like::matches($actual, $text, 'start'),
+            FilterOperator::EndsWith => Like::matches($actual, $text, 'end'),
+            FilterOperator::Has, FilterOperator::DoesntHave => false,
         };
     }
 
