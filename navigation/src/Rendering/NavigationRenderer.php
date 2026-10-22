@@ -10,12 +10,12 @@ use Gcego\Navigation\Navigation;
 use Gcego\Navigation\NavigationConfig;
 use Gcego\Navigation\NavigationManager;
 use Gcego\Navigation\Presets\NavigationPresets;
-use Gcego\Runtime\Contracts\RendererInterface;
-use Gcego\Runtime\Contracts\StylingResolver;
-use Gcego\Runtime\Exceptions\RenderException;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Rendering\RenderResult;
-use Gcego\Runtime\Styling\StyleSlots;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Contracts\RendererInterface;
+use Gcego\Rendering\Contracts\StylingResolver;
+use Gcego\Rendering\Exceptions\RenderException;
+use Gcego\Rendering\Output\RenderResult;
+use Gcego\Rendering\Styling\StyleSlots;
 use Gcego\Tables\Support\Icons;
 use Illuminate\Contracts\View\Factory;
 

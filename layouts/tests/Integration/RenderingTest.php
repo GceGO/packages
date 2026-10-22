@@ -30,8 +30,8 @@ use Gcego\Layouts\Configuration\Gap;
 use Gcego\Layouts\Layout;
 use Gcego\Layouts\Responsive\ColumnSpan;
 use Gcego\Layouts\Responsive\Visibility;
-use Gcego\Runtime\Exceptions\RenderException;
-use Gcego\Runtime\Rendering\RenderMode;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\Exceptions\RenderException;
 use Gcego\Security\Permissions\Permission;
 
 /**

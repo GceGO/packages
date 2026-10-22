@@ -12,6 +12,7 @@ use Gcego\Actions\Tests\Fixtures\Models\Subject;
 use Gcego\Actions\Tests\Fixtures\Policies\PermissivePolicy;
 use Gcego\Actions\Tests\Fixtures\Policies\SubjectPolicy;
 use Gcego\Actions\Tests\Fixtures\TenantResolver;
+use Gcego\Blueprints\BlueprintsServiceProvider;
 use Gcego\Chroma\ChromaServiceProvider;
 use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
@@ -19,6 +20,7 @@ use Gcego\Data\DataServiceProvider;
 use Gcego\Luminaries\LuminariesServiceProvider;
 use Gcego\Registry\Registry;
 use Gcego\Registry\RegistryServiceProvider;
+use Gcego\Rendering\RenderingServiceProvider;
 use Gcego\Runtime\RuntimeServiceProvider;
 use Gcego\Security\SecurityServiceProvider;
 use Illuminate\Database\Schema\Blueprint as Table;
@@ -59,7 +61,7 @@ abstract class TestCase extends Orchestra
     {
         $app->register(ComponentServiceProvider::class);
 
-        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, LuminariesServiceProvider::class, ActionsServiceProvider::class];
+        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, BlueprintsServiceProvider::class, RuntimeServiceProvider::class, RenderingServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, LuminariesServiceProvider::class, ActionsServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void

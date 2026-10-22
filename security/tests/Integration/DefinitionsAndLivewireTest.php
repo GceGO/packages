@@ -6,9 +6,9 @@ use Gcego\Blueprints\Blueprint;
 use Gcego\Components\Properties\Property;
 use Gcego\Data\Source;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Runtime\Livewire\BlueprintHost;
-use Gcego\Runtime\Runtime;
 use Gcego\Security\Exceptions\AccessDeniedException;
 use Gcego\Security\Exceptions\TenantAccessException;
 use Gcego\Security\Integration\SecurityRenderAuthorizer;
@@ -73,11 +73,11 @@ it('denies a bulk operation when any record is denied', function (): void {
 it('authorizes runtime renders of registered definitions', function (): void {
     $this->actingAs($this->world['teacher']);
 
-    expect(fn () => app(Runtime::class)->renderAuthorized('blueprint:subjects'))->toThrow(AccessDeniedException::class);
+    expect(fn () => app(RenderEngine::class)->renderAuthorized('blueprint:subjects'))->toThrow(AccessDeniedException::class);
 
     security()->enterTenant((string) $this->world['north']->id);
 
-    expect(app(Runtime::class)->renderAuthorized('blueprint:subjects')->toHtml())->toContain('Subjects');
+    expect(app(RenderEngine::class)->renderAuthorized('blueprint:subjects')->toHtml())->toContain('Subjects');
 });
 
 it('authorizes the Livewire host initially and again on every interaction', function (): void {

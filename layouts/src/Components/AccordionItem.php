@@ -11,7 +11,7 @@ use Gcego\Components\Schema\Type;
 use Gcego\Layouts\LayoutComponent;
 use Gcego\Layouts\Presets\LayoutPresets;
 use Gcego\Layouts\Rendering\LayoutView;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 
 /**
  * One item of an Accordion: a summary (Label, Description, Icon) and content.

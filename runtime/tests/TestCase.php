@@ -4,32 +4,14 @@ declare(strict_types=1);
 
 namespace Gcego\Runtime\Tests;
 
-use Gcego\Components\ComponentServiceProvider;
+use Gcego\Blueprints\BlueprintsServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
+use Gcego\Registry\Kinds\DefinitionKinds;
 use Gcego\Registry\RegistryServiceProvider;
-use Gcego\Runtime\Contracts\StylingResolver;
-use Gcego\Runtime\Rendering\RendererRegistry;
 use Gcego\Runtime\RuntimeServiceProvider;
-use Gcego\Runtime\Tests\Fixtures\CountingRenderer;
-use Gcego\Runtime\Tests\Fixtures\ExampleContainer;
-use Gcego\Runtime\Tests\Fixtures\ExampleHeading;
-use Gcego\Runtime\Tests\Fixtures\ExampleParagraph;
-use Gcego\Runtime\Tests\Fixtures\ExampleSearch;
-use Gcego\Runtime\Tests\Fixtures\ExampleTable;
-use Gcego\Runtime\Tests\Fixtures\FailingComponent;
-use Gcego\Runtime\Tests\Fixtures\FailingRenderer;
-use Gcego\Runtime\Tests\Fixtures\FixtureStylingResolver;
-use Gcego\Runtime\Tests\Fixtures\HeadingRenderer;
-use Gcego\Runtime\Tests\Fixtures\ListContainerRenderer;
-use Gcego\Runtime\Tests\Fixtures\MissingViewComponent;
-use Gcego\Runtime\Tests\Fixtures\MissingViewRenderer;
-use Gcego\Runtime\Tests\Fixtures\ParagraphRenderer;
-use Gcego\Runtime\Tests\Fixtures\SearchRenderer;
-use Gcego\Runtime\Tests\Fixtures\TableRenderer;
-use Gcego\Runtime\Tests\Fixtures\TrustedHtmlComponent;
-use Gcego\Runtime\Tests\Fixtures\TrustedHtmlRenderer;
+use Gcego\Runtime\Tests\Fixtures\NoteKind;
 use Illuminate\Foundation\Application;
-use Livewire\LivewireServiceProvider;
+use Illuminate\Support\ServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
@@ -39,36 +21,28 @@ abstract class TestCase extends Orchestra
      */
     private array $overrides = [];
 
+    /**
+     * @var list<class-string<ServiceProvider>>
+     */
+    private array $extraProviders = [];
+
     protected function setUp(): void
     {
-        CountingRenderer::$instances = 0;
-        $this->afterApplicationCreated(fn () => $this->registerFixtureRenderers());
+        $this->afterApplicationCreated(fn () => $this->registerFixtureKind());
 
         parent::setUp();
     }
 
     /**
-     * @param  array<string, mixed>  $config  Full config keys, e.g. ['gcego-runtime.rendering.strict' => false].
+     * @param  array<string, mixed>  $config  Full config keys, e.g. ['gcego-runtime.execution.max_depth' => 3].
+     * @param  list<class-string<ServiceProvider>>  $providers  Extra providers, registered before GCEGO boots.
      */
-    public function rebuildApplication(array $config = []): Application
+    public function rebuildApplication(array $config = [], array $providers = []): Application
     {
         $this->overrides = $config;
+        $this->extraProviders = $providers;
         $this->refreshApplication();
-        $this->registerFixtureRenderers();
-
-        /** @var Application */
-        return $this->app;
-    }
-
-    /**
-     * Rebuild with the fixture styling resolver bound before renderers are created.
-     */
-    public function rebuildApplicationWithStyling(): Application
-    {
-        $this->afterApplicationCreated(fn () => $this->app?->singleton(StylingResolver::class, FixtureStylingResolver::class));
-        $this->refreshApplication();
-        $this->app?->singleton(StylingResolver::class, FixtureStylingResolver::class);
-        $this->registerFixtureRenderers();
+        $this->registerFixtureKind();
 
         /** @var Application */
         return $this->app;
@@ -76,9 +50,7 @@ abstract class TestCase extends Orchestra
 
     protected function getPackageProviders($app): array
     {
-        $app->register(ComponentServiceProvider::class);
-
-        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class];
+        return [GcegoServiceProvider::class, RegistryServiceProvider::class, BlueprintsServiceProvider::class, RuntimeServiceProvider::class, ...$this->extraProviders];
     }
 
     protected function defineEnvironment($app): void
@@ -86,28 +58,19 @@ abstract class TestCase extends Orchestra
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('k', 32)));
         $app['config']->set('gcego-registry.discovery.enabled', false);
         $app['config']->set('gcego-registry.cache.enabled', false);
-        $app['view']->addNamespace('fixtures', __DIR__.'/Fixtures/views');
+        $app['config']->set('gcego-blueprints.discovery.enabled', false);
 
         foreach ($this->overrides as $key => $value) {
             $app['config']->set($key, $value);
         }
     }
 
-    private function registerFixtureRenderers(): void
+    private function registerFixtureKind(): void
     {
-        $renderers = $this->app?->make(RendererRegistry::class);
+        $kinds = $this->app?->make(DefinitionKinds::class);
 
-        if ($renderers === null || $renderers->has(ExampleHeading::class)) {
-            return;
+        if ($kinds !== null && ! $kinds->has('note')) {
+            $kinds->register(new NoteKind);
         }
-
-        $renderers->register(ExampleHeading::class, HeadingRenderer::class);
-        $renderers->register(ExampleParagraph::class, ParagraphRenderer::class);
-        $renderers->register(ExampleContainer::class, ListContainerRenderer::class);
-        $renderers->register(ExampleTable::class, TableRenderer::class);
-        $renderers->register(ExampleSearch::class, SearchRenderer::class);
-        $renderers->register(FailingComponent::class, FailingRenderer::class);
-        $renderers->register(TrustedHtmlComponent::class, TrustedHtmlRenderer::class);
-        $renderers->register(MissingViewComponent::class, MissingViewRenderer::class);
     }
 }

@@ -7,8 +7,8 @@ namespace Gcego\Layouts\Rendering;
 use Gcego\Chroma\ChromaManager;
 use Gcego\Layouts\LayoutComponent;
 use Gcego\Layouts\LayoutsConfig;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Styling\StyleSlots;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Styling\StyleSlots;
 use Gcego\Tables\Support\Icons;
 use Illuminate\Support\HtmlString;
 

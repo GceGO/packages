@@ -7,9 +7,9 @@ namespace Gcego\Actions\Rendering;
 use Gcego\Actions\Action;
 use Gcego\Actions\ActionGroup;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Runtime\Contracts\RendererInterface;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Rendering\RenderResult;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Contracts\RendererInterface;
+use Gcego\Rendering\Output\RenderResult;
 use Livewire\Livewire;
 
 /**

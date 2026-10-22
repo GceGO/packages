@@ -20,7 +20,7 @@ use Gcego\Chroma\ChromaManager;
 use Gcego\Chroma\Slots\SlotDefinition;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
@@ -91,7 +91,7 @@ final class ActionsServiceProvider extends ServiceProvider implements PackageInt
     {
         return new PackageDescriptor(
             'gcego/actions',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security'],
             capabilities: ['actions', 'actions.crud', 'actions.bulk', 'actions.livewire'],
             description: 'Declarative CRUD, custom and bulk actions with secure execution, confirmation and transactions.',
         );

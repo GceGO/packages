@@ -7,8 +7,8 @@ namespace Gcego\Pages\Rendering;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Pages\Components\Content;
 use Gcego\Pages\Presets\PagePresets;
-use Gcego\Runtime\Blade\BladeRenderer;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Blade\BladeRenderer;
+use Gcego\Rendering\Context\RenderContext;
 
 /**
  * Renders Content as escaped paragraphs.

@@ -41,8 +41,8 @@ Layout components extend `LayoutComponent`, which is a gcego/components
 | --- | --- | --- |
 | `LayoutManager::render($identity, $record, $live)` | the layout's requirements | static, or Livewire children with `$live` |
 | `<x-gcego-layouts::layout name="…" :record="…" :live="true" />` | same | Livewire children by default |
-| A layout inside a blueprint (`Runtime::renderAuthorized('blueprint:…')`, `<livewire:gcego-blueprint>`) | the blueprint's | the blueprint render's |
-| `LayoutManager::renderLayout($component)` / `Runtime::render($component)` | trusted server code (root not authorized) | static or Livewire |
+| A layout inside a blueprint (`RenderEngine::renderAuthorized('blueprint:…')`, `<livewire:gcego-blueprint>`) | the blueprint's | the blueprint render's |
+| `LayoutManager::renderLayout($component)` / `RenderEngine::render($component)` | trusted server code (root not authorized) | static or Livewire |
 
 Notes:
 - **Livewire hosts.** "Livewire children" means children that need a host

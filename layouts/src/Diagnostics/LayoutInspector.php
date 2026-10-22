@@ -25,7 +25,7 @@ use Gcego\Layouts\LayoutsConfig;
 use Gcego\Layouts\Registry\LayoutKind;
 use Gcego\Layouts\Responsive\ColumnSpan;
 use Gcego\Layouts\Responsive\Visibility;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Widgets\Widget;
 use Illuminate\Contracts\Container\Container;
 use Stringable;

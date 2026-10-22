@@ -61,7 +61,7 @@ GcegoTest::component($dashboard)
 ```php
 use Gcego\Components\Component;
 use Gcego\Components\Properties\Property;
-use Gcego\Runtime\Rendering\ContainerRenderer;
+use Gcego\Rendering\Renderers\ContainerRenderer;
 use Gcego\Testing\GcegoTest;
 
 GcegoTest::runtime()
@@ -73,8 +73,8 @@ GcegoTest::runtime()->assertRendererFor(new Component, ContainerRenderer::class)
 ```
 
 - **Rendering**:
-  - `render()` uses `Runtime::render()`, which does no authorization.
-  - `renderAuthorized('blueprint:subjects')` is the `<x-gcego-runtime::render>` path: it authorizes first.
+  - `render()` uses `RenderEngine::render()`, which does no authorization.
+  - `renderAuthorized('blueprint:subjects')` is the `<x-gcego-rendering::render>` path: it authorizes first.
   - Both return an [HTML testable](#html).
 - **Renderers**:
   - `assertMissingRenderer($tree, $class)` and `assertRenderable($tree)` read the runtime inspector.

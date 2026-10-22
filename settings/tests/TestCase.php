@@ -7,6 +7,7 @@ namespace Gcego\Settings\Tests;
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
 use Gcego\Actions\ActionsServiceProvider;
+use Gcego\Blueprints\BlueprintsServiceProvider;
 use Gcego\Chroma\ChromaServiceProvider;
 use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\GcegoServiceProvider;
@@ -22,6 +23,7 @@ use Gcego\Notifications\NotificationsServiceProvider;
 use Gcego\Pages\PagesServiceProvider;
 use Gcego\Panels\PanelsServiceProvider;
 use Gcego\Registry\RegistryServiceProvider;
+use Gcego\Rendering\RenderingServiceProvider;
 use Gcego\Runtime\RuntimeServiceProvider;
 use Gcego\Security\SecurityServiceProvider;
 use Gcego\Settings\SettingsServiceProvider;
@@ -77,7 +79,7 @@ abstract class TestCase extends Orchestra
     {
         $app->register(ComponentServiceProvider::class);
 
-        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, RuntimeServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, ActionsServiceProvider::class, FormsServiceProvider::class, BladeIconsServiceProvider::class, BladeHeroiconsServiceProvider::class, BladeLucideIconsServiceProvider::class, LuminariesServiceProvider::class, TablesServiceProvider::class, InfolistsServiceProvider::class, WidgetsServiceProvider::class, LayoutsServiceProvider::class, NavigationServiceProvider::class, PagesServiceProvider::class, ModulesServiceProvider::class, PanelsServiceProvider::class, NotificationsServiceProvider::class, MediaServiceProvider::class, WorkflowsServiceProvider::class, SettingsServiceProvider::class];
+        return [LivewireServiceProvider::class, GcegoServiceProvider::class, RegistryServiceProvider::class, BlueprintsServiceProvider::class, RuntimeServiceProvider::class, RenderingServiceProvider::class, ChromaServiceProvider::class, DataServiceProvider::class, SecurityServiceProvider::class, ActionsServiceProvider::class, FormsServiceProvider::class, BladeIconsServiceProvider::class, BladeHeroiconsServiceProvider::class, BladeLucideIconsServiceProvider::class, LuminariesServiceProvider::class, TablesServiceProvider::class, InfolistsServiceProvider::class, WidgetsServiceProvider::class, LayoutsServiceProvider::class, NavigationServiceProvider::class, PagesServiceProvider::class, ModulesServiceProvider::class, PanelsServiceProvider::class, NotificationsServiceProvider::class, MediaServiceProvider::class, WorkflowsServiceProvider::class, SettingsServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void

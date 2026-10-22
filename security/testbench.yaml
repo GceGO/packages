@@ -2,6 +2,8 @@ providers:
   - Livewire\LivewireServiceProvider
   - Gcego\Core\GcegoServiceProvider
   - Gcego\Registry\RegistryServiceProvider
+  - Gcego\Blueprints\BlueprintsServiceProvider
   - Gcego\Runtime\RuntimeServiceProvider
+  - Gcego\Rendering\RenderingServiceProvider
   - Gcego\Data\DataServiceProvider
   - Gcego\Security\SecurityServiceProvider

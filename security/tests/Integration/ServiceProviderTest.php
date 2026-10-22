@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Gcego\Core\Gcego;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Registry\Index\DefinitionDescriptor;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
 use Gcego\Security\Authorization\AuthorizationEngine;
 use Gcego\Security\Authorization\ContextFactory;
 use Gcego\Security\Integration\SecurityDataAuthorizer;

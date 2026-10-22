@@ -9,7 +9,7 @@ use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\Source;
 use Gcego\Registry\Contracts\RegistryInterface;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
 use Gcego\Security\Contracts\Requirement;
 use Gcego\Security\Integration\SecurityDataAuthorizer;
 use Gcego\Security\Integration\SecurityRenderAuthorizer;

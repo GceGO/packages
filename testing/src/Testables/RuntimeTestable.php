@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Gcego\Testing\Testables;
 
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Runtime\Diagnostics\RuntimeInspector;
-use Gcego\Runtime\Exceptions\RendererNotFoundException;
-use Gcego\Runtime\Rendering\RendererRegistry;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\Diagnostics\RenderingInspector;
+use Gcego\Rendering\Exceptions\RendererNotFoundException;
+use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Testing\Assertions\Verifier;
 use Gcego\Testing\Support\Reports;
 use Illuminate\Contracts\Container\Container;
@@ -17,8 +17,8 @@ use Throwable;
 
 /**
  * Rendering through gcego/runtime: renderer resolution, rendered markup
- * and failures. render() uses Runtime::render() (no authorization), and
- * renderAuthorized() the same path as <x-gcego-runtime::render>.
+ * and failures. render() uses RenderEngine::render() (no authorization), and
+ * renderAuthorized() the same path as <x-gcego-rendering::render>.
  */
 final class RuntimeTestable extends Testable
 {
@@ -63,7 +63,7 @@ final class RuntimeTestable extends Testable
      */
     public function assertMissingRenderer(ComponentInterface $tree, ?string $class = null): self
     {
-        $missing = $this->container->make(RuntimeInspector::class)->inspect($tree)->missingRenderers;
+        $missing = $this->container->make(RenderingInspector::class)->inspect($tree)->missingRenderers;
         $classes = array_map(static fn (array $entry): string => $entry['class'], $missing);
 
         return $this->check($class === null ? $classes !== [] : in_array($class, $classes, true), sprintf('assertMissingRenderer(%s, %s)', $tree::class, $this->export($class)), 'Expected the tree to contain a component without a renderer.', ['missing' => $class ?? '≥ 1'], ['missing' => $classes]);
@@ -71,7 +71,7 @@ final class RuntimeTestable extends Testable
 
     public function assertRenderable(ComponentInterface $tree): self
     {
-        $missing = $this->container->make(RuntimeInspector::class)->inspect($tree)->missingRenderers;
+        $missing = $this->container->make(RenderingInspector::class)->inspect($tree)->missingRenderers;
 
         return $this->check($missing === [], 'assertRenderable('.$tree::class.')', 'Expected every component in the tree to have a renderer.', ['missing' => []], ['missing' => array_map(static fn (array $entry): string => $entry['path'].' ('.$entry['class'].')', $missing)]);
     }
@@ -92,7 +92,7 @@ final class RuntimeTestable extends Testable
 
     public function assertHealthy(ComponentInterface|string|null $target = null): self
     {
-        $problems = Reports::problems($this->container->make(RuntimeInspector::class)->inspect($target));
+        $problems = Reports::problems($this->container->make(RenderingInspector::class)->inspect($target));
 
         return $this->check($problems === [], 'assertHealthy()', 'Expected the runtime inspector to report no errors.', ['errors' => []], ['errors' => $problems]);
     }
@@ -102,8 +102,8 @@ final class RuntimeTestable extends Testable
         return 'runtime';
     }
 
-    private function runtime(): Runtime
+    private function runtime(): RenderEngine
     {
-        return $this->container->make(Runtime::class);
+        return $this->container->make(RenderEngine::class);
     }
 }

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Gcego\Security\Integration;
 
 use Gcego\Registry\Index\DefinitionDescriptor;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
 use Gcego\Security\Resources\DefinitionAuthorizer;
 use Illuminate\Contracts\Container\Container;
 
 /**
- * gcego/runtime's RenderAuthorizer, backed by definition requirements.
+ * gcego/rendering's RenderAuthorizer, backed by definition requirements.
  *
  * The runtime calls it before loading a definition for every public render
  * and on every Livewire request of <livewire:gcego-blueprint>, so access is

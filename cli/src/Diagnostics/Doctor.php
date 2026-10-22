@@ -11,7 +11,7 @@ use Gcego\Cli\CliManager;
 use Gcego\Cli\Commands\Concerns\CommandNames;
 use Gcego\Cli\Validation\DefinitionValidation;
 use Gcego\Registry\RegistryConfig;
-use Gcego\Runtime\Diagnostics\RuntimeInspector;
+use Gcego\Rendering\Diagnostics\RenderingInspector;
 use Gcego\Settings\SettingsManager;
 use Gcego\Studio\Health\HealthCheckResult;
 use Gcego\Studio\Health\HealthStatus;
@@ -148,12 +148,12 @@ final readonly class Doctor
 
     private function renderers(): DiagnosticResult
     {
-        $report = $this->app->make(RuntimeInspector::class)->inspect();
+        $report = $this->app->make(RenderingInspector::class)->inspect();
         $errors = array_filter($report->diagnostics, static fn ($diagnostic): bool => $diagnostic->level === 'error');
 
         return $errors === [] && $report->missingRenderers === []
-            ? DiagnosticResult::pass('runtime.renderers', 'Runtime renderers', sprintf('%d renderer bindings are registered.', count($report->renderers)), 'gcego/runtime')
-            : DiagnosticResult::failure('runtime.renderers', 'Runtime renderers', implode(' ', array_map(static fn ($diagnostic): string => $diagnostic->message, $errors)) ?: sprintf('%d component types have no renderer.', count($report->missingRenderers)), 'Install the package that renders them, or register a renderer.', 'gcego/runtime');
+            ? DiagnosticResult::pass('runtime.renderers', 'Renderers', sprintf('%d renderer bindings are registered.', count($report->renderers)), 'gcego/rendering')
+            : DiagnosticResult::failure('runtime.renderers', 'Renderers', implode(' ', array_map(static fn ($diagnostic): string => $diagnostic->message, $errors)) ?: sprintf('%d component types have no renderer.', count($report->missingRenderers)), 'Install the package that renders them, or register a renderer.', 'gcego/rendering');
     }
 
     private function styling(): DiagnosticResult

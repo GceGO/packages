@@ -19,7 +19,7 @@ use Gcego\Forms\Layout\Step;
 use Gcego\Forms\Layout\Tab;
 use Gcego\Forms\Layout\Tabs;
 use Gcego\Forms\Layout\Wizard;
-use Gcego\Runtime\Exceptions\RenderException;
+use Gcego\Rendering\Exceptions\RenderException;
 use Gcego\Security\Permissions\Permission;
 
 it('renders the documented examples', function (Form $form, array $expected): void {

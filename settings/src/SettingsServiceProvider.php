@@ -166,7 +166,7 @@ final class SettingsServiceProvider extends ServiceProvider implements PackageIn
     {
         return new PackageDescriptor(
             'gcego/settings',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/panels', 'gcego/notifications', 'gcego/media', 'gcego/workflows'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/security', 'gcego/actions', 'gcego/forms', 'gcego/panels', 'gcego/notifications', 'gcego/media', 'gcego/workflows'],
             capabilities: ['settings', 'settings.scopes', 'settings.encryption', 'settings.history', 'settings.pages', 'settings.transfer', 'settings.approvals', 'settings.preferences'],
             description: 'Declarative typed settings with scopes, encryption, validation, caching, history and generated settings pages.',
         );

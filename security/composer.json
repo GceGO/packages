@@ -27,7 +27,7 @@
         "gcego/core": "^0.1",
         "gcego/data": "^0.1",
         "gcego/registry": "^0.1",
-        "gcego/runtime": "^0.1",
+        "gcego/rendering": "^0.1",
         "illuminate/auth": "^13.0",
         "illuminate/contracts": "^13.0",
         "illuminate/database": "^13.0",
@@ -87,7 +87,7 @@
             "url": "../runtime",
             "options": {
                 "versions": {
-                    "gcego/runtime": "0.1.0"
+                    "gcego/runtime": "0.2.0"
                 }
             }
         },
@@ -97,6 +97,15 @@
             "options": {
                 "versions": {
                     "gcego/data": "0.1.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../rendering",
+            "options": {
+                "versions": {
+                    "gcego/rendering": "0.1.0"
                 }
             }
         }

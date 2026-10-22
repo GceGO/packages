@@ -6,7 +6,7 @@ use Gcego\Blueprints\Blueprint;
 use Gcego\Data\Source;
 use Gcego\Registry\Index\DefinitionDescriptor;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
 use Gcego\Security\Audit\SecurityEvent;
 use Gcego\Security\Contracts\AuditReporter;
 use Gcego\Security\Diagnostics\SecurityDiagnostic;

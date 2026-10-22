@@ -25,7 +25,7 @@ Tailwind node (instance)        config/gcego-chroma.php        component package
 | Themes | `Themes\Theme`, `Themes\ThemeRegistry` |
 | Presets | `Presets\DefaultPresets`, `Presets\PresetRegistry` |
 | Slot declarations and overrides | `Slots\SlotDefinition`, `Slots\SlotRegistry` |
-| Resolution (runtime contract) | `Slots\SlotResolver` implements `Gcego\Runtime\Contracts\StylingResolver` |
+| Resolution (runtime contract) | `Slots\SlotResolver` implements `Gcego\Rendering\Contracts\StylingResolver` |
 | Facade-free entry point | `ChromaManager` |
 | Colors, appearance, accents, branding | gcego/swatches (delegated from `ChromaManager`) |
 | Diagnostics | `Diagnostics\ChromaInspector`, `ChromaReport`, `ChromaDiagnostic` |

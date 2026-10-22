@@ -8,7 +8,7 @@ use Gcego\Infolists\InfolistsServiceProvider;
 use Gcego\Infolists\Layout\Section;
 use Gcego\Infolists\Livewire\InfolistHost;
 use Gcego\Infolists\Tests\Fixtures\Models\Subject;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Features\SupportTesting\Testable;

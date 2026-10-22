@@ -9,7 +9,7 @@ use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Components\Schema\PropertyDefinition;
 use Gcego\Components\Schema\Type;
 use Gcego\Layouts\LayoutComponent;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 
 /**
  * A placeholder for content that does not exist yet, with optional actions:
