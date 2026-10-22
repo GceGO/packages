@@ -73,7 +73,7 @@ gcego/core.
 
 | Before | After |
 | --- | --- |
-| Rendering asked the `gcego-runtime.render` Gate ability | Definitions are checked against their own requirement nodes. A definition with none is denied; use `PublicAccess` for public ones. |
+| Rendering asked the `gcego-rendering.render` Gate ability | Definitions are checked against their own requirement nodes. A definition with none is denied; use `PublicAccess` for public ones. |
 | Data used model policies | Data uses model policies plus requirement nodes on the `Source`, tenant-owned models need a tenant, and security scopes apply to every query |
 
 ## Configuration (`config/gcego-security.php`)

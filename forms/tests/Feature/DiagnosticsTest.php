@@ -15,7 +15,7 @@ use Gcego\Forms\Form;
 use Gcego\Forms\FormsServiceProvider;
 use Gcego\Forms\Livewire\FormHost;
 use Gcego\Forms\Tests\Fixtures\Models\Subject;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Livewire\Livewire;
 
 it('reports a healthy form with its fields', function (): void {

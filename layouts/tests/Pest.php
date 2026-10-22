@@ -10,8 +10,8 @@ use Gcego\Layouts\Tests\Fixtures\Models\Membership;
 use Gcego\Layouts\Tests\Fixtures\Models\Student;
 use Gcego\Layouts\Tests\Fixtures\Models\User;
 use Gcego\Layouts\Tests\TestCase;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Security\SecurityManager;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Events\QueryExecuted;
@@ -82,7 +82,7 @@ function layoutHtml(string $name, string|int|null $record = null, bool $live = f
  */
 function render(LayoutComponent $component, RenderMode $mode = RenderMode::Static): string
 {
-    return squish(app(Runtime::class)->render($component, $mode)->toHtml());
+    return squish(app(RenderEngine::class)->render($component, $mode)->toHtml());
 }
 
 function squish(string $html): string

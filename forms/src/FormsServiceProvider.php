@@ -28,7 +28,7 @@ use Gcego\Forms\Rendering\LayoutRenderer;
 use Gcego\Forms\State\StateDehydrator;
 use Gcego\Forms\State\StateHydrator;
 use Gcego\Forms\Validation\ValidationEngine;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -126,7 +126,7 @@ final class FormsServiceProvider extends ServiceProvider implements PackageInter
     {
         return new PackageDescriptor(
             'gcego/forms',
-            requires: ['gcego/core', 'gcego/runtime', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions'],
+            requires: ['gcego/core', 'gcego/rendering', 'gcego/chroma', 'gcego/data', 'gcego/security', 'gcego/actions'],
             capabilities: ['forms', 'forms.livewire', 'forms.validation', 'forms.repeaters', 'forms.uploads'],
             description: 'Declarative forms with secure validation, dehydration, reactive state and Livewire hosting.',
         );

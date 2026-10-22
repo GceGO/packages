@@ -8,8 +8,8 @@ use Gcego\Actions\ActionIntent;
 use Gcego\Data\Exceptions\InvalidQueryException;
 use Gcego\Data\Results\DataResult;
 use Gcego\Data\Source;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Tables\Actions\TableActions;
 use Gcego\Tables\Exceptions\InvalidTableStateException;
 use Gcego\Tables\Export\CsvWriter;
@@ -619,7 +619,7 @@ final class TableHost extends Component
             poll: is_int($poll = $table->table->get(Table::Poll)) ? $poll : null,
         );
 
-        $content = app(TableRenderContext::class)->run($frame, fn (): string => app(Runtime::class)->render($table->table, RenderMode::Livewire, identity: $table->definition)->toHtml());
+        $content = app(TableRenderContext::class)->run($frame, fn (): string => app(RenderEngine::class)->render($table->table, RenderMode::Livewire, identity: $table->definition)->toHtml());
 
         return view('gcego-tables::tables.host', ['content' => new HtmlString($content), 'poll' => $frame->poll]);
     }

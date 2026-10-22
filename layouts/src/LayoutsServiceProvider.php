@@ -35,7 +35,7 @@ use Gcego\Layouts\Diagnostics\LayoutInspector;
 use Gcego\Layouts\Registry\LayoutKind;
 use Gcego\Layouts\Rendering\LayoutRenderer;
 use Gcego\Registry\Kinds\DefinitionKinds;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Blade;
@@ -108,7 +108,7 @@ final class LayoutsServiceProvider extends ServiceProvider implements PackageInt
     {
         return new PackageDescriptor(
             'gcego/layouts',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/chroma', 'gcego/security', 'gcego/tables'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/chroma', 'gcego/security', 'gcego/tables'],
             optional: ['gcego/widgets', 'gcego/forms', 'gcego/infolists', 'gcego/actions'],
             capabilities: ['layouts', 'layouts.responsive', 'layouts.tabs', 'layouts.disclosure', 'layouts.registry'],
             description: 'Declarative layouts: containers, responsive grids, rows, stacks, sections, cards, splits, sidebars, tabs, accordions and utility regions.',

@@ -10,8 +10,8 @@ use Gcego\Data\Contracts\DataAuthorizer;
 use Gcego\Data\Security\GateDataAuthorizer;
 use Gcego\Data\Security\ScopeRegistry;
 use Gcego\Registry\Contracts\RegistryInterface;
-use Gcego\Runtime\Contracts\RenderAuthorizer;
-use Gcego\Runtime\Security\GateRenderAuthorizer;
+use Gcego\Rendering\Contracts\RenderAuthorizer;
+use Gcego\Rendering\Security\GateRenderAuthorizer;
 use Gcego\Security\Audit\LogAuditReporter;
 use Gcego\Security\Audit\NullAuditReporter;
 use Gcego\Security\Authorization\AuthorizationEngine;
@@ -55,7 +55,7 @@ use Livewire\Livewire;
  * scoped instance, reset by Laravel for every request and job (Octane
  * included). Nothing reads the user or the database during registration or boot.
  *
- * It replaces gcego/runtime's GateRenderAuthorizer and gcego/data's
+ * It replaces gcego/rendering's GateRenderAuthorizer and gcego/data's
  * GateDataAuthorizer (only those defaults; application bindings are kept),
  * adds its data scope to gcego/data, and registers the middleware aliases
  * gcego.authorize and gcego.tenant without applying them to any route.
@@ -171,7 +171,7 @@ final class SecurityServiceProvider extends ServiceProvider implements PackageIn
     {
         return new PackageDescriptor(
             'gcego/security',
-            requires: ['gcego/core', 'gcego/registry', 'gcego/runtime', 'gcego/data'],
+            requires: ['gcego/core', 'gcego/registry', 'gcego/rendering', 'gcego/data'],
             capabilities: ['security', 'security.authorization', 'security.tenancy'],
             description: 'Deny-by-default authorization over Laravel Gates and Policies, tenant isolation, record and field access, and mandatory data scopes.',
         );

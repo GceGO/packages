@@ -10,8 +10,8 @@ use Gcego\Forms\Rendering\FormRenderContext;
 use Gcego\Forms\Rendering\FormRenderFrame;
 use Gcego\Forms\State\FormState;
 use Gcego\Panels\PanelManager;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Settings\Definitions\SettingDefinition;
 use Gcego\Settings\Exceptions\InvalidSettingException;
 use Gcego\Settings\Exceptions\SettingAuthorizationException;
@@ -247,7 +247,7 @@ final class SettingsForm extends Component
         $form = app(FormSettingsAdapter::class)->single($definition, $screen->canEdit($definition->key), $this->secrets[$definition->key] ?? false);
         $schema = $forms->schema($form);
         $frame = new FormRenderFrame($schema, new FormState($this->data), $forms->access($schema), 'data', $errors, idPrefix: 'gcego-settings-'.$this->page);
-        $html = app(FormRenderContext::class)->run($frame, static fn (): string => app(Runtime::class)->render($form, RenderMode::Livewire, identity: 'settings-page:'.$screen->page->pageName())->toHtml());
+        $html = app(FormRenderContext::class)->run($frame, static fn (): string => app(RenderEngine::class)->render($form, RenderMode::Livewire, identity: 'settings-page:'.$screen->page->pageName())->toHtml());
 
         return [
             'key' => $definition->key,

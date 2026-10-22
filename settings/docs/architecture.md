@@ -31,7 +31,7 @@ UI:  PanelSettingsExtension ─► SettingsPanel (Livewire) ─► SettingsForm 
 | Discovery, caching of definitions | gcego/registry | `SettingsKind`, `SettingsPageKind`, `DefinitionProvider` classes |
 | Tenancy, requirements, Gate | gcego/security | `TenantContext`, `TenantAuthorizer`, `SecurityManager::check()` |
 | Fields, rendering, normalization | gcego/forms | `FormSettingsAdapter`, `FormManager::process()`, `FormRenderFrame` |
-| Rendering | gcego/runtime | `Runtime::render()` |
+| Rendering | gcego/runtime | `RenderEngine::render()` |
 | Classes and themes | gcego/chroma | slots on `SettingsGroup`, `control.button` presets |
 | Panel routes and shell | gcego/panels | `PanelSettingsExtension`, `PanelManager::respond()` |
 | Action handlers | gcego/actions | `SaveSettings`, `ResetSettings` |

@@ -13,8 +13,8 @@ use Gcego\Chroma\Presets\PresetRegistry;
 use Gcego\Chroma\Tailwind;
 use Gcego\Chroma\Themes\ThemeRegistry;
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Runtime\Contracts\StylingResolver;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Contracts\StylingResolver;
 
 /**
  * Resolves the effective classes of a component slot. Implements gcego/runtime's StylingResolver.

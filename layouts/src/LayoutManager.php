@@ -8,8 +8,8 @@ use Gcego\Layouts\Diagnostics\LayoutInspector;
 use Gcego\Layouts\Diagnostics\LayoutReport;
 use Gcego\Layouts\Registry\LayoutKind;
 use Gcego\Registry\Contracts\RegistryInterface;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Security\SecurityManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\HtmlString;
@@ -91,7 +91,7 @@ final readonly class LayoutManager
      */
     public function renderLayout(LayoutComponent $layout, ?string $identity = null, string|int|null $record = null, bool $live = false): HtmlString
     {
-        return new HtmlString($this->container->make(Runtime::class)->render(
+        return new HtmlString($this->container->make(RenderEngine::class)->render(
             $layout,
             $live ? RenderMode::Livewire : RenderMode::Static,
             identity: $identity,

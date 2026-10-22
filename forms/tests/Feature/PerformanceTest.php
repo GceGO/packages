@@ -7,7 +7,7 @@ use Gcego\Forms\Fields\Repeater;
 use Gcego\Forms\Fields\TextInput;
 use Gcego\Forms\Form;
 use Gcego\Forms\Livewire\FormHost;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\RenderEngine;
 use Livewire\Livewire;
 
 it('compiles once per definition and processes large forms quickly', function (): void {
@@ -36,7 +36,7 @@ it('compiles once per definition and processes large forms quickly', function ()
     $processMs = (hrtime(true) - $started) / 1e6;
 
     $started = hrtime(true);
-    $html = app(Runtime::class)->render($form)->toHtml();
+    $html = app(RenderEngine::class)->render($form)->toHtml();
     $renderMs = (hrtime(true) - $started) / 1e6;
 
     fwrite(STDERR, sprintf("\n[forms perf] process 100 fields + 200 repeater items: %.1f ms; static render 100 fields: %.1f ms\n", $processMs, $renderMs));

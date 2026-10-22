@@ -16,8 +16,8 @@ use Gcego\Chroma\Themes\ThemeRegistry;
 use Gcego\Components\Component;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
-use Gcego\Runtime\Contracts\StylingResolver;
-use Gcego\Runtime\Styling\NullStylingResolver;
+use Gcego\Rendering\Contracts\StylingResolver;
+use Gcego\Rendering\Styling\NullStylingResolver;
 use Gcego\Swatches\Support\PreviewClasses;
 use Gcego\Swatches\SwatchesConfig;
 use Gcego\Swatches\SwatchesServiceProvider;
@@ -29,7 +29,7 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Laravel integration for gcego/chroma; also the "gcego/chroma" GCEGO package.
  *
- * Replaces gcego/runtime's NullStylingResolver with SlotResolver (unless the
+ * Replaces gcego/rendering's NullStylingResolver with SlotResolver (unless the
  * application bound its own resolver), declares the slots of the runtime's
  * built-in renderers, and registers the gcego-chroma Blade components. Registers
  * gcego/swatches (colors) too, and gives its color explorer the real presets.
@@ -103,7 +103,7 @@ final class ChromaServiceProvider extends ServiceProvider implements PackageInte
     {
         return new PackageDescriptor(
             'gcego/chroma',
-            requires: ['gcego/core', 'gcego/runtime', 'gcego/swatches'],
+            requires: ['gcego/core', 'gcego/rendering', 'gcego/swatches'],
             capabilities: ['styling', 'styling.tailwind'],
             description: 'Tailwind CSS v4 styling: non-color design tokens, presets, slots and class merging (colors: gcego/swatches).',
         );
@@ -140,7 +140,8 @@ final class ChromaServiceProvider extends ServiceProvider implements PackageInte
     }
 
     /**
-     * Slots used by gcego/runtime's built-in BlueprintRenderer and ContainerRenderer views.
+     * Slots used by gcego/rendering's built-in ContainerRenderer view (and the
+     * blueprint slots of gcego/runtime 0.1's removed BlueprintRenderer).
      */
     public static function registerRuntimeSlots(SlotRegistry $slots): void
     {

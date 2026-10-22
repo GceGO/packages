@@ -6,85 +6,91 @@ All classes live under `Gcego\Runtime`.
 
 | Method | Notes |
 | --- | --- |
-| `render(ComponentInterface\|string $target, RenderMode $mode = Static, ?string $identity = null, ?string $panel = null, ?string $theme = null, int $headingLevel = 1, array $metadata = [], array $state = []): RenderResult` | no authorization |
-| `renderAuthorized(string $identifier, RenderMode $mode = Static, ?string $panel = null, ?string $theme = null, int $headingLevel = 1, array $metadata = [], array $state = []): RenderResult` | `RenderAuthorizer` first |
-| `hostedBlueprint(string $identifier): BlueprintInterface` | blueprint kind only; authorized; validated |
-| `identityOf(string $identifier): string` | canonical identity |
-| `canRender(ComponentInterface): bool` | |
+| `execute(Operation $operation, ?ExecutionContext $context = null): ExecutionResult` | throws `ExecutionException`; context defaults to the running operation's, else the current request's |
+| `attempt(Operation $operation, ?ExecutionContext $context = null): ExecutionResult` | failures as results |
+| `contexts(): ExecutionContextFactory` | |
 
 ## Contracts
 
 | Interface | Methods |
 | --- | --- |
-| `Contracts\RendererInterface` | `render(ComponentInterface, RenderContext): RenderResult` |
-| `Contracts\StylingResolver` | `classes(ComponentInterface, string $slot, RenderContext): string` |
-| `Contracts\StatefulComponent` (extends `ComponentInterface`) | `initialState(): array`, `acceptState(string $field, mixed $value): mixed` |
-| `Contracts\RenderAuthorizer` | `authorize(DefinitionDescriptor): void` (throws `AuthorizationException`) |
+| `Contracts\OperationHandler` | `handle(ExecutionRequest): mixed` |
+| `Contracts\ActionHandler`, `QueryHandler`, `FormSubmissionHandler` | category contracts (extend `OperationHandler`) |
+| `Contracts\ValidatesOperation` | `rules(ExecutionRequest): array` |
+| `Contracts\AuthorizesOperation` | `authorize(ExecutionRequest): bool` |
+| `Contracts\ObservesLifecycle` | `before()`, `succeeded()`, `failed()` |
+| `Contracts\ExecutionAuthorizer` | `authorize(ExecutionRequest): void` (throws `AuthorizationException`/`AuthenticationException`) |
+| `Contracts\ExecutionMiddleware` | `handle(ExecutionRequest, Closure $next): ExecutionResult` |
+| `Contracts\TenantResolver` | `resolve(?Authenticatable, Request): ?TenantReference` |
+| `Contracts\PanelResolver` | `resolve(Request): ?string` |
 
-## Rendering
-
-| Class | Members |
-| --- | --- |
-| `Rendering\RendererRegistry` | `register(string $target, string\|RendererInterface $renderer, bool $inherit = true, bool $override = false)`, `has()`, `for(ComponentInterface, string $path = '')`, `bindingFor(string $class)`, `bindings()`, `overrides()` |
-| `Rendering\RendererBinding` | public `target`, `renderer`, `inherit`; `rendererClass()`, `sameAs()`, `toArray()` |
-| `Rendering\ComponentRenderer` | `render(ComponentInterface, RenderContext): RenderResult`, `children(RenderContext, ?int $headingLevel = null): Children`, `registry()` |
-| `Rendering\RenderContext` | `static root(...)`, `child()`, `component()`, `path()`, `depth()`, `isLivewire()`, `nextHeadingLevel()`, `hasAncestor()`, `domId()`, `statePath()`, `state()`, `wireModel()`; public `node`, `identity`, `mode`, `locale`, `panel`, `theme`, `headingLevel`, `metadata`, `state` |
-| `Rendering\RenderResult` | `static view()`, `static text()`, `static trustedHtml()`, `static empty()`, `toHtml()` (`deferred()` is internal) |
-| `Rendering\Children` | `nodes()`, `render(int $index)`, `isEmpty()`, `count()`, `toHtml()`, iteration over `RenderResult`s |
-| `Rendering\RenderMode` | `Static`, `Livewire` |
-| `Rendering\BlueprintRenderer`, `Rendering\ContainerRenderer` | built-in renderers |
-| `Blade\BladeRenderer` (abstract) | `view(): string`, `data()`, `childHeadingLevel()`, `render()` |
-
-## State, styling, security
+## Execution
 
 | Class | Members |
 | --- | --- |
-| `State\StateCoordinator` | `initialState(ComponentInterface)`, `sanitize(ComponentInterface, array)`, `accept(ComponentInterface, string $property, mixed $value)`, `occurrences(ComponentInterface)` |
-| `State\StatePath` | `static for(ComponentPath)`, public `key`, `property(string $field)`; constants `Property`, `FieldPattern` |
-| `Styling\StyleSlots` | `__invoke(string $slot): string`, `attribute(string $slot): HtmlString` |
-| `Styling\NullStylingResolver` | default `StylingResolver` |
-| `Security\GateRenderAuthorizer` | default `RenderAuthorizer` |
+| `Execution\Operation` | `static make(type, name = 'default')`, `action()`, `query()`, `submit()`; `on(target)`, `with(input)`, `input(key)`, `key()`, `toArray()`; public `type`, `name`, `target`, `input`; constants `Action`, `Query`, `FormSubmission` |
+| `Execution\ExecutionKernel` | `execute()`, `attempt()`, `currentContext()` |
+| `Execution\ExecutionPipeline` | `middleware(string\|ExecutionMiddleware ...)`, `middlewareClasses()`, `process()` |
+| `Execution\HandlerRegistry` | `category(type, contract)`, `register(type, handler, ?name, override)`, `has()`, `hasCategory()`, `bindingFor()`, `for()`, `categories()`, `bindings()`, `overrides()` |
+| `Execution\HandlerBinding` | public `type`, `name`, `handler`; `key()`, `handlerClass()`, `toArray()` |
+| `Execution\ExecutionRequest` | public `operation`, `context`, `target`, `trace`, `validated`; `target()`, `input(?key)`, `isValidated()` |
+| `Execution\ExecutionTarget` | public `descriptor`; `identity()`, `kind()`, `isBlueprint()`, `isLoaded()`, `definition()`, `definitionAs(class)`, `blueprint()` |
+| `Execution\ExecutionResult` | `static success(data, meta)`, `static failure(exception)`; `succeeded()`, `failed()`, `data()`, `category()`, `throw()`, `toArray()`; public `status`, `data`, `error`, `meta`, `trace` |
+| `Execution\ExecutionTrace` | public `id`, `operation`, `requestId`, `depth`; `stages()`, `stageNames()`, `handler()`, `status()`, `category()`, `durationMs()`, `toArray()` |
+| `Execution\ExecutionScope` | scoped: `current()`, `depth()`, `isActive()` |
+| `Execution\DefinitionResolver`, `FailureTranslator` | internal services |
+| `Execution\Events\OperationExecuting`, `OperationExecuted`, `OperationFailed` | events |
+| `Context\ExecutionContext` | `static forUser()`, `guest()`, `system()`; `withAttributes()`, `isSystem()`, `isGuest()`, `userId()`, `attribute()`, `sameSubjectAs()`, `toArray()`; public `user`, `tenant`, `panel`, `locale`, `request`, `system`, `attributes` |
+| `Context\ExecutionContextFactory` | `current()`, `fromRequest()`, `forUser()`, `system()` |
+| `Context\TenantReference` | public `key`, `type`; `equals()`, `toString()` |
+| `Context\RequestMetadata` | public `id`, `channel`, `method`, `path`, `ip`, `correlationId` |
+| `Extensions\ExecutionExtension` (abstract) | Core extension; implement `descriptor()` and `extend(HandlerRegistry, ExecutionPipeline)` |
 
-## Livewire
+## Security and support
 
-`Livewire\BlueprintHost` (final): public `blueprint` (`#[Locked]`) and `state`,
-plus `mount()`, `hydrate()`, `updating()`, `updated()` and `render()`.
+| Class | Members |
+| --- | --- |
+| `Security\GateExecutionAuthorizer` | default `ExecutionAuthorizer` |
+| `Support\Identifiers` | `isName()`, `isDefinition()`; constants `NamePattern`, `LocalePattern` |
 
 ## Diagnostics
 
 | Class | Members |
 | --- | --- |
-| `Diagnostics\RuntimeInspector` | `inspect(ComponentInterface\|string\|null $target = null): RuntimeReport` (never throws) |
-| `Diagnostics\RuntimeReport` | public `diagnostics`, `renderers`, `missingRenderers`; `check(string)`, `isHealthy()`, `toArray()` |
-| `Diagnostics\RenderDiagnostic` | public `check`, `level`, `message`, `details`; `toArray()` |
+| `Diagnostics\RuntimeInspector` | `inspect(): RuntimeReport` (never throws) |
+| `Diagnostics\RuntimeReport` | public `diagnostics`, `handlers`; `check(string)`, `isHealthy()`, `toArray()` |
+| `Diagnostics\RuntimeDiagnostic` | public `check`, `level`, `message`, `details`; `toArray()` |
+| `Diagnostics\ExecutionHealthCheck` | Core `DiagnosticCheck` `gcego-runtime.execution` |
 
-Checks: `config`, `renderers.override`, `views`, `livewire`, `target`,
-`target.renderers` and `target.validation`.
+Checks: `config`, `execution.framework`, `execution.categories`,
+`execution.override`, `execution.authorizer`, `execution.middleware`.
 
 ## Configuration (`RuntimeConfig`)
 
 | Key | Default |
 | --- | --- |
-| `gcego-runtime.rendering.strict` | `true` |
-| `gcego-runtime.rendering.validate` | `true` |
-| `gcego-runtime.rendering.max_depth` | `64` |
-| `gcego-runtime.livewire.enabled` | `true` |
-| `gcego-runtime.livewire.alias` | `gcego-blueprint` |
-| `gcego-runtime.authorization.ability` | `gcego-runtime.render` |
+| `gcego-runtime.execution.ability` | `gcego-runtime.execute` |
+| `gcego-runtime.execution.middleware` | `[]` |
+| `gcego-runtime.execution.max_depth` | `8` |
 
 ## Exceptions (all implement `Exceptions\RuntimeException`)
 
-`RendererNotFoundException`, `RendererConflictException`,
-`InvalidRenderContextException`, `InvalidStateException` and
-`RenderException`. Authorization failures are
-`Illuminate\Auth\Access\AuthorizationException`.
+`ExecutionException` (with `ErrorCategory`, `status()`, `trace()`,
+`toArray()`, `render()`) and its subclasses `InvalidOperationException`,
+`ExecutionDeniedException`, `TargetNotFoundException`,
+`OperationValidationException`, `OperationNotSupportedException`,
+`ContextViolationException` and `HandlerFailedException`. Registration errors
+are `HandlerRegistrationException`, configuration errors
+`InvalidConfigurationException`.
 
 ## Service provider
 
-`RuntimeServiceProvider` (implements `Gcego\Core\Contracts\PackageInterface`):
+`RuntimeServiceProvider` (implements `Gcego\Core\Contracts\PackageInterface` and `Bootable`; requires `gcego/core`, `gcego/registry`, `gcego/blueprints`; capabilities `runtime`, `runtime.execution`):
 
-- views namespace `gcego-runtime`;
-- publish tags `gcego-runtime-config` and `gcego-runtime-views`;
-- singletons `Runtime`, `RendererRegistry`, `ComponentRenderer`,
-  `StateCoordinator`, `RuntimeConfig`, `StylingResolver` and `RenderAuthorizer`;
-- the Livewire alias.
+- publish tag `gcego-runtime-config`;
+- singletons `Runtime`, `RuntimeConfig`, `HandlerRegistry`, `ExecutionPipeline`,
+  `ExecutionKernel`, `ExecutionContextFactory`, `ExecutionAuthorizer`,
+  `TenantResolver`, `PanelResolver`, `DefinitionResolver`, `FailureTranslator`;
+  scoped `ExecutionScope`;
+- `bootPackage()` adds the configured middleware;
+- the `gcego-runtime.execution` diagnostic.

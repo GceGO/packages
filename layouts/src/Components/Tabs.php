@@ -11,7 +11,7 @@ use Gcego\Components\Schema\PropertyDefinition;
 use Gcego\Components\Schema\Type;
 use Gcego\Layouts\LayoutComponent;
 use Gcego\Layouts\Rendering\LayoutView;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 use Illuminate\Support\Js;
 
 /**

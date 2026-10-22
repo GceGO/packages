@@ -7,7 +7,7 @@ namespace Gcego\Widgets\Diagnostics;
 use Gcego\Chroma\Slots\SlotRegistry;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Registry\Contracts\RegistryInterface;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Widgets\Activity\ActivitySource;
 use Gcego\Widgets\Charts\ChartAdapters;
 use Gcego\Widgets\Data\Aggregate;

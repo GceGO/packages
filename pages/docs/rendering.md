@@ -19,7 +19,7 @@
 - Children whose own requirements deny the user are left out; when nothing is left, the empty state (`Empty`) shows.
 - `?tab=name` opens that tab of the page's tab sets (the page is rendered as a copy with `Tabs::Active` set; paths are unchanged).
 
-Pages render only by registry identity: `PageManager::render()`, the page route, `PageHost`, or `Runtime::render('page:…')` (which opens and authorizes the page first). A Page rendered without an identity is refused, because its parts could not be trusted.
+Pages render only by registry identity: `PageManager::render()`, the page route, `PageHost`, or `RenderEngine::render('page:…')` (which opens and authorizes the page first). A Page rendered without an identity is refused, because its parts could not be trusted.
 
 ## Views
 

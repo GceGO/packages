@@ -27,7 +27,7 @@ use Gcego\Layouts\LayoutsServiceProvider;
 use Gcego\Layouts\Responsive\ColumnSpan;
 use Gcego\Layouts\Tests\Fixtures\Models\Student;
 use Gcego\Layouts\Tests\Fixtures\Unrenderable;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Tables\Columns\Text;
 use Gcego\Tables\Table;

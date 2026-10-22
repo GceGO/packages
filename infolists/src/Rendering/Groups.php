@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Infolists\Rendering;
 
 use Gcego\Infolists\Entries\Entry;
-use Gcego\Runtime\Rendering\Children;
+use Gcego\Rendering\Output\Children;
 
 /**
  * Renders a component's children and groups consecutive entries, so they

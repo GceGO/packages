@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gcego\Chroma\Tests\Fixtures;
 
-use Gcego\Runtime\Blade\BladeRenderer;
+use Gcego\Rendering\Blade\BladeRenderer;
 
 final class CardRenderer extends BladeRenderer
 {

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Gcego\Widgets\Rendering;
 
 use Gcego\Components\Contracts\ComponentInterface;
-use Gcego\Runtime\Blade\BladeRenderer;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Rendering\RenderResult;
+use Gcego\Rendering\Blade\BladeRenderer;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Output\RenderResult;
 use Gcego\Tables\Presets\TablePresets;
 use Gcego\Tables\Support\Icons;
 use Gcego\Widgets\Exceptions\InvalidWidgetException;

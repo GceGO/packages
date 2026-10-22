@@ -80,7 +80,7 @@ abstract class TestCase extends PackageTestCase
         Gate::policy(Subject::class, SubjectPolicy::class);
         Gate::define('access-admin', static fn (User $user): bool => $user->name === 'Admin');
         Gate::define('view-reports', static fn (User $user): bool => $user->name === 'Admin');
-        Gate::define('gcego-runtime.render', static fn (?User $user): bool => true);
+        Gate::define('gcego-rendering.render', static fn (?User $user): bool => true);
     }
 
     protected function defineRoutes($router): void

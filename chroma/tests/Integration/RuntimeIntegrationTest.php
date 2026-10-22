@@ -12,11 +12,11 @@ use Gcego\Components\Component;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Properties\Property;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Contracts\StylingResolver;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Contracts\StylingResolver;
+use Gcego\Rendering\RenderEngine;
+use Gcego\Rendering\Styling\NullStylingResolver;
 use Gcego\Runtime\Livewire\BlueprintHost;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Runtime;
-use Gcego\Runtime\Styling\NullStylingResolver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\ComponentAttributeBag;
@@ -40,7 +40,7 @@ it('respects a resolver bound by the application', function (): void {
 });
 
 it('styles the runtime built-in blueprint markup', function (): void {
-    $html = app(Runtime::class)->render(new Blueprint('subjects', new Property(Blueprint::Description, 'Manage subjects')))->toHtml();
+    $html = app(RenderEngine::class)->render(new Blueprint('subjects', new Property(Blueprint::Description, 'Manage subjects')))->toHtml();
 
     expect($html)->toContain('class="flex flex-col gap-6"')
         ->and($html)->toContain('class="flex flex-wrap items-start justify-between gap-4"')
@@ -49,7 +49,7 @@ it('styles the runtime built-in blueprint markup', function (): void {
 });
 
 it('renders component slots, nested components and instance styling', function (): void {
-    $html = app(Runtime::class)->render(new Blueprint(
+    $html = app(RenderEngine::class)->render(new Blueprint(
         'dashboard',
         new Tailwind('gap-10'),
         new ExampleCard('Enrolments', new Tailwind(new Slot(Tailwind::Body, ['grid', 'md:grid-cols-2']))),
@@ -67,13 +67,13 @@ it('never renders a Tailwind node as a child', function (): void {
     $card = new ExampleCard('A', new Tailwind('p-2'));
 
     expect($card->childCount())->toBe(0)
-        ->and(app(Runtime::class)->render($card)->toHtml())->not->toContain('slots');
+        ->and(app(RenderEngine::class)->render($card)->toHtml())->not->toContain('slots');
 });
 
 it('escapes resolved classes in attributes', function (): void {
     $card = new ExampleCard('A', new Tailwind("data-[x='1']:p-4"));
 
-    expect(app(Runtime::class)->render($card)->toHtml())->toContain('data-[x=&#039;1&#039;]:p-4');
+    expect(app(RenderEngine::class)->render($card)->toHtml())->toContain('data-[x=&#039;1&#039;]:p-4');
 });
 
 it('merges with Blade attribute bags without duplicating the class attribute', function (): void {
@@ -87,7 +87,7 @@ it('merges with Blade attribute bags without duplicating the class attribute', f
 });
 
 it('keeps classes stable across Livewire re-renders', function (): void {
-    Gate::define('gcego-runtime.render', fn (?object $user): bool => true);
+    Gate::define('gcego-rendering.render', fn (?object $user): bool => true);
     app(Registry::class)->register(new Blueprint('dashboard', new ExampleCard('Enrolments', new Tailwind('ring-1'))));
 
     $classes = function (string $html): array {

@@ -17,8 +17,8 @@ use Gcego\Layouts\Layout;
 use Gcego\Layouts\Tests\Fixtures\Models\Student;
 use Gcego\Layouts\Tests\Fixtures\Providers\CountProvider;
 use Gcego\Registry\Registry;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Security\Requirements\Ability;
 use Gcego\Tables\Columns\Text;
 use Gcego\Tables\Table;
@@ -109,7 +109,7 @@ it('runs the documented split example in a blueprint', function (): void {
         ),
     ));
 
-    $html = squish(app(Runtime::class)->renderAuthorized('blueprint:roster', RenderMode::Livewire)->toHtml());
+    $html = squish(app(RenderEngine::class)->renderAuthorized('blueprint:roster', RenderMode::Livewire)->toHtml());
 
     expect(substr_count($html, 'wire:name="gcego-table"'))->toBe(1)
         ->and($html)->toMatch('/<aside[^>]*>.*Recent enrolments.*Chidi.*<\/aside>/');

@@ -25,8 +25,8 @@ use Gcego\Infolists\Resolution\EntryAccess;
 use Gcego\Infolists\Resolution\ResolvedInfolist;
 use Gcego\Infolists\Schema\InfolistSchema;
 use Gcego\Infolists\Schema\SchemaCompiler;
-use Gcego\Runtime\Rendering\RenderMode;
-use Gcego\Runtime\Runtime;
+use Gcego\Rendering\Context\RenderMode;
+use Gcego\Rendering\RenderEngine;
 use Gcego\Security\SecurityManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
@@ -170,7 +170,7 @@ final class InfolistManager
             live: $live,
         );
 
-        $html = $this->container->make(InfolistRenderContext::class)->run($frame, fn (): string => $this->container->make(Runtime::class)->render($infolist->infolist, $live ? RenderMode::Livewire : RenderMode::Static, identity: $infolist->definition)->toHtml());
+        $html = $this->container->make(InfolistRenderContext::class)->run($frame, fn (): string => $this->container->make(RenderEngine::class)->render($infolist->infolist, $live ? RenderMode::Livewire : RenderMode::Static, identity: $infolist->definition)->toHtml());
 
         return new HtmlString($html);
     }

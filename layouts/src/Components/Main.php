@@ -8,7 +8,7 @@ use Gcego\Components\Schema\ComponentDefinition;
 use Gcego\Layouts\LayoutComponent;
 use Gcego\Layouts\Presets\LayoutPresets;
 use Gcego\Layouts\Rendering\LayoutView;
-use Gcego\Runtime\Rendering\RenderContext;
+use Gcego\Rendering\Context\RenderContext;
 
 /**
  * The main region of a Split or Sidebar. Element: div (default), main

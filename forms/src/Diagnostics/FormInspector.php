@@ -14,7 +14,7 @@ use Gcego\Forms\Form;
 use Gcego\Forms\FormsConfig;
 use Gcego\Forms\Options\OptionsResolver;
 use Gcego\Forms\Schema\SchemaCompiler;
-use Gcego\Runtime\Rendering\RendererRegistry;
+use Gcego\Rendering\Renderers\RendererRegistry;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;

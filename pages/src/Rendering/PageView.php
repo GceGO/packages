@@ -8,8 +8,8 @@ use Gcego\Chroma\ChromaManager;
 use Gcego\Navigation\Breadcrumbs\BreadcrumbCollection;
 use Gcego\Pages\Context\PageContext;
 use Gcego\Pages\Presets\PagePresets;
-use Gcego\Runtime\Rendering\RenderContext;
-use Gcego\Runtime\Styling\StyleSlots;
+use Gcego\Rendering\Context\RenderContext;
+use Gcego\Rendering\Styling\StyleSlots;
 use Illuminate\Support\HtmlString;
 
 /**

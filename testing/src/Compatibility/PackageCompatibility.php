@@ -26,9 +26,10 @@ final readonly class PackageCompatibility
     public const array Packages = [
         'gcego/components' => null,
         'gcego/core' => 'Gcego\Core\GcegoServiceProvider',
-        'gcego/blueprints' => null,
+        'gcego/blueprints' => 'Gcego\Blueprints\BlueprintsServiceProvider',
         'gcego/registry' => 'Gcego\Registry\RegistryServiceProvider',
         'gcego/runtime' => 'Gcego\Runtime\RuntimeServiceProvider',
+        'gcego/rendering' => 'Gcego\Rendering\RenderingServiceProvider',
         'gcego/chroma' => 'Gcego\Chroma\ChromaServiceProvider',
         'gcego/data' => 'Gcego\Data\DataServiceProvider',
         'gcego/security' => 'Gcego\Security\SecurityServiceProvider',
